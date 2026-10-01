@@ -104,3 +104,13 @@ DocumentPreviewService utiliza PDFBox existente para renderizar solo la página 
 Permisos de clínica, documentación y configuración independientes. Escribir clínica exige vinculación con odontólogo activo o rol administrador; consultar historias conserva acceso a registros de profesionales inactivos. AuditService registra consultas y cambios sin volcar antecedentes, diagnósticos, archivos ni motivos clínicos en logs.
 
 El cierre de fase 3 prepara pg_dump de toda la base; [procedimiento](project/respaldo-postgresql.md). El catálogo y la huella del respaldo se verifican, pero la restauración integral/A30 se valida en fase 9. Referencias y decisiones en [diseño clínico](project/diseno-clinico-fase-3.md).
+
+## Tratamientos y cargos: fase 4
+
+Treatments contiene el acuerdo, conceptos, operaciones inmutables y sesiones. Finance contiene cargos y ajustes inmutables y su agregado por moneda. ClinicalBillingService conecta la finalización clínica con ambos servicios; la corrección clínica conserva los movimientos anteriores. No hay pagos, cuotas ni caja en esta fase.
+
+La escritura se serializa por paciente antes del plan o atención. Las operaciones del plan y ajustes usan claves UUID con huella de contenido; los cargos tienen claves únicas de origen. La aceptación, cargos y auditoría comparten transacción. Cada edición de conceptos o avance incrementa mutation y por tanto la versión del plan, incluso cuando su cabecera permanece igual.
+
+El presupuesto tiene un máximo inicial de 50 conceptos y admite hasta 100 con adicionales. Esta colección acotada se procesa dentro de la transacción de aceptación; los listados HTTP son paginados. Las sumas y el avance se consultan mediante agregados de PostgreSQL. BigDecimal y numeric conservan cálculos monetarios de dos decimales. Cada acuerdo y cargo conserva moneda; no se suman monedas distintas.
+
+V8 incorpora tablas, permisos, claves, índices, protección de acuerdos y vínculo documental con tratamiento. V9 incorpora la revisión de cambios del detalle. Se conservan migraciones anteriores. Las atenciones finalizadas anteriormente no se cobran retroactivamente. Decisiones y comprobaciones en las instantáneas de diseño y cierre de fase 4.

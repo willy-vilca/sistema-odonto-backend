@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 a 3: configuración, acceso, pacientes, agenda manual, atención clínica, odontograma y documentos con historial. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 4: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes y cargos con historial. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 
@@ -82,9 +82,9 @@ En Windows, detener java -jar antes de reconstruir el ejecutable. El arranque sp
 
 prod exige DB_URL, DB_USERNAME y DB_PASSWORD, con PORT y SERVER_ADDRESS opcionales; no hereda credenciales locales. Flyway V2 necesita autorización para instalar btree_gist. Preparar esa extensión con el administrador de PostgreSQL para una instalación productiva.
 
-La fase 2 aplica las reglas a las citas, genera códigos de pacientes y conserva duración e historial. Presupuestos y constancias consumirán sus textos y correlativos en fases posteriores. La clínica está disponible desde fase 3; presupuestos, pagos y WhatsApp se incorporan en las siguientes fases. Despliegue final, respaldos y restauración: fase 9.
+La fase 2 aplica las reglas a las citas, genera códigos de pacientes y conserva duración e historial. Presupuestos y constancias consumirán sus textos y correlativos en fases posteriores. La clínica está disponible desde fase 3 y los presupuestos y cargos desde fase 4; pagos y WhatsApp se incorporan en las siguientes fases. Despliegue final, respaldos y restauración: fase 9.
 
-Consultar [arquitectura](docs/architecture.md) y [cierre de fase 3](docs/project/cierre-fase-3.md). Las guías maestras están en la raíz; docs/project conserva sus instantáneas exactas.
+Consultar [arquitectura](docs/architecture.md) y [cierre de fase 4](docs/project/cierre-fase-4.md). Las guías maestras están en la raíz; docs/project conserva sus instantáneas exactas.
 
 ## Pacientes y agenda
 
@@ -107,3 +107,19 @@ Archivos: GET/POST multipart /api/v1/documents. Partes metadata (JSON) y file. L
 Consentimientos: GET/POST /documents/consents, copia del mismo paciente y responsable/relación/fecha. Configuración: /clinical/templates, /documents/categories y /documents/policy. Política de 20 MiB inicialmente, ajustable entre 1 y 60 MiB. Transporte limitado a 64 MiB. Formatos verificados por contenido: JPEG, PNG, WebP y PDF; imágenes hasta 40 millones de píxeles, PDF sin contraseña y hasta 1.000 páginas, sin acciones activas ni archivos incrustados.
 
 Respaldo local: scripts/backup-local.ps1. Copias en .runtime/backups, ignoradas por Git. [Procedimiento](docs/project/respaldo-postgresql.md). La restauración integral y A30 se validan en fase 9. Los vínculos con planes/tratamientos y los cargos se incorporan en fase 4.
+
+## Presupuestos, planes y cargos
+
+Abrir Presupuestos y planes, seleccionar paciente y guardar un presupuesto con profesional, conceptos, precio, unidades, sesiones, piezas y condiciones. Presentarlo no genera deuda. Aceptarlo exige registrar la aceptación explícita y genera cargos en la misma transacción. El correlativo utiliza budget_prefix/budget_next_number de Configuración.
+
+API: GET/POST /api/v1/plans; GET/PUT /plans/{id}; POST /plans/{id}/actions/{propose|accept|finish|cancel}; POST /plans/{id}/additional; GET /plans/items, /plans/items/{id}, /plans/{id}/history y /plans/{id}/sessions. Las escrituras usan requestKey UUID; edición y acciones requieren version. Misma clave con otro contenido: HTTP 409.
+
+GET /api/v1/charges y /charges/summary requieren patientId. Los movimientos se filtran por planId, originalId, kind y currency; se buscan y paginan. POST /charges/{id}/adjustments agrega una variación con requestKey, amount y reason. Un importe negativo reduce deuda y uno positivo la aumenta, conservando el cargo original. No se admiten cargos netos negativos ni reducción de la parte ya realizada.
+
+PLANS_READ/WRITE protegen acuerdos; FINANCES_READ protege deuda y FINANCES_ADJUST permite ajustes y liberación de deuda al cancelar. Administrador dispone de todos; recepción gestiona planes, odontólogo gestiona planes y consulta deuda, caja consulta planes y deuda. Solo el administrador recibe ajustes por defecto. Se pueden configurar desde Roles.
+
+El procedimiento clínico admite planItemId y unitPrice opcionales. planItemId enlaza el concepto del mismo paciente y profesional, con servicio/pieza coincidentes; quantity representa sesiones realizadas. El presupuesto separa unidades facturadas de sesiones previstas. Los servicios individuales se cobran al finalizar, con precio acordado o vigente del catálogo; un procedimiento libre sin importe es sin honorarios. Las correcciones clínicas conservan cargos; los cambios económicos requieren ajustes explícitos.
+
+Cancelar puede conservar deuda o, con permiso de ajustes, liberar proporcionalmente lo pendiente. Finalizar exige completar sesiones. Las tablas de cargos, operaciones y sesiones rechazan cambios o borrados; los acuerdos y conceptos aceptados conservan sus datos. La moneda permanece en cada documento/movimiento; los totales se muestran por moneda.
+
+Las atenciones finalizadas antes de fase 4 no generan cargos retroactivos. No se registra dinero recibido, cuotas, anticipos, egresos ni devoluciones todavía: fase 5. Evidencia en [cierre de fase 4](docs/project/cierre-fase-4.md) y [diseño de tratamientos](docs/project/diseno-tratamientos-fase-4.md).
