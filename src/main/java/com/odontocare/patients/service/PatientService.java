@@ -33,25 +33,28 @@ public class PatientService {
 
   @Transactional(readOnly = true)
   public PageResponse<PatientResponse> list(
-      PageQuery q, Boolean active, Boolean provisional, String phone) {
+      PageQuery query, Boolean active, Boolean provisional, String phone) {
     Specification<Patient> spec =
-        SearchSpecifications.<Patient>text(q.getSearch(), "fullName", "code", "documentNumber")
-            .or(contactSearch(q.getSearch()))
+        SearchSpecifications.<Patient>text(query.getSearch(), "fullName", "code", "documentNumber")
+            .or(contactSearch(query.getSearch()))
             .and(SearchSpecifications.equal("active", active))
             .and(SearchSpecifications.equal("provisional", provisional));
     if (phone != null && !phone.isBlank())
-      spec = spec.and((root, query, cb) -> cb.equal(root.join("contacts").get("phone"), phone));
+      spec =
+          spec.and(
+              (root, criteriaQuery, cb) -> cb.equal(root.join("contacts").get("phone"), phone));
     spec =
         spec.and(
-            (root, query, cb) -> {
-              query.distinct(true);
+            (root, criteriaQuery, cb) -> {
+              criteriaQuery.distinct(true);
               return cb.conjunction();
             });
     return PageResponse.of(
         patients
             .findAll(
                 spec,
-                q.pageable(Map.of("name", "fullName", "code", "code", "createdAt", "createdAt")))
+                query.pageable(
+                    Map.of("name", "fullName", "code", "code", "createdAt", "createdAt")))
             .map(PatientResponse::of));
   }
 
@@ -61,35 +64,35 @@ public class PatientService {
   }
 
   @Transactional
-  public PatientResponse create(PatientRequest r) {
+  public PatientResponse create(PatientRequest request) {
     var profile = profiles.lockInstallation().orElseThrow();
-    var p = new Patient();
+    var patient = new Patient();
     int number = profile.getPatientNextNumber();
     String code;
     do {
       code = profile.getPatientPrefix() + "-" + String.format(Locale.ROOT, "%06d", number++);
     } while (patients.existsByCode(code));
     profile.setPatientNextNumber(number);
-    p.setCode(code);
-    apply(p, r, profile.getTimeZone());
-    patients.saveAndFlush(p);
-    audit.record("PATIENT_CREATED", "PATIENT", p.getId(), "Creó ficha " + code);
-    return PatientResponse.of(p);
+    patient.setCode(code);
+    apply(patient, request, profile.getTimeZone());
+    patients.saveAndFlush(patient);
+    audit.record("PATIENT_CREATED", "PATIENT", patient.getId(), "Creó ficha " + code);
+    return PatientResponse.of(patient);
   }
 
   @Transactional
-  public PatientResponse update(UUID id, PatientRequest r) {
+  public PatientResponse update(UUID id, PatientRequest request) {
     var profile = profiles.lockInstallation().orElseThrow();
-    var p = patients.findById(id).orElseThrow(ApiException::notFound);
-    p.checkVersion(r.version());
-    apply(p, r, profile.getTimeZone());
-    patients.saveAndFlush(p);
-    audit.record("PATIENT_UPDATED", "PATIENT", id, "Actualizó ficha " + p.getCode());
-    return PatientResponse.of(p);
+    var patient = patients.findById(id).orElseThrow(ApiException::notFound);
+    patient.checkVersion(request.version());
+    apply(patient, request, profile.getTimeZone());
+    patients.saveAndFlush(patient);
+    audit.record("PATIENT_UPDATED", "PATIENT", id, "Actualizó ficha " + patient.getCode());
+    return PatientResponse.of(patient);
   }
 
   private Specification<Patient> contactSearch(String search) {
-    return (root, q, cb) -> {
+    return (root, query, cb) -> {
       if (search.isBlank()) return cb.conjunction();
       String pattern =
           "%"
@@ -106,52 +109,56 @@ public class PatientService {
     };
   }
 
-  private void apply(Patient p, PatientRequest r, String zone) {
-    validator.validate(r, ZoneId.of(zone));
-    String number = r.documentNumber().strip().toUpperCase(Locale.ROOT);
-    String key = validator.duplicateKey(r);
-    UUID except = p.getId() == null ? new UUID(0, 0) : p.getId();
+  private void apply(Patient patient, PatientRequest request, String zone) {
+    validator.validate(request, ZoneId.of(zone));
+    String number = request.documentNumber().strip().toUpperCase(Locale.ROOT);
+    String key = validator.duplicateKey(request);
+    UUID except = patient.getId() == null ? new UUID(0, 0) : patient.getId();
     if (!number.isEmpty()
-        && patients.existsByDocumentTypeAndDocumentNumberAndIdNot(r.documentType(), number, except))
+        && patients.existsByDocumentTypeAndDocumentNumberAndIdNot(
+            request.documentType(), number, except))
       throw ApiException.conflict("Ya existe un paciente con ese documento. Busca su ficha.");
-    String name = r.fullName().strip().replaceAll("\\s+", " ");
-    var phones = r.contacts().stream().map(PatientRequest.ContactRequest::phone).toList();
+    String name = request.fullName().strip().replaceAll("\\s+", " ");
+    var phones = request.contacts().stream().map(PatientRequest.ContactRequest::phone).toList();
     Specification<Patient> probable =
-        (root, q, cb) -> {
+        (root, query, cb) -> {
           var contact = root.join("contacts");
           return cb.and(
               cb.notEqual(root.get("id"), except),
               cb.equal(cb.lower(root.get("fullName")), name.toLowerCase(Locale.ROOT)),
-              r.birthDate() == null
+              request.birthDate() == null
                   ? cb.isNull(root.get("birthDate"))
-                  : cb.equal(root.get("birthDate"), r.birthDate()),
+                  : cb.equal(root.get("birthDate"), request.birthDate()),
               contact.get("phone").in(phones));
         };
     if (patients.exists(probable))
       throw ApiException.conflict(
           "Ya existe una ficha con el mismo nombre, nacimiento y teléfono. Revisa el paciente antes"
               + " de duplicarlo.");
-    p.setFullName(name);
-    p.setBirthDate(r.birthDate());
-    p.setDocumentType(r.documentType());
-    p.setDocumentNumber(number);
-    p.setAddress(r.address().strip());
-    p.setEmail(r.email().strip());
-    p.setEmergencyName(r.emergencyName().strip());
-    p.setEmergencyPhone(r.emergencyPhone());
-    p.setNotes(r.notes().strip());
-    p.setProvisional(r.provisional());
-    p.setActive(r.active());
-    p.setDuplicateKey(key);
-    p.getContacts().clear();
+    patient.setFullName(name);
+    patient.setBirthDate(request.birthDate());
+    patient.setDocumentType(request.documentType());
+    patient.setDocumentNumber(number);
+    patient.setAddress(request.address().strip());
+    patient.setEmail(request.email().strip());
+    patient.setEmergencyName(request.emergencyName().strip());
+    patient.setEmergencyPhone(request.emergencyPhone());
+    patient.setNotes(request.notes().strip());
+    patient.setProvisional(request.provisional());
+    patient.setActive(request.active());
+    patient.setDuplicateKey(key);
+    patient.advanceContactRevision();
+    patient.getContacts().clear();
     patients.flush();
-    r.contacts()
+    request
+        .contacts()
         .forEach(
             c ->
-                p.getContacts()
+                patient
+                    .getContacts()
                     .add(
                         new PatientContact(
-                            p,
+                            patient,
                             c.phone(),
                             c.name().strip(),
                             c.relationship().strip(),

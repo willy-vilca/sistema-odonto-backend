@@ -32,8 +32,9 @@ public class AppointmentStateRules {
           AppointmentStatus.NO_SHOW,
           Set.of());
 
-  public void requireTransition(Appointment a, AppointmentStatus next, String reason, Clock clock) {
-    if (!NEXT.get(a.getStatus()).contains(next))
+  public void requireTransition(
+      Appointment appointment, AppointmentStatus next, String reason, Clock clock) {
+    if (!NEXT.get(appointment.getStatus()).contains(next))
       throw ApiException.conflict("El cambio de estado no está permitido desde el estado actual.");
     if ((next == AppointmentStatus.CANCELLED || next == AppointmentStatus.NO_SHOW)
         && reason.isBlank()) throw ApiException.badRequest("Indica el motivo del cambio.");
@@ -43,13 +44,14 @@ public class AppointmentStateRules {
                 AppointmentStatus.ATTENDED,
                 AppointmentStatus.NO_SHOW)
             .contains(next)
-        && a.getStartsAt().isAfter(clock.instant()))
+        && appointment.getStartsAt().isAfter(clock.instant()))
       throw ApiException.badRequest(
           "Este estado solo está disponible cuando ha llegado la hora de la cita.");
   }
 
-  public void requireReschedulable(Appointment a) {
-    if (!Set.of(AppointmentStatus.RESERVED, AppointmentStatus.CONFIRMED).contains(a.getStatus()))
+  public void requireReschedulable(Appointment appointment) {
+    if (!Set.of(AppointmentStatus.RESERVED, AppointmentStatus.CONFIRMED)
+        .contains(appointment.getStatus()))
       throw ApiException.conflict("Solo puedes reprogramar una cita reservada o confirmada.");
   }
 }

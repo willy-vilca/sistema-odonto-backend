@@ -8,7 +8,5 @@ public interface PatientRepository
     extends JpaRepository<Patient, UUID>, JpaSpecificationExecutor<Patient> {
   boolean existsByCode(String code);
 
-  boolean existsByDuplicateKeyAndIdNot(String key, UUID id);
-
   boolean existsByDocumentTypeAndDocumentNumberAndIdNot(String type, String number, UUID id);
 }

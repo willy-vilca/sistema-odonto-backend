@@ -14,30 +14,31 @@ public class PatientValidator {
     this.clock = clock;
   }
 
-  public void validate(PatientRequest r, ZoneId zone) {
-    if (!r.provisional() && r.birthDate() == null)
+  public void validate(PatientRequest request, ZoneId zone) {
+    if (!request.provisional() && request.birthDate() == null)
       throw ApiException.badRequest(
           "Completa la fecha de nacimiento o marca la ficha como provisional.");
-    if (r.birthDate() != null && r.birthDate().isAfter(LocalDate.now(clock.withZone(zone))))
+    if (request.birthDate() != null
+        && request.birthDate().isAfter(LocalDate.now(clock.withZone(zone))))
       throw ApiException.badRequest("La fecha de nacimiento no puede ser futura.");
-    if (r.birthDate() != null
-        && r.birthDate().isAfter(LocalDate.now(clock.withZone(zone)).minusYears(18))
-        && r.contacts().stream().noneMatch(PatientRequest.ContactRequest::guardian))
+    if (request.birthDate() != null
+        && request.birthDate().isAfter(LocalDate.now(clock.withZone(zone)).minusYears(18))
+        && request.contacts().stream().noneMatch(PatientRequest.ContactRequest::guardian))
       throw ApiException.badRequest("Un menor necesita un contacto identificado como responsable.");
-    if (r.documentType().isBlank() != r.documentNumber().isBlank())
+    if (request.documentType().isBlank() != request.documentNumber().isBlank())
       throw ApiException.badRequest("Indica el tipo y el número del documento juntos.");
-    if (r.contacts().stream().map(PatientRequest.ContactRequest::phone).distinct().count()
-        != r.contacts().size())
+    if (request.contacts().stream().map(PatientRequest.ContactRequest::phone).distinct().count()
+        != request.contacts().size())
       throw ApiException.badRequest("No repitas un teléfono dentro de la misma ficha.");
   }
 
-  public String duplicateKey(PatientRequest r) {
+  public String duplicateKey(PatientRequest request) {
 
-    return r.fullName().strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT)
+    return request.fullName().strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT)
         + "|"
-        + r.birthDate()
+        + request.birthDate()
         + "|"
-        + r.contacts().stream()
+        + request.contacts().stream()
             .map(PatientRequest.ContactRequest::phone)
             .sorted()
             .findFirst()

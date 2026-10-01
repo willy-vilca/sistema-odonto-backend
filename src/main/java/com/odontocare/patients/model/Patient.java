@@ -8,6 +8,13 @@ import java.util.*;
 @Entity
 @Table(name = "patient")
 public class Patient extends VersionedEntity {
+  @Column(name = "contact_revision", nullable = false)
+  private long contactRevision;
+
+  public void advanceContactRevision() {
+    contactRevision++;
+  }
+
   @Column(nullable = false, length = 30)
   private String code;
 

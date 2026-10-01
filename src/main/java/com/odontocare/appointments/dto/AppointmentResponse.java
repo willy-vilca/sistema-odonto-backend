@@ -23,25 +23,25 @@ public record AppointmentResponse(
     String origin,
     String notes,
     long version) {
-  public static AppointmentResponse of(Appointment a, ZoneId zone) {
+  public static AppointmentResponse of(Appointment appointment, ZoneId zone) {
     return new AppointmentResponse(
-        a.getId(),
-        a.getPatient().getId(),
-        a.getPatient().getFullName(),
-        a.getPatient().getCode(),
-        a.getDentist().getId(),
-        a.getDentistName(),
-        a.getService() == null ? null : a.getService().getId(),
-        a.getServiceName(),
-        a.getDurationMinutes(),
-        a.getGapMinutes(),
-        a.getStartsAt(),
-        a.getEndsAt(),
-        LocalDateTime.ofInstant(a.getStartsAt(), zone),
-        LocalDateTime.ofInstant(a.getEndsAt(), zone),
-        a.getStatus().name(),
-        a.getOrigin(),
-        a.getNotes(),
-        a.getVersion());
+        appointment.getId(),
+        appointment.getPatient().getId(),
+        appointment.getPatient().getFullName(),
+        appointment.getPatient().getCode(),
+        appointment.getDentist().getId(),
+        appointment.getDentistName(),
+        appointment.getService() == null ? null : appointment.getService().getId(),
+        appointment.getServiceName(),
+        appointment.getDurationMinutes(),
+        appointment.getGapMinutes(),
+        appointment.getStartsAt(),
+        appointment.getEndsAt(),
+        LocalDateTime.ofInstant(appointment.getStartsAt(), zone),
+        LocalDateTime.ofInstant(appointment.getEndsAt(), zone),
+        appointment.getStatus().name(),
+        appointment.getOrigin(),
+        appointment.getNotes(),
+        appointment.getVersion());
   }
 }

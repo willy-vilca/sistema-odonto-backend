@@ -17,19 +17,19 @@ public record HistoryResponse(
     String actorName,
     String reason,
     Instant createdAt) {
-  public static HistoryResponse of(AppointmentHistory h) {
+  public static HistoryResponse of(AppointmentHistory entry) {
     return new HistoryResponse(
-        h.getId(),
-        h.getAction(),
-        h.getPreviousStatus(),
-        h.getStatus(),
-        h.getPreviousStart(),
-        h.getStartsAt(),
-        h.getEndsAt(),
-        h.getDentistName(),
-        h.getDurationMinutes(),
-        h.getActorName(),
-        h.getReason(),
-        h.getCreatedAt());
+        entry.getId(),
+        entry.getAction(),
+        entry.getPreviousStatus(),
+        entry.getStatus(),
+        entry.getPreviousStart(),
+        entry.getStartsAt(),
+        entry.getEndsAt(),
+        entry.getDentistName(),
+        entry.getDurationMinutes(),
+        entry.getActorName(),
+        entry.getReason(),
+        entry.getCreatedAt());
   }
 }

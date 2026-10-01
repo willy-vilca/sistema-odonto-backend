@@ -31,13 +31,13 @@ public class AppointmentController {
   @GetMapping
   @PreAuthorize("hasAuthority('APPOINTMENTS_READ')")
   public PageResponse<AppointmentResponse> list(
-      @Valid @ModelAttribute PageQuery q,
+      @Valid @ModelAttribute PageQuery query,
       @RequestParam(required = false) UUID dentistId,
       @RequestParam(required = false) UUID patientId,
       @RequestParam(required = false) AppointmentStatus status,
       @RequestParam(required = false) LocalDate from,
       @RequestParam(required = false) LocalDate to) {
-    return queries.list(q, dentistId, patientId, status, from, to);
+    return queries.list(query, dentistId, patientId, status, from, to);
   }
 
   @GetMapping("/calendar")
@@ -57,8 +57,8 @@ public class AppointmentController {
       @RequestParam(required = false) @Min(1) @Max(1440) Integer durationMinutes,
       @RequestParam LocalDate date,
       @RequestParam(required = false) UUID appointmentId,
-      @Valid @ModelAttribute PageQuery q) {
-    return availability.slots(dentistId, serviceId, durationMinutes, date, appointmentId, q);
+      @Valid @ModelAttribute PageQuery query) {
+    return availability.slots(dentistId, serviceId, durationMinutes, date, appointmentId, query);
   }
 
   @GetMapping("/{id}")
@@ -70,27 +70,30 @@ public class AppointmentController {
   @GetMapping("/{id}/history")
   @PreAuthorize("hasAuthority('APPOINTMENTS_READ')")
   public PageResponse<HistoryResponse> history(
-      @PathVariable UUID id, @Valid @ModelAttribute PageQuery q) {
-    return queries.history(id, q);
+      @PathVariable UUID id,
+      @Valid @ModelAttribute PageQuery query,
+      @RequestParam(required = false) String action) {
+    return queries.history(id, query, action);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAuthority('APPOINTMENTS_WRITE')")
-  public AppointmentResponse create(@Valid @RequestBody AppointmentRequest r) {
-    return commands.create(r);
+  public AppointmentResponse create(@Valid @RequestBody AppointmentRequest request) {
+    return commands.create(request);
   }
 
   @PutMapping("/{id}/reschedule")
   @PreAuthorize("hasAuthority('APPOINTMENTS_WRITE')")
   public AppointmentResponse reschedule(
-      @PathVariable UUID id, @Valid @RequestBody RescheduleRequest r) {
-    return commands.reschedule(id, r);
+      @PathVariable UUID id, @Valid @RequestBody RescheduleRequest request) {
+    return commands.reschedule(id, request);
   }
 
   @PutMapping("/{id}/status")
   @PreAuthorize("hasAuthority('APPOINTMENTS_WRITE')")
-  public AppointmentResponse status(@PathVariable UUID id, @Valid @RequestBody StatusRequest r) {
-    return commands.changeStatus(id, r);
+  public AppointmentResponse status(
+      @PathVariable UUID id, @Valid @RequestBody StatusRequest request) {
+    return commands.changeStatus(id, request);
   }
 }

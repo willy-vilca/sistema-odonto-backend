@@ -305,6 +305,29 @@ class Phase2IntegrationTests {
         call(put("/api/v1/patients/" + p.get("id").asText()).with(csrf()), admin, update, 200);
     assertThat(saved.get("active").asBoolean()).isFalse();
     call(put("/api/v1/patients/" + p.get("id").asText()).with(csrf()), admin, update, 409);
+    var contactChange = copy(saved);
+    contactChange.put(
+        "contacts",
+        List.of(
+            Map.of(
+                "phone",
+                "+51999888777",
+                "name",
+                "Contacto actualizado",
+                "relationship",
+                "Paciente",
+                "guardian",
+                false,
+                "payer",
+                true)));
+    var updatedContact =
+        call(
+            put("/api/v1/patients/" + p.get("id").asText()).with(csrf()),
+            admin,
+            contactChange,
+            200);
+    assertThat(updatedContact.get("version").asLong()).isGreaterThan(saved.get("version").asLong());
+    call(put("/api/v1/patients/" + p.get("id").asText()).with(csrf()), admin, contactChange, 409);
     call(get("/api/v1/patients?size=101"), admin, null, 400);
     call(get("/api/v1/patients?sort=password"), admin, null, 400);
   }
@@ -549,6 +572,16 @@ class Phase2IntegrationTests {
                 .get("totalElements")
                 .asInt())
         .isEqualTo(3);
+    assertThat(
+            read("/api/v1/appointments/" + a.get("id").asText() + "/history?action=RESCHEDULED")
+                .get("totalElements")
+                .asInt())
+        .isEqualTo(2);
+    call(
+        get("/api/v1/appointments/" + a.get("id").asText() + "/history?action=INVALID"),
+        admin,
+        null,
+        400);
   }
 
   @Test

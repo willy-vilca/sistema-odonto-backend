@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class BookingRules {
-  public void eligible(Dentist d, DentalService s) {
-    if (!d.getActive() || !d.getUser().getActive())
+  public void eligible(Dentist dentist, DentalService service) {
+    if (!dentist.getActive() || !dentist.getUser().getActive())
       throw ApiException.badRequest("El odontólogo no está activo.");
-    if (s != null
-        && (!s.getActive()
-            || !s.getCategory().getActive()
-            || d.getServices().stream().noneMatch(x -> x.getId().equals(s.getId()))))
+    if (service != null
+        && (!service.getActive()
+            || !service.getCategory().getActive()
+            || dentist.getServices().stream().noneMatch(x -> x.getId().equals(service.getId()))))
       throw ApiException.badRequest(
           "El servicio no está activo o no está asignado a este odontólogo.");
   }

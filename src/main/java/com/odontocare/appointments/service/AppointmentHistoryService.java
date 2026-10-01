@@ -18,28 +18,29 @@ public class AppointmentHistoryService {
 
   @Transactional(propagation = Propagation.MANDATORY)
   public void append(
-      Appointment a,
+      Appointment appointment,
       String action,
       AppointmentStatus previous,
       Instant previousStart,
       String reason) {
-    var h = new AppointmentHistory();
-    h.setAppointment(a);
-    h.setAction(action);
-    h.setPreviousStatus(previous == null ? null : previous.name());
-    h.setStatus(a.getStatus().name());
-    h.setPreviousStart(previousStart);
-    h.setStartsAt(a.getStartsAt());
-    h.setEndsAt(a.getEndsAt());
-    h.setDentistId(a.getDentist().getId());
-    h.setDentistName(a.getDentistName());
-    h.setDurationMinutes(a.getDurationMinutes());
-    var auth = SecurityContextHolder.getContext().getAuthentication();
-    h.setActorName(
-        auth != null && auth.getPrincipal() instanceof AccountPrincipal p
-            ? p.getDisplayName()
+    var entry = new AppointmentHistory();
+    entry.setAppointment(appointment);
+    entry.setAction(action);
+    entry.setPreviousStatus(previous == null ? null : previous.name());
+    entry.setStatus(appointment.getStatus().name());
+    entry.setPreviousStart(previousStart);
+    entry.setStartsAt(appointment.getStartsAt());
+    entry.setEndsAt(appointment.getEndsAt());
+    entry.setDentistId(appointment.getDentist().getId());
+    entry.setDentistName(appointment.getDentistName());
+    entry.setDurationMinutes(appointment.getDurationMinutes());
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    entry.setActorName(
+        authentication != null
+                && authentication.getPrincipal() instanceof AccountPrincipal principal
+            ? principal.getDisplayName()
             : "Sistema");
-    h.setReason(reason);
-    history.save(h);
+    entry.setReason(reason);
+    history.save(entry);
   }
 }

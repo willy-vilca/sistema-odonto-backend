@@ -21,11 +21,11 @@ public class PatientController {
   @GetMapping
   @PreAuthorize("hasAuthority('PATIENTS_READ')")
   public PageResponse<PatientResponse> list(
-      @Valid @ModelAttribute PageQuery q,
+      @Valid @ModelAttribute PageQuery query,
       @RequestParam(required = false) Boolean active,
       @RequestParam(required = false) Boolean provisional,
       @RequestParam(required = false) String phone) {
-    return service.list(q, active, provisional, phone);
+    return service.list(query, active, provisional, phone);
   }
 
   @GetMapping("/{id}")
@@ -37,13 +37,13 @@ public class PatientController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAuthority('PATIENTS_WRITE')")
-  public PatientResponse create(@Valid @RequestBody PatientRequest r) {
-    return service.create(r);
+  public PatientResponse create(@Valid @RequestBody PatientRequest request) {
+    return service.create(request);
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAuthority('PATIENTS_WRITE')")
-  public PatientResponse update(@PathVariable UUID id, @Valid @RequestBody PatientRequest r) {
-    return service.update(id, r);
+  public PatientResponse update(@PathVariable UUID id, @Valid @RequestBody PatientRequest request) {
+    return service.update(id, request);
   }
 }

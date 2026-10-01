@@ -56,10 +56,10 @@ public class AvailabilityService {
       List<Appointment> appointments,
       ZoneId zone) {}
 
-  private DayData day(UUID dentist, LocalDate date, ZoneId zone) {
+  private DayData loadDay(UUID dentist, LocalDate date, ZoneId zone) {
     var blocks =
         exceptions.findAll(
-            (root, q, cb) ->
+            (root, criteriaQuery, cb) ->
                 cb.and(
                     cb.isTrue(root.get("active")),
                     cb.lessThanOrEqualTo(root.get("startDate"), date),
@@ -82,47 +82,47 @@ public class AvailabilityService {
       UUID dentist, Instant start, int duration, InstallationProfile profile, UUID excluded) {
     ZoneId zone = ZoneId.of(profile.getTimeZone());
     LocalDate date = start.atZone(zone).toLocalDate();
-    String failure = unavailable(start, duration, profile, excluded, day(dentist, date, zone));
+    String failure = unavailable(start, duration, profile, excluded, loadDay(dentist, date, zone));
     if (failure != null) throw ApiException.conflict(failure);
   }
 
   private String unavailable(
-      Instant start, int duration, InstallationProfile p, UUID excluded, DayData day) {
-    if (start.isBefore(clock.instant().plusSeconds(p.getMinimumLeadMinutes() * 60L)))
+      Instant start, int duration, InstallationProfile profile, UUID excluded, DayData dayData) {
+    if (start.isBefore(clock.instant().plusSeconds(profile.getMinimumLeadMinutes() * 60L)))
       return "La cita no respeta la anticipación mínima del consultorio.";
     Instant end = start.plusSeconds(duration * 60L);
-    var localStart = start.atZone(day.zone());
-    var localEnd = end.atZone(day.zone());
+    var localStart = start.atZone(dayData.zone());
+    var localEnd = end.atZone(dayData.zone());
     int from = localStart.getHour() * 60 + localStart.getMinute();
     int to = localEnd.getHour() * 60 + localEnd.getMinute();
     if (localEnd.toLocalDate().equals(localStart.toLocalDate().plusDays(1)) && to == 0) to = 1440;
     else if (!localStart.toLocalDate().equals(localEnd.toLocalDate()))
       return "La cita debe terminar dentro de la jornada del día.";
     final int until = to;
-    if (day.periods().stream()
+    if (dayData.periods().stream()
         .noneMatch(
             w ->
                 w.getKind() == PeriodKind.WORK
                     && w.getStartMinute() <= from
                     && w.getEndMinute() >= until))
       return "El intervalo completo está fuera de la jornada.";
-    if (day.periods().stream()
+    if (dayData.periods().stream()
         .anyMatch(
             w ->
                 w.getKind() == PeriodKind.BREAK
                     && w.getStartMinute() < until
                     && w.getEndMinute() > from)) return "El intervalo coincide con un descanso.";
-    if (day.exceptions().stream()
+    if (dayData.exceptions().stream()
         .anyMatch(
             e ->
                 e.getStartMinute() == null
                     || (e.getStartMinute() < until && e.getEndMinute() > from)))
       return "El intervalo coincide con un día no laborable o una ausencia.";
-    for (var a : day.appointments()) {
-      if (a.getId().equals(excluded)) continue;
-      int gap = Math.max(p.getAppointmentGapMinutes(), a.getGapMinutes());
-      if (start.isBefore(a.getEndsAt().plusSeconds(gap * 60L))
-          && end.plusSeconds(gap * 60L).isAfter(a.getStartsAt()))
+    for (var appointment : dayData.appointments()) {
+      if (appointment.getId().equals(excluded)) continue;
+      int gap = Math.max(profile.getAppointmentGapMinutes(), appointment.getGapMinutes());
+      if (start.isBefore(appointment.getEndsAt().plusSeconds(gap * 60L))
+          && end.plusSeconds(gap * 60L).isAfter(appointment.getStartsAt()))
         return "El intervalo está ocupado o no respeta la separación entre citas.";
     }
     return null;
@@ -136,25 +136,27 @@ public class AvailabilityService {
       LocalDate date,
       UUID appointmentId,
       PageQuery query) {
-    var p = profiles.findById((short) 1).orElseThrow();
-    var d = dentists.findById(dentistId).orElseThrow(ApiException::notFound);
-    var s =
+    var profile = profiles.findById((short) 1).orElseThrow();
+    var dentist = dentists.findById(dentistId).orElseThrow(ApiException::notFound);
+    var service =
         serviceId == null ? null : services.findById(serviceId).orElseThrow(ApiException::notFound);
-    rules.eligible(d, s);
+    rules.eligible(dentist, service);
     int duration =
-        s == null ? (manualDuration == null ? 0 : manualDuration) : s.getDurationMinutes();
+        service == null
+            ? (manualDuration == null ? 0 : manualDuration)
+            : service.getDurationMinutes();
     if (duration < 1 || duration > 1440)
       throw ApiException.badRequest("Indica una duración entre 1 y 1440 minutos.");
     if (appointmentId != null && !appointments.existsById(appointmentId))
       throw ApiException.notFound();
-    var zone = ZoneId.of(p.getTimeZone());
-    var data = day(dentistId, date, zone);
+    var zone = ZoneId.of(profile.getTimeZone());
+    var data = loadDay(dentistId, date, zone);
     List<Slot> slots = new ArrayList<>();
     for (int minute = 0; minute < 1440; minute += 15) {
       var local = date.atStartOfDay().plusMinutes(minute);
       if (zone.getRules().getValidOffsets(local).size() != 1) continue;
       Instant start = rules.instant(local, zone);
-      if (unavailable(start, duration, p, appointmentId, data) == null
+      if (unavailable(start, duration, profile, appointmentId, data) == null
           && (query.getSearch().isEmpty()
               || local.toLocalTime().toString().contains(query.getSearch())))
         slots.add(

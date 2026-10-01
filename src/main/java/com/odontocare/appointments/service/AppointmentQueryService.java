@@ -39,7 +39,7 @@ public class AppointmentQueryService {
   }
 
   private Specification<Appointment> criteria(
-      PageQuery q,
+      PageQuery pageQuery,
       UUID dentistId,
       UUID patientId,
       AppointmentStatus status,
@@ -50,25 +50,39 @@ public class AppointmentQueryService {
       throw ApiException.badRequest("El rango de fechas no es válido.");
     Specification<Appointment> s =
         SearchSpecifications.text(
-            q.getSearch(), "patient.fullName", "patient.code", "serviceName", "dentistName");
-    if (dentistId != null) s = s.and((r, x, c) -> c.equal(r.get("dentist").get("id"), dentistId));
-    if (patientId != null) s = s.and((r, x, c) -> c.equal(r.get("patient").get("id"), patientId));
+            pageQuery.getSearch(),
+            "patient.fullName",
+            "patient.code",
+            "serviceName",
+            "dentistName");
+    if (dentistId != null)
+      s =
+          s.and(
+              (root, criteriaQuery, builder) ->
+                  builder.equal(root.get("dentist").get("id"), dentistId));
+    if (patientId != null)
+      s =
+          s.and(
+              (root, criteriaQuery, builder) ->
+                  builder.equal(root.get("patient").get("id"), patientId));
     if (status != null) s = s.and(SearchSpecifications.equal("status", status));
     if (from != null)
       s =
           s.and(
-              (r, x, c) ->
-                  c.greaterThanOrEqualTo(r.get("startsAt"), from.atStartOfDay(zone).toInstant()));
+              (root, criteriaQuery, builder) ->
+                  builder.greaterThanOrEqualTo(
+                      root.get("startsAt"), from.atStartOfDay(zone).toInstant()));
     if (to != null)
       s =
           s.and(
-              (r, x, c) ->
-                  c.lessThan(r.get("startsAt"), to.plusDays(1).atStartOfDay(zone).toInstant()));
+              (root, criteriaQuery, builder) ->
+                  builder.lessThan(
+                      root.get("startsAt"), to.plusDays(1).atStartOfDay(zone).toInstant()));
     return s;
   }
 
   public PageResponse<AppointmentResponse> list(
-      PageQuery q,
+      PageQuery pageQuery,
       UUID dentistId,
       UUID patientId,
       AppointmentStatus status,
@@ -78,8 +92,8 @@ public class AppointmentQueryService {
     return PageResponse.of(
         appointments
             .findAll(
-                criteria(q, dentistId, patientId, status, from, to, zone),
-                q.pageable(
+                criteria(pageQuery, dentistId, patientId, status, from, to, zone),
+                pageQuery.pageable(
                     Map.of(
                         "name",
                         "startsAt",
@@ -89,7 +103,7 @@ public class AppointmentQueryService {
                         "patient.fullName",
                         "status",
                         "status")))
-            .map(a -> AppointmentResponse.of(a, zone)));
+            .map(appointment -> AppointmentResponse.of(appointment, zone)));
   }
 
   public record CalendarResponse(
@@ -107,21 +121,29 @@ public class AppointmentQueryService {
       throw ApiException.badRequest(
           "Reduce el intervalo o selecciona un odontólogo para consultar el calendario.");
     return new CalendarResponse(
-        page.getContent().stream().map(a -> AppointmentResponse.of(a, zone)).toList(),
+        page.getContent().stream()
+            .map(appointment -> AppointmentResponse.of(appointment, zone))
+            .toList(),
         zone.toString(),
         from,
         to);
   }
 
-  public PageResponse<HistoryResponse> history(UUID id, PageQuery q) {
+  public PageResponse<HistoryResponse> history(UUID id, PageQuery pageQuery, String action) {
     if (!appointments.existsById(id)) throw ApiException.notFound();
+    if (action != null
+        && !Set.of("CREATED", "RESCHEDULED", "STATUS_CHANGED", "CANCELLED").contains(action))
+      throw ApiException.badRequest("El filtro de movimiento no está permitido.");
     Specification<AppointmentHistory> s =
         SearchSpecifications.<AppointmentHistory>text(
-                q.getSearch(), "reason", "actorName", "action")
-            .and((r, x, c) -> c.equal(r.get("appointment").get("id"), id));
+                pageQuery.getSearch(), "reason", "actorName", "action")
+            .and(
+                (root, criteriaQuery, builder) ->
+                    builder.equal(root.get("appointment").get("id"), id));
+    s = s.and(SearchSpecifications.equal("action", action));
     return PageResponse.of(
         history
-            .findAll(s, q.pageable(Map.of("name", "createdAt", "createdAt", "createdAt")))
+            .findAll(s, pageQuery.pageable(Map.of("name", "createdAt", "createdAt", "createdAt")))
             .map(HistoryResponse::of));
   }
 }
