@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 y 1: identidad, acceso, permisos, usuarios, odontólogos, servicios, horarios, bloqueos y auditoría. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 2: configuración, acceso, pacientes y agenda manual confiable, con historial y disponibilidad compartida. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 
@@ -27,7 +27,7 @@ La instalación sin usuarios solicita crear una cuenta administradora propia. No
 
 Sesiones de servidor con cookie HttpOnly, SameSite Strict, CSRF y rotación de sesión al acceder. El perfil prod exige además cookie Secure y HTTPS. Las contraseñas se almacenan mediante BCrypt y nunca se devuelven por HTTP.
 
-Administrador, odontólogo, recepción y caja son roles fijos con nombres y permisos configurables. En esta fase los roles operativos consultan configuración, profesionales, servicios y horarios. El administrador gestiona usuarios, política y auditoría. Las funciones de pacientes, agenda, clínica y cobros llegarán con sus módulos.
+Administrador, odontólogo, recepción y caja son roles fijos con nombres y permisos configurables. Los roles operativos consultan configuración, profesionales, servicios y horarios. Recepción registra pacientes y gestiona citas; odontólogo y caja consultan fichas administrativas y agenda. El administrador conserva todos los permisos. Clínica y cobros se incorporarán en sus fases.
 
 Administrar necesita consultar la función correspondiente. Administrar odontólogos necesita consultar servicios; administrar horarios necesita consultar profesionales. El administrador conserva acceso completo. Se impide desactivar la propia cuenta o retirar el último administrador activo. Cambiar contraseña, usuario, estado o roles invalida sesiones; los permisos de un rol se verifican en cada solicitud.
 
@@ -82,6 +82,14 @@ En Windows, detener java -jar antes de reconstruir el ejecutable. El arranque sp
 
 prod exige DB_URL, DB_USERNAME y DB_PASSWORD, con PORT y SERVER_ADDRESS opcionales; no hereda credenciales locales. Flyway V2 necesita autorización para instalar btree_gist. Preparar esa extensión con el administrador de PostgreSQL para una instalación productiva.
 
-La fase 2 aplicará las reglas a las citas. Textos y correlativos se consumirán al incorporar pacientes, presupuestos y constancias. Clínica, pagos y WhatsApp siguen pendientes. Despliegue final, respaldos y restauración: fase 9.
+La fase 2 aplica las reglas a las citas, genera códigos de pacientes y conserva duración e historial. Presupuestos y constancias consumirán sus textos y correlativos en fases posteriores. Clínica, pagos y WhatsApp siguen pendientes. Despliegue final, respaldos y restauración: fase 9.
 
-Consultar [arquitectura](docs/architecture.md) y [cierre de fase 1](docs/project/cierre-fase-1.md). Las guías maestras están en la raíz; docs/project conserva sus instantáneas exactas.
+Consultar [arquitectura](docs/architecture.md) y [cierre de fase 2](docs/project/cierre-fase-2.md). Las guías maestras están en la raíz; docs/project conserva sus instantáneas exactas.
+
+## Pacientes y agenda
+
+Pacientes: GET/POST /api/v1/patients, GET/PUT /api/v1/patients/{id}. Citas: GET/POST /api/v1/appointments, GET /{id}, PUT /{id}/status y PUT /{id}/reschedule. El historial GET /{id}/history se pagina. /appointments/calendar limita el intervalo a 42 días y 1.000 citas; /appointments/availability consulta un día, devuelve horarios paginados y acepta appointmentId al reprogramar. Todos los endpoints requieren sus permisos y las escrituras requieren CSRF.
+
+POST /appointments recibe paciente explícito, odontólogo, servicio (o motivo administrativo y duración), inicio local del consultorio, notas y requestKey UUID. Reintentar el mismo contenido con la misma clave devuelve la cita existente; cambiar el contenido con esa clave produce conflicto. Reprogramación y estado requieren version. Los estados terminales se conservan, no se eliminan citas.
+
+AvailabilityService y AppointmentService concentran las reglas que utilizará el agente. La reserva manual no necesita bookableByAgent; sí exige servicio activo asignado. La prueba real de WhatsApp está pendiente de accesos externos, no se ha simulado como evidencia. Diseño detallado en [decisiones de fase 2](docs/project/diseno-agenda-fase-2.md).

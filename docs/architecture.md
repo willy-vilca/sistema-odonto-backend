@@ -82,3 +82,11 @@ installation_logo separa bytes del perfil. La identidad pública expone nombre, 
 Frontend con definiciones de formularios por módulo y componentes reutilizables de editor, selector remoto, tabla y diálogo. Los selectores consultan al abrir su búsqueda. La autorización definitiva permanece en el servidor.
 
 test usa una base separada y comprueba su nombre antes de limpiar datos. Las pruebas de navegador crean una contraseña aleatoria y una sesión por caso. No utilizan cuentas predeterminadas ni preparan datos en la instalación local del usuario.
+
+## Fase 2: pacientes y agenda
+
+Los módulos patients y appointments tienen sus propios modelos, repositorios, DTO, servicios y controladores. PatientValidator separa identidad y responsables; BookingRules y AppointmentStateRules separan elegibilidad, tiempo y transiciones. AvailabilityService calcula con horarios reales; AppointmentService ejecuta transacciones y AppointmentQueryService limita y pagina consultas. AppointmentHistoryService agrega movimientos inmutables; AuditService registra las operaciones sin contactos ni notas personales.
+
+La configuración compartida se bloquea para lectura durante las reservas, mientras los cambios administrativos usan su bloqueo exclusivo. Los bloqueos de odontólogos se toman en orden UUID al cambiar de profesional. La exclusión GiST protege el intervalo ocupado en PostgreSQL y la clave UUID de solicitud evita duplicación por reintento. La duración es una instantánea y los cambios de catálogo no alteran citas existentes.
+
+Ver [decisiones de la fase](project/diseno-agenda-fase-2.md) para límites de consultas, separación, estados y zona horaria. La integración real de WhatsApp continúa como dependencia externa de fase 6.
