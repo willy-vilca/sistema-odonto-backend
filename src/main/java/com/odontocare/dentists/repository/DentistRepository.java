@@ -15,4 +15,8 @@ public interface DentistRepository
   boolean existsByLicenseNumberIgnoreCaseAndIdNot(String licenseNumber, UUID id);
 
   boolean existsByLicenseNumberIgnoreCase(String licenseNumber);
+
+  @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+  @Query("select d from Dentist d where d.id=:id")
+  java.util.Optional<Dentist> lockById(UUID id);
 }

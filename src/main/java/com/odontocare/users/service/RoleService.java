@@ -75,6 +75,10 @@ public class RoleService {
           "Administrar odontólogos necesita consultar los servicios que se les asignan.");
     if (permissions.contains("SCHEDULES_WRITE") && !permissions.contains("DENTISTS_READ"))
       throw ApiException.badRequest("Administrar horarios necesita consultar los odontólogos.");
+    if (permissions.contains("APPOINTMENTS_WRITE")
+        && !permissions.containsAll(Set.of("PATIENTS_READ", "DENTISTS_READ", "SERVICES_READ")))
+      throw ApiException.badRequest(
+          "Administrar citas necesita consultar pacientes, odontólogos y servicios.");
     role.setName(request.name().strip());
     role.replacePermissions(permissions);
     roles.saveAndFlush(role);

@@ -24,8 +24,9 @@ public class DentalServiceController {
       @Valid @ModelAttribute PageQuery query,
       @RequestParam(required = false) Boolean active,
       @RequestParam(required = false) UUID categoryId,
-      @RequestParam(required = false) Boolean bookable) {
-    return service.list(query, active, categoryId, bookable);
+      @RequestParam(required = false) Boolean bookable,
+      @RequestParam(required = false) UUID dentistId) {
+    return service.list(query, active, categoryId, bookable, dentistId);
   }
 
   @PostMapping

@@ -32,13 +32,25 @@ public class DentalServiceService {
 
   @Transactional(readOnly = true)
   public PageResponse<ServiceResponse> list(
-      PageQuery query, Boolean active, UUID categoryId, Boolean bookable) {
+      PageQuery query, Boolean active, UUID categoryId, Boolean bookable, UUID dentistId) {
     Specification<DentalService> spec =
         SearchSpecifications.<DentalService>text(query.getSearch(), "name", "description")
             .and(SearchSpecifications.equal("active", active))
             .and(SearchSpecifications.equal("bookableByAgent", bookable));
     if (categoryId != null)
       spec = spec.and((root, q, cb) -> cb.equal(root.get("category").get("id"), categoryId));
+    if (dentistId != null)
+      spec =
+          spec.and(
+              (root, q, cb) -> {
+                var sub = q.subquery(java.util.UUID.class);
+                var d = sub.from(com.odontocare.dentists.model.Dentist.class);
+                sub.select(d.get("id"))
+                    .where(
+                        cb.equal(d.get("id"), dentistId),
+                        cb.equal(d.join("services").get("id"), root.get("id")));
+                return cb.exists(sub);
+              });
     return PageResponse.of(
         services
             .findAll(

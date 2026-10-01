@@ -42,7 +42,7 @@ class Phase1IntegrationTests {
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
         "TRUNCATE"
-            + " installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
+            + " appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
     jdbc.update(
         "UPDATE installation_profile SET display_name='Mi"
             + " consultorio',time_zone='America/Lima',currency='PEN',patient_next_number=1,receipt_next_number=1,budget_next_number=1,version=0,logo_revision=0");

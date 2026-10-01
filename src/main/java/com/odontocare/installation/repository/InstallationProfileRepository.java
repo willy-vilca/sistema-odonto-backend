@@ -9,4 +9,8 @@ public interface InstallationProfileRepository extends JpaRepository<Installatio
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select p from InstallationProfile p where p.id = 1")
   Optional<InstallationProfile> lockInstallation();
+
+  @Lock(LockModeType.PESSIMISTIC_READ)
+  @Query("select p from InstallationProfile p where p.id = 1")
+  Optional<InstallationProfile> readLockedInstallation();
 }
