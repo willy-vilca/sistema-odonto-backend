@@ -562,6 +562,8 @@ class Phase4IntegrationTests {
     call(post(url).with(csrf()), admin, request, 200);
     call(post(url).with(csrf()), admin, request, 200);
     assertThat(debt()).isEqualByComparingTo("1400");
+    assertThat(read("/api/v1/plans/" + p.get("id").asText()).get("status").asText())
+        .isEqualTo("ACCEPTED");
     assertThat(read("/api/v1/plans/" + p.get("id").asText()).get("originalTotal").decimalValue())
         .isEqualByComparingTo("1200");
     assertThat(

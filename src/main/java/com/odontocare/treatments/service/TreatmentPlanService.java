@@ -232,7 +232,6 @@ public class TreatmentPlanService {
     var item = addItem(plan, request.item(), position);
     items.flush();
     issue(plan, item, request.reason());
-    plan.setStatus("IN_PROGRESS");
     plan.advanceRevision();
     plans.saveAndFlush(plan);
     operation(
