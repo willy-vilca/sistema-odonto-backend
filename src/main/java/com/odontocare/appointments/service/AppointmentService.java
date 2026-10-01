@@ -176,6 +176,29 @@ public class AppointmentService {
     return AppointmentResponse.of(appointment, ZoneId.of(profile.getTimeZone()));
   }
 
+  @Transactional
+  public void completeClinical(UUID id) {
+    profiles.readLockedInstallation().orElseThrow();
+    var appointment = appointments.lockById(id).orElseThrow(ApiException::notFound);
+    if (appointment.getStatus() == AppointmentStatus.ATTENDED) return;
+    if (Set.of(AppointmentStatus.CANCELLED, AppointmentStatus.NO_SHOW)
+        .contains(appointment.getStatus()))
+      throw ApiException.conflict("La cita ya no admite una atención clínica.");
+    if (appointment.getStartsAt().isAfter(clock.instant()))
+      throw ApiException.badRequest(
+          "La atención vinculada solo se finaliza al llegar la hora de la cita.");
+    for (var next :
+        List.of(
+            AppointmentStatus.WAITING, AppointmentStatus.IN_PROGRESS, AppointmentStatus.ATTENDED)) {
+      if (appointment.getStatus() == next) continue;
+      if (next == AppointmentStatus.WAITING
+          && appointment.getStatus() == AppointmentStatus.IN_PROGRESS) continue;
+      changeStatus(
+          id,
+          new StatusRequest(appointment.getVersion(), next, "Finalización de atención clínica"));
+    }
+  }
+
   private void setInterval(Appointment appointment, Instant start) {
     appointment.setStartsAt(start);
     appointment.setEndsAt(start.plusSeconds(appointment.getDurationMinutes() * 60L));

@@ -90,3 +90,17 @@ Los módulos patients y appointments tienen sus propios modelos, repositorios, D
 La configuración compartida se bloquea para lectura durante las reservas, mientras los cambios administrativos usan su bloqueo exclusivo. Los bloqueos de odontólogos se toman en orden UUID al cambiar de profesional. La exclusión GiST protege el intervalo ocupado en PostgreSQL y la clave UUID de solicitud evita duplicación por reintento. La duración es una instantánea y los cambios de catálogo no alteran citas existentes.
 
 Ver [decisiones de la fase](project/diseno-agenda-fase-2.md) para límites de consultas, separación, estados y zona horaria. La integración real de WhatsApp continúa como dependencia externa de fase 6.
+
+## Fase 3: expediente clínico y originales
+
+clinical separa configuración, control de acceso profesional, estados clínicos y atenciones. Un borrador usa version optimista; finalizar agrega encounter_revision inmutable; corregir agrega otra revisión con motivo y la identidad histórica del paciente/profesional. El controlador no ejecuta reglas. Las revisiones y estados se protegen también con triggers PostgreSQL.
+
+Los estados BACKGROUND y ODONTOGRAM usan contratos tipados y JSON textual acotado; el estado previo y la secuencia se validan dentro de un bloqueo de paciente. Índices únicos previenen cadenas bifurcadas. El gráfico es un conjunto fijo de 52 piezas, no un listado de pacientes descargado; el historial se pagina en PostgreSQL. No se presupone salud para superficies sin registrar.
+
+documents almacena metadatos inmutables y DocumentContent BYTEA en entidades/tablas separadas, sin asociación de carga automática. Las listas nunca consultan contents. Validación por contenido, extensión, tamaño, estructura PDF y dimensiones de imagen; SHA-256 para recuperación y conservación de originales. Consentimientos referencian una copia del mismo paciente.
+
+DocumentPreviewService utiliza PDFBox existente para renderizar solo la página PDF solicitada. La imagen es una vista, no reemplaza el archivo; el acceso autorizado a la vista y al original se audita. Se limita el render a 1600 píxeles por lado con subsampling; el navegador administra URLs de objeto y las libera al cerrar/cambiar. JPG/PNG/WebP se recuperan mediante URL protegida a demanda.
+
+Permisos de clínica, documentación y configuración independientes. Escribir clínica exige vinculación con odontólogo activo o rol administrador; consultar historias conserva acceso a registros de profesionales inactivos. AuditService registra consultas y cambios sin volcar antecedentes, diagnósticos, archivos ni motivos clínicos en logs.
+
+El cierre de fase 3 prepara pg_dump de toda la base; [procedimiento](project/respaldo-postgresql.md). El catálogo y la huella del respaldo se verifican, pero la restauración integral/A30 se valida en fase 9. Referencias y decisiones en [diseño clínico](project/diseno-clinico-fase-3.md).

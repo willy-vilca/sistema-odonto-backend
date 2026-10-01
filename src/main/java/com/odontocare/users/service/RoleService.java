@@ -79,6 +79,17 @@ public class RoleService {
         && !permissions.containsAll(Set.of("PATIENTS_READ", "DENTISTS_READ", "SERVICES_READ")))
       throw ApiException.badRequest(
           "Administrar citas necesita consultar pacientes, odontólogos y servicios.");
+    if (permissions.contains("CLINICAL_WRITE")
+        && !permissions.containsAll(
+            Set.of("PATIENTS_READ", "DENTISTS_READ", "SERVICES_READ", "APPOINTMENTS_READ")))
+      throw ApiException.badRequest(
+          "Registrar clínica requiere consultar pacientes, odontólogos, servicios y citas.");
+    if (permissions.contains("DOCUMENTS_WRITE") && !permissions.contains("PATIENTS_READ"))
+      throw ApiException.badRequest("Cargar documentos requiere consultar pacientes.");
+    if ((permissions.contains("CLINICAL_READ") || permissions.contains("DOCUMENTS_READ"))
+        && !permissions.contains("PATIENTS_READ"))
+      throw ApiException.badRequest(
+          "Consultar expedientes o documentos requiere consultar la ficha del paciente.");
     role.setName(request.name().strip());
     role.replacePermissions(permissions);
     roles.saveAndFlush(role);
