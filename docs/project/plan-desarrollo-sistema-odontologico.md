@@ -1,8 +1,8 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 1 de octubre de 2026. Versión del plan: 1.3. Alcance de referencia: versión 1.2 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 1 de octubre de 2026. Versión del plan: 1.4. Alcance de referencia: versión 1.2 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
-Estado: fase 0 revisada y aprobada por el usuario; fase 1 revisada y aprobada por el usuario; fase 2 completada técnicamente y disponible para revisión. Las fases 3 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md) [cierre de fase 1](cierre-fase-1.md) y [cierre de fase 2](cierre-fase-2.md).
+Estado: fases 0, 1 y 2 revisadas y aprobadas por el usuario; fase 3 completada técnicamente y disponible para revisión. Las fases 4 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md) y [cierre de fase 3](cierre-fase-3.md).
 
 ## 1. Objetivo y estrategia
 
@@ -332,8 +332,8 @@ Estados de trabajo: pendiente, en desarrollo, en validación, en ajustes y compl
 |---|---|---|
 | 0 | Completada | 30/09/2026: backend y frontend ejecutables; PostgreSQL real; 5 pruebas backend y 8 de navegador aprobadas; revisión visual en computadora, tablet y celular. [Evidencia](cierre-fase-0.md). Revisada y aprobada por el usuario |
 | 1 | Completada | 30/09/2026: configuración, acceso, roles, equipo, catálogo, horarios y auditoría con PostgreSQL real; 21 pruebas backend y 17 de navegador aprobadas; revisión de formularios y listas en seis tamaños. [Evidencia](cierre-fase-1.md). Revisada y aprobada por el usuario |
-| 2 | Completada | 01/10/2026: fichas, contactos compartidos, responsables y agenda manual con disponibilidad, concurrencia, duración conservada e historial; 32 pruebas backend y 22 escenarios de navegador aprobados. [Evidencia](cierre-fase-2.md). Disponible para revisión; WhatsApp externo pendiente de accesos de fase 6 |
-| 3 | Pendiente | Depende de fase 2 |
+| 2 | Completada | 01/10/2026: fichas, contactos compartidos, responsables y agenda manual con disponibilidad, concurrencia, duración conservada e historial; 32 pruebas backend y 22 escenarios de navegador aprobados. [Evidencia](cierre-fase-2.md). Revisada y aprobada por el usuario; WhatsApp externo pendiente de accesos de fase 6 |
+| 3 | Completada | 01/10/2026: atenciones versionadas, antecedentes, odontograma, originales PostgreSQL, consentimientos, configuración, permisos y auditoría; 41 pruebas backend y 30 escenarios distintos de navegador aprobados. Revisión visual en computadora, tablet y celular; migración local conserva datos. [Evidencia](cierre-fase-3.md). Disponible para revisión del usuario; restauración integral pendiente de fase 9 |
 | 4 | Pendiente | Depende de fase 3 |
 | 5 | Pendiente | Depende de fase 4 |
 | 6 | Pendiente | Depende de fase 5 y accesos externos de prueba |
