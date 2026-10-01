@@ -1,0 +1,830 @@
+# PROMPT MAESTRO — DESARROLLO PROFESIONAL DEL SISTEMA WEB
+
+Quiero que desarrolles este sistema web siguiendo estándares profesionales de ingeniería de software. El objetivo no es únicamente conseguir un sistema funcional, sino construir una solución organizada, mantenible, escalable, segura, documentada y técnicamente sólida, que posteriormente pueda ser presentada como un producto de software propio y, si corresponde, utilizada como base para un proceso de registro ante INDECOPI.
+
+A partir de este momento, considera las siguientes reglas como directrices permanentes para todo el desarrollo.
+
+---
+
+## 1. OBJETIVO GENERAL
+
+Desarrolla el sistema aplicando buenas prácticas modernas de desarrollo de software.
+
+El código debe priorizar:
+
+* Legibilidad.
+* Modularidad.
+* Mantenibilidad.
+* Escalabilidad.
+* Reutilización.
+* Bajo acoplamiento.
+* Alta cohesión.
+* Seguridad.
+* Testabilidad.
+* Separación de responsabilidades.
+* Documentación.
+* Consistencia arquitectónica.
+* Facilidad para incorporar nuevas funcionalidades.
+* Facilidad para detectar y corregir errores.
+
+No quiero una implementación improvisada ni código generado únicamente para resolver el requisito inmediato.
+
+Antes de implementar funcionalidades complejas, analiza cómo deberían integrarse correctamente dentro de la arquitectura existente.
+
+---
+
+# 2. ARQUITECTURA
+
+Utiliza una arquitectura clara y profesional, adecuada para el tamaño y naturaleza del proyecto.
+
+Se debe mantener una separación clara entre:
+
+* Presentación / interfaz de usuario.
+* Lógica de negocio.
+* Acceso a datos.
+* Servicios.
+* Modelos / entidades.
+* Controladores.
+* Validaciones.
+* Configuración.
+* Seguridad.
+* Utilidades.
+* Manejo de errores.
+
+Evita colocar lógica de negocio directamente dentro de componentes de interfaz, controladores o archivos excesivamente grandes.
+
+Cada módulo debe tener una responsabilidad clara.
+
+Si la tecnología utilizada lo permite, aplica una arquitectura por capas o una arquitectura basada en principios de Clean Architecture / separación de responsabilidades, sin introducir complejidad innecesaria.
+
+No quiero una arquitectura artificialmente compleja. La arquitectura debe ser proporcional al proyecto.
+
+---
+
+# 3. PRINCIPIOS SOLID
+
+Aplica SOLID de forma real y no únicamente como concepto teórico.
+
+### Single Responsibility Principle
+
+Cada clase, módulo, función o componente debe tener una responsabilidad claramente definida.
+
+Evita clases o archivos "Dios" que hagan demasiadas cosas.
+
+### Open/Closed Principle
+
+Diseña los módulos de manera que puedan extenderse sin tener que modificar constantemente código existente.
+
+### Liskov Substitution Principle
+
+Cuando exista herencia o abstracciones, respeta correctamente los contratos definidos.
+
+### Interface Segregation Principle
+
+Evita interfaces enormes. Prefiere interfaces pequeñas y específicas.
+
+### Dependency Inversion Principle
+
+Las capas superiores no deben depender directamente de implementaciones concretas cuando sea posible.
+
+Utiliza abstracciones e inyección de dependencias cuando aporte valor.
+
+No implementes SOLID de manera forzada. Si una abstracción no aporta valor real, no la agregues simplemente por cumplir una regla.
+
+---
+
+# 4. PATRONES DE DISEÑO
+
+Utiliza patrones de diseño reconocidos cuando realmente solucionen un problema.
+
+Considera, según corresponda:
+
+* Factory / Factory Method.
+* Strategy.
+* Repository.
+* Service Layer.
+* Adapter.
+* Facade.
+* Builder.
+* Observer / eventos.
+* Dependency Injection.
+* DTO.
+* MVC u otra separación equivalente.
+
+No utilices patrones únicamente para demostrar que existen.
+
+Cada patrón debe tener una justificación técnica.
+
+Cuando implementes un patrón importante, deja claro mediante nombres y estructura cuál es su propósito.
+
+Evita sobreingeniería.
+
+---
+
+# 5. PRINCIPIOS DE CÓDIGO LIMPIO
+
+El código debe seguir principios de Clean Code.
+
+Prioriza:
+
+* Nombres descriptivos.
+* Funciones pequeñas.
+* Clases cohesionadas.
+* Evitar duplicación.
+* Evitar código muerto.
+* Evitar comentarios innecesarios.
+* Evitar números mágicos.
+* Evitar cadenas mágicas.
+* Evitar variables ambiguas.
+* Evitar funciones excesivamente largas.
+* Evitar anidamientos innecesarios.
+* Evitar lógica duplicada.
+
+Prefiere código explícito y fácil de leer antes que soluciones excesivamente compactas.
+
+No sacrifiques legibilidad por escribir menos líneas.
+
+---
+
+# 6. NOMENCLATURA
+
+Utiliza una convención de nombres consistente en todo el proyecto.
+
+Los nombres deben describir claramente su propósito.
+
+Ejemplos:
+
+* `UserService`
+* `ProductRepository`
+* `AuthenticationService`
+* `OrderController`
+* `ProductValidator`
+
+Evita nombres como:
+
+* `data`
+* `obj`
+* `temp`
+* `x`
+* `thing`
+* `helper2`
+* `managerFinal`
+* `processData2`
+
+A menos que sean variables de alcance extremadamente pequeño donde el significado sea evidente.
+
+Mantén una única convención de nomenclatura en todo el proyecto.
+
+---
+
+# 7. ESTRUCTURA DE CARPETAS
+
+La estructura del proyecto debe ser lógica y escalable.
+
+No coloques todos los archivos en una única carpeta.
+
+Organiza el proyecto de acuerdo con responsabilidades y módulos.
+
+La estructura debe permitir identificar fácilmente:
+
+* Componentes.
+* Páginas.
+* Servicios.
+* Modelos.
+* Controladores.
+* Repositorios.
+* Utilidades.
+* Configuración.
+* Validaciones.
+* Tests.
+* Recursos.
+* Middleware.
+* Seguridad.
+
+Si la aplicación crece, organiza también por funcionalidades o dominios cuando sea conveniente.
+
+---
+
+# 8. MODULARIDAD
+
+Cada funcionalidad importante debe estar desacoplada.
+
+Por ejemplo, si existe:
+
+* autenticación,
+* usuarios,
+* productos,
+* ventas,
+* reportes,
+* configuración,
+
+cada módulo debe tener límites claros.
+
+Una modificación en un módulo no debería obligar a modificar archivos que no están relacionados.
+
+Reutiliza componentes y servicios comunes en lugar de duplicar código.
+
+---
+
+# 9. BASE DE DATOS
+
+Diseña la base de datos profesionalmente.
+
+Antes de crear tablas nuevas, analiza:
+
+* Entidades.
+* Relaciones.
+* Cardinalidades.
+* Claves primarias.
+* Claves foráneas.
+* Restricciones.
+* Índices.
+* Normalización.
+* Integridad referencial.
+* Campos obligatorios.
+* Valores por defecto.
+* Auditoría cuando corresponda.
+
+Evita almacenar información duplicada innecesariamente.
+
+Los nombres de tablas y columnas deben seguir una convención consistente.
+
+No hagas consultas SQL dispersas por toda la aplicación.
+
+Centraliza el acceso a datos mediante una capa apropiada, como Repository o equivalente.
+
+---
+
+# 10. VALIDACIONES
+
+Implementa validaciones tanto en frontend como backend cuando corresponda.
+
+Nunca confíes únicamente en las validaciones del frontend.
+
+El backend debe validar nuevamente los datos recibidos.
+
+Valida:
+
+* Tipos.
+* Formatos.
+* Longitudes.
+* Valores permitidos.
+* Campos obligatorios.
+* Relaciones.
+* Reglas de negocio.
+
+Las validaciones deben estar centralizadas cuando sea posible y no duplicadas innecesariamente.
+
+---
+
+# 11. MANEJO DE ERRORES
+
+Implementa un sistema consistente de manejo de errores.
+
+No utilices simplemente:
+
+```text
+try/catch
+```
+
+sin una estrategia clara.
+
+Los errores deben:
+
+* Tener mensajes comprensibles.
+* Tener códigos o categorías cuando sea útil.
+* Ser registrados adecuadamente.
+* No revelar información sensible.
+* Diferenciar errores esperados de errores inesperados.
+
+El usuario debe recibir mensajes apropiados mientras que los detalles técnicos deben mantenerse en los logs.
+
+Evita mostrar stack traces, consultas SQL, credenciales o información interna al usuario final.
+
+---
+
+# 12. SEGURIDAD
+
+Considera seguridad desde el diseño y no como una etapa posterior.
+
+Aplica buenas prácticas contra vulnerabilidades comunes, incluyendo:
+
+* SQL Injection.
+* XSS.
+* CSRF cuando corresponda.
+* Broken Access Control.
+* Authentication vulnerabilities.
+* Session vulnerabilities.
+* Exposición de información sensible.
+* Manipulación de parámetros.
+* Inyección de código.
+* Contraseñas almacenadas de forma insegura.
+* CORS configurado incorrectamente.
+
+Nunca almacenes contraseñas en texto plano.
+
+Nunca coloques secretos directamente en el código.
+
+Utiliza variables de entorno para:
+
+* Claves.
+* Tokens.
+* Contraseñas.
+* Credenciales.
+* URLs sensibles.
+* Configuración privada.
+
+No expongas secretos en el frontend ni en repositorios.
+
+---
+
+# 13. AUTENTICACIÓN Y AUTORIZACIÓN
+
+Separa conceptualmente:
+
+* Autenticación: quién es el usuario.
+* Autorización: qué puede hacer.
+
+Implementa permisos y roles de manera centralizada.
+
+No dependas únicamente de ocultar botones en la interfaz.
+
+El backend debe verificar los permisos antes de ejecutar operaciones sensibles.
+
+---
+
+# 14. API Y COMUNICACIÓN
+
+Si el sistema utiliza una API, mantén una estructura consistente.
+
+Utiliza:
+
+* Endpoints claros.
+* Métodos HTTP adecuados.
+* Códigos de estado HTTP apropiados.
+* Respuestas consistentes.
+* Validaciones.
+* Manejo uniforme de errores.
+
+Evita mezclar diferentes formatos de respuesta sin justificación.
+
+Si es necesario, utiliza DTOs para evitar exponer directamente las entidades internas.
+
+---
+
+# 15. FRONTEND
+
+La interfaz debe ser:
+
+* Profesional.
+* Limpia.
+* Legible.
+* Consistente.
+* Responsive.
+* Accesible.
+* Fácil de utilizar.
+
+Mantén separados:
+
+* Componentes visuales.
+* Estado.
+* Lógica.
+* Servicios de API.
+* Validaciones.
+* Modelos.
+
+Evita colocar llamadas HTTP, reglas de negocio y grandes cantidades de lógica directamente dentro de componentes visuales.
+
+Utiliza componentes reutilizables.
+
+---
+
+# 16. UX/UI
+
+Utiliza un sistema visual consistente.
+
+Define y reutiliza:
+
+* Tipografía.
+* Tamaños.
+* Espaciados.
+* Bordes.
+* Radios.
+* Botones.
+* Formularios.
+* Mensajes.
+* Estados.
+* Modales.
+* Tablas.
+* Navegación.
+
+No diseñes cada pantalla de manera independiente.
+
+El usuario debe sentir que todo el sistema pertenece al mismo producto.
+
+Prioriza claridad sobre efectos visuales innecesarios.
+
+---
+
+# 17. ACCESIBILIDAD
+
+Siempre que sea posible aplica buenas prácticas de accesibilidad:
+
+* HTML semántico.
+* Labels correctamente asociados.
+* Contraste adecuado.
+* Navegación mediante teclado.
+* Estados de focus.
+* Textos alternativos.
+* Mensajes de error comprensibles.
+* No depender exclusivamente del color para comunicar información.
+
+---
+
+# 18. CONFIGURACIÓN
+
+Separa la configuración del código.
+
+Utiliza archivos y variables de entorno apropiados para diferentes ambientes:
+
+* Development.
+* Testing.
+* Production.
+
+No mezcles configuración de desarrollo con producción.
+
+No introduzcas valores sensibles directamente en el código fuente.
+
+---
+
+# 19. LOGGING Y AUDITORÍA
+
+Cuando sea necesario, implementa logs estructurados.
+
+Los logs deben permitir identificar:
+
+* Qué ocurrió.
+* Cuándo ocurrió.
+* Qué módulo estuvo involucrado.
+* Qué operación se estaba ejecutando.
+* Si ocurrió un error.
+
+Para operaciones críticas considera mecanismos de auditoría, por ejemplo:
+
+* Usuario que realizó la operación.
+* Fecha y hora.
+* Acción realizada.
+* Registro afectado.
+
+No almacenes información sensible innecesaria en logs.
+
+---
+
+# 20. TESTING
+
+El sistema debe diseñarse pensando en pruebas.
+
+Cuando sea razonable, implementa:
+
+* Unit tests.
+* Integration tests.
+* Tests de servicios.
+* Tests de validaciones.
+* Tests de endpoints.
+* Tests de componentes críticos.
+
+Las pruebas deben enfocarse especialmente en:
+
+* Reglas de negocio.
+* Autenticación.
+* Autorización.
+* Validaciones.
+* Operaciones críticas.
+* Casos límite.
+
+No generes tests artificiales únicamente para aumentar el porcentaje de cobertura.
+
+---
+
+21. GIT Y CONTROL DE VERSIONES
+
+El proyecto debe estar preparado para utilizar Git correctamente.
+
+Utiliza commits claros y descriptivos.
+
+Evita commits como:
+
+cambios
+arreglos
+final
+final2
+ahora si
+
+Prefiere mensajes como:
+
+feat: implement user authentication
+fix: validate duplicate email registration
+refactor: extract product repository
+docs: update installation instructions
+test: add authentication service tests
+
+Mantén un .gitignore correctamente configurado.
+
+---
+
+# 22. DOCUMENTACIÓN
+
+El proyecto debe incluir documentación profesional.
+
+Como mínimo considera:
+
+* README.
+* Descripción del sistema.
+* Objetivo.
+* Tecnologías utilizadas.
+* Arquitectura.
+* Estructura del proyecto.
+* Instalación.
+* Configuración.
+* Variables de entorno.
+* Ejecución.
+* Base de datos.
+* API.
+* Usuarios/roles cuando corresponda.
+* Testing.
+* Despliegue.
+* Consideraciones de seguridad.
+
+Cuando una decisión arquitectónica sea importante, documenta el motivo.
+
+---
+
+# 24. REUTILIZACIÓN
+
+Antes de crear una nueva función, componente, servicio o utilidad, revisa si ya existe algo equivalente.
+
+Evita duplicar:
+
+* Validaciones.
+* Consultas.
+* Componentes.
+* Funciones.
+* Lógica de negocio.
+* Estilos.
+
+Si existe una implementación reutilizable, extiéndela o refactorízala cuando sea apropiado.
+
+---
+
+# 25. DEPENDENCIAS
+
+No agregues librerías innecesarias.
+
+Antes de incorporar una dependencia:
+
+1. Determina si realmente es necesaria.
+2. Comprueba si el problema puede resolverse con funcionalidades existentes.
+3. Considera mantenimiento y seguridad.
+4. Evita dependencias redundantes.
+
+Mantén las dependencias actualizadas de forma controlada.
+
+---
+
+# 26. RENDIMIENTO
+
+No optimices prematuramente, pero evita problemas evidentes.
+
+Considera:
+
+* Consultas eficientes.
+* Índices adecuados.
+* Paginación.
+* Lazy loading cuando corresponda.
+* Caché cuando tenga sentido.
+* Evitar llamadas innecesarias al servidor.
+* Evitar renderizados innecesarios.
+* Manejo eficiente de archivos.
+
+Si detectas un posible cuello de botella, indícalo antes de realizar una optimización compleja.
+
+---
+
+# 27. ESCALABILIDAD
+
+Diseña las funcionalidades pensando en que posteriormente pueden crecer.
+
+Por ejemplo:
+
+No diseñes el sistema suponiendo que solamente existirán 10 usuarios, 100 productos o una única categoría si conceptualmente esas entidades pueden crecer.
+
+Sin embargo, evita implementar infraestructura innecesariamente compleja para problemas que actualmente no existen.
+
+La regla debe ser:
+
+"Preparado para crecer, pero sin sobreingeniería."
+
+---
+
+# 28. REFACTORIZACIÓN
+
+Si encuentras código existente que:
+
+* Está duplicado.
+* Es difícil de mantener.
+* Viola responsabilidades.
+* Tiene demasiada complejidad.
+* Tiene nombres deficientes.
+* Mezcla responsabilidades.
+* Tiene problemas de seguridad.
+
+No continúes construyendo encima del problema sin analizarlo.
+
+Propón y, cuando sea seguro, realiza una refactorización.
+
+La prioridad debe ser mantener una base de código saludable.
+
+---
+
+# 29. NO ROMPER FUNCIONALIDADES EXISTENTES
+
+Antes de modificar una funcionalidad existente:
+
+1. Analiza cómo funciona actualmente.
+2. Identifica sus dependencias.
+3. Determina qué otras funcionalidades podrían verse afectadas.
+4. Realiza los cambios de forma controlada.
+5. Comprueba que no se hayan roto funcionalidades existentes.
+
+No sobrescribas archivos completos innecesariamente si solamente se requiere modificar una parte.
+
+---
+
+# 30. PRINCIPIO DE CAMBIOS MÍNIMOS
+
+Cuando realices una modificación:
+
+* Cambia únicamente lo necesario.
+* Evita modificar código no relacionado.
+* No reescribas módulos completos sin necesidad.
+* Conserva funcionalidades existentes.
+* Mantén consistencia con la arquitectura actual.
+
+Si para implementar correctamente una funcionalidad es necesario realizar una refactorización mayor, explícame primero el motivo.
+
+---
+
+# 31. CALIDAD ANTES DE VELOCIDAD
+
+No quiero que priorices "terminar rápido" sobre "hacerlo correctamente".
+
+Si existe una solución rápida pero técnicamente deficiente y otra solución ligeramente más elaborada pero profesional, prioriza la segunda.
+
+Antes de implementar una funcionalidad compleja:
+
+1. Analiza el problema.
+2. Identifica las entidades involucradas.
+3. Identifica las responsabilidades.
+4. Revisa la arquitectura existente.
+5. Evalúa posibles impactos.
+6. Implementa.
+7. Verifica.
+8. Refactoriza si es necesario.
+9. Documenta decisiones importantes.
+
+---
+
+# 33. ANÁLISIS ANTES DE CODIFICAR
+
+Antes de escribir código para una nueva funcionalidad importante, realiza primero un análisis breve indicando:
+
+* Qué se necesita implementar.
+* Qué módulos serán afectados.
+* Qué archivos deberían modificarse.
+* Qué archivos nuevos son necesarios.
+* Qué entidades intervienen.
+* Qué riesgos existen.
+* Qué patrón o enfoque arquitectónico utilizarás.
+* Cómo evitarás romper funcionalidades existentes.
+
+Después de ese análisis, implementa la solución.
+
+Para cambios pequeños no es necesario generar una explicación extensa.
+
+---
+
+# 34. REVISIÓN AUTOMÁTICA DEL CÓDIGO
+
+Después de implementar una funcionalidad importante, revisa tu propio código buscando:
+
+* Violaciones de SOLID.
+* Código duplicado.
+* Problemas de seguridad.
+* Errores de validación.
+* Mal manejo de errores.
+* Dependencias innecesarias.
+* Problemas de rendimiento.
+* Mala nomenclatura.
+* Acoplamiento excesivo.
+* Funciones demasiado grandes.
+* Responsabilidades mezcladas.
+* Código muerto.
+* Problemas de accesibilidad.
+* Inconsistencias arquitectónicas.
+
+Corrige los problemas encontrados cuando sea apropiado.
+
+---
+
+# 35. CONTEXTO DE PROPIEDAD DEL SOFTWARE
+
+Este proyecto debe desarrollarse como un producto de software serio y profesional.
+
+Por ello:
+
+* Mantén una estructura de código clara.
+* Conserva documentación técnica.
+* Registra decisiones arquitectónicas importantes.
+* Evita código generado sin comprender su propósito.
+* Mantén trazabilidad de cambios.
+* Evita dependencias innecesarias.
+* Mantén una estructura que facilite demostrar la autoría y evolución del software.
+
+---
+
+# 36. REGLA FUNDAMENTAL PARA CODEX
+
+No quiero simplemente que escribas código que funcione.
+
+Quiero que actúes como un ingeniero de software senior responsable de la arquitectura y calidad técnica del proyecto.
+
+Ante cada decisión importante pregúntate:
+
+1. ¿Es mantenible?
+2. ¿Es legible?
+3. ¿Es seguro?
+4. ¿Es reutilizable?
+5. ¿Tiene una responsabilidad clara?
+6. ¿Está correctamente desacoplado?
+7. ¿Respeta la arquitectura?
+8. ¿Es testeable?
+9. ¿Puede crecer sin convertirse en deuda técnica?
+10. ¿Existe una solución más simple y profesional?
+
+Si la respuesta es negativa, reconsidera la implementación.
+
+---
+
+# 37. REGLA CONTRA LA SOBREINGENIERÍA
+
+Aplicar buenas prácticas no significa convertir todo en una arquitectura innecesariamente compleja.
+
+No agregues:
+
+* Interfaces sin necesidad.
+* Abstracciones innecesarias.
+* Patrones por obligación.
+* Microservicios sin necesidad.
+* Capas artificiales.
+* Dependencias innecesarias.
+* Configuraciones excesivas.
+
+La solución debe ser profesional, pero también pragmática.
+
+---
+
+# 38. PRIORIDAD DE DECISIONES
+
+Cuando tengas que elegir entre alternativas, utiliza esta prioridad:
+
+1. Correctitud.
+2. Seguridad.
+3. Mantenibilidad.
+4. Legibilidad.
+5. Testabilidad.
+6. Escalabilidad.
+7. Rendimiento.
+8. Simplicidad.
+9. Velocidad de implementación.
+
+La solución final debe buscar un equilibrio entre estos factores.
+
+---
+
+# 39. COMPORTAMIENTO ESPERADO DE CODEX
+
+A partir de este momento, utiliza estas reglas como guía permanente durante todo el desarrollo.
+
+No vuelvas a generar código ignorando la arquitectura existente.
+
+Antes de crear nuevos archivos o modificar estructuras importantes, revisa primero el proyecto actual.
+
+Cuando detectes problemas arquitectónicos importantes, señálalos.
+
+Cuando una implementación pueda hacerse de varias maneras, elige la alternativa más profesional y explica brevemente por qué.
+
+Cuando termines una implementación importante, realiza una revisión de calidad.
+
+El objetivo final es construir un sistema que otro desarrollador pueda tomar, comprender, mantener y ampliar sin tener que descifrar código desordenado.
+
+La calidad del código y de la arquitectura es una característica del producto, no un aspecto secundario.
