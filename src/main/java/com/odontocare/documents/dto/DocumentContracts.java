@@ -17,6 +17,7 @@ public final class DocumentContracts {
   public record UploadRequest(
       @NotNull UUID patientId,
       UUID encounterId,
+      UUID planId,
       Integer tooth,
       @NotNull UUID categoryId,
       @NotNull LocalDate recordedOn,
@@ -26,6 +27,7 @@ public final class DocumentContracts {
       UUID id,
       UUID patientId,
       UUID encounterId,
+      UUID planId,
       Integer tooth,
       UUID categoryId,
       String categoryName,

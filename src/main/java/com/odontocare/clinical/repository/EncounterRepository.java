@@ -6,5 +6,8 @@ import org.springframework.data.jpa.repository.*;
 
 public interface EncounterRepository
     extends JpaRepository<Encounter, UUID>, JpaSpecificationExecutor<Encounter> {
+  @Query("select e.patientId from Encounter e where e.id=:id")
+  Optional<UUID> patientId(UUID id);
+
   boolean existsByAppointmentId(UUID appointmentId);
 }

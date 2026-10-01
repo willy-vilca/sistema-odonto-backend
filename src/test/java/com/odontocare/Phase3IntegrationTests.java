@@ -68,7 +68,7 @@ class Phase3IntegrationTests {
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
         "TRUNCATE"
-            + " document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
+            + " charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
     jdbc.update(
         "UPDATE installation_profile SET"
             + " time_zone='America/Lima',minimum_lead_minutes=0,appointment_gap_minutes=0,patient_prefix='PAC',patient_next_number=1,version=0");

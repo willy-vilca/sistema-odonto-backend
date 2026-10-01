@@ -27,6 +27,7 @@ public class EncounterService {
   private final AuditService audit;
   private final ObjectMapper mapper;
   private final AppointmentService booking;
+  private final com.odontocare.finance.service.ClinicalBillingService billing;
 
   public EncounterService(
       EncounterRepository encounters,
@@ -37,7 +38,8 @@ public class EncounterService {
       ClinicalAccess access,
       AuditService audit,
       ObjectMapper mapper,
-      AppointmentService booking) {
+      AppointmentService booking,
+      com.odontocare.finance.service.ClinicalBillingService billing) {
     this.encounters = encounters;
     this.revisions = revisions;
     this.patients = patients;
@@ -47,6 +49,7 @@ public class EncounterService {
     this.audit = audit;
     this.mapper = mapper;
     this.booking = booking;
+    this.billing = billing;
   }
 
   @Transactional
@@ -122,7 +125,10 @@ public class EncounterService {
 
   @Transactional
   public EncounterResponse finish(UUID id, VersionRequest request) {
+    patients.lockById(encounters.patientId(id).orElseThrow(ApiException::notFound)).orElseThrow();
     var encounter = required(id);
+    access.requireDentist(encounter.getDentistId());
+    if (encounter.getStatus().equals("FINAL")) return response(encounter, true);
     encounter.checkVersion(request.version());
     access.requireDentist(encounter.getDentistId());
     if (!encounter.getStatus().equals("DRAFT"))
@@ -136,6 +142,7 @@ public class EncounterService {
       throw ApiException.badRequest("Para finalizar registra evolución y diagnóstico.");
     if (encounter.getAppointmentId() != null)
       booking.completeClinical(encounter.getAppointmentId());
+    billing.finalizeProcedures(encounter, content.procedures());
     append(encounter, content, "Finalización inicial");
     encounter.setStatus("FINAL");
     encounters.saveAndFlush(encounter);
@@ -220,7 +227,7 @@ public class EncounterService {
               procedure.quantity(),
               procedure.tooth(),
               service == null ? "" : service.getName(),
-              service == null ? null : service.getPrice()));
+              billing.unitPrice(procedure)));
     }
     revision.setPayload(mapper.writeValueAsString(new StoredEncounter(content, snapshots)));
     revision.setActorName(access.actor().getDisplayName());

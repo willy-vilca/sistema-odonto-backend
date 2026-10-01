@@ -67,7 +67,10 @@ public final class ClinicalContracts {
       UUID serviceId,
       @NotBlank @Size(max = 300) String description,
       @NotNull @Min(1) @Max(100) Integer quantity,
-      Integer tooth) {}
+      Integer tooth,
+      UUID planItemId,
+      @DecimalMin("0") @DecimalMax("99999999.99") @Digits(integer = 8, fraction = 2)
+          BigDecimal unitPrice) {}
 
   public record EncounterContent(
       @NotNull @Size(max = 8000) String anamnesis,

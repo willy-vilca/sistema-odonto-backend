@@ -27,6 +27,7 @@ public class PatientDocumentService {
   private final DocumentValidator validator;
   private final ClinicalAccess access;
   private final AuditService audit;
+  private final com.odontocare.treatments.repository.TreatmentPlanRepository plans;
 
   public PatientDocumentService(
       PatientDocumentRepository documents,
@@ -38,7 +39,8 @@ public class PatientDocumentService {
       EncounterRepository encounters,
       DocumentValidator validator,
       ClinicalAccess access,
-      AuditService audit) {
+      AuditService audit,
+      com.odontocare.treatments.repository.TreatmentPlanRepository plans) {
     this.documents = documents;
     this.contents = contents;
     this.categories = categories;
@@ -49,6 +51,7 @@ public class PatientDocumentService {
     this.validator = validator;
     this.access = access;
     this.audit = audit;
+    this.plans = plans;
   }
 
   @Transactional
@@ -56,6 +59,7 @@ public class PatientDocumentService {
       UUID patientId,
       UUID categoryId,
       UUID encounterId,
+      UUID planId,
       Integer tooth,
       String mediaType,
       java.time.LocalDate from,
@@ -73,6 +77,7 @@ public class PatientDocumentService {
             .and(SearchSpecifications.equal("patientId", patientId))
             .and(SearchSpecifications.equal("categoryId", categoryId))
             .and(SearchSpecifications.equal("encounterId", encounterId))
+            .and(SearchSpecifications.equal("planId", planId))
             .and(SearchSpecifications.equal("tooth", tooth))
             .and(SearchSpecifications.equal("mediaType", mediaType));
     if (from != null)
@@ -108,6 +113,11 @@ public class PatientDocumentService {
       if (!encounter.getPatientId().equals(patient.getId()))
         throw ApiException.badRequest("La atención pertenece a otro paciente.");
     }
+    if (request.planId() != null) {
+      var plan = plans.findById(request.planId()).orElseThrow(ApiException::notFound);
+      if (!plan.getPatientId().equals(request.patientId()))
+        throw ApiException.badRequest("El tratamiento pertenece a otro paciente.");
+    }
     var category = categories.findById(request.categoryId()).orElseThrow(ApiException::notFound);
     if (!category.getActive())
       throw ApiException.badRequest("La categoría documental está inactiva.");
@@ -116,6 +126,7 @@ public class PatientDocumentService {
     var document = new PatientDocument();
     document.setPatientId(patient.getId());
     document.setEncounterId(request.encounterId());
+    document.setPlanId(request.planId());
     document.setTooth(request.tooth());
     document.setCategoryId(category.getId());
     document.setCategoryName(category.getName());
@@ -194,6 +205,7 @@ public class PatientDocumentService {
         document.getId(),
         document.getPatientId(),
         document.getEncounterId(),
+        document.getPlanId(),
         document.getTooth(),
         document.getCategoryId(),
         document.getCategoryName(),

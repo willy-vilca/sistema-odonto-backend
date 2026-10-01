@@ -90,6 +90,15 @@ public class RoleService {
         && !permissions.contains("PATIENTS_READ"))
       throw ApiException.badRequest(
           "Consultar expedientes o documentos requiere consultar la ficha del paciente.");
+    if (permissions.contains("PLANS_WRITE")
+        && !permissions.containsAll(Set.of("PATIENTS_READ", "DENTISTS_READ", "SERVICES_READ")))
+      throw ApiException.badRequest(
+          "Gestionar planes requiere consultar pacientes, profesionales y servicios.");
+    if (permissions.contains("FINANCES_ADJUST") && !permissions.contains("FINANCES_READ"))
+      throw ApiException.badRequest("Ajustar cargos requiere consultar finanzas.");
+    if ((permissions.contains("PLANS_READ") || permissions.contains("FINANCES_READ"))
+        && !permissions.contains("PATIENTS_READ"))
+      throw ApiException.badRequest("Consultar planes o deuda requiere consultar pacientes.");
     role.setName(request.name().strip());
     role.replacePermissions(permissions);
     roles.saveAndFlush(role);

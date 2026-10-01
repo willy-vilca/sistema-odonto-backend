@@ -8,6 +8,16 @@ import java.util.*;
 @Entity
 @Table(name = "patient_document")
 public class PatientDocument extends VersionedEntity {
+  private UUID planId;
+
+  public UUID getPlanId() {
+    return planId;
+  }
+
+  public void setPlanId(UUID value) {
+    planId = value;
+  }
+
   private UUID patientId;
   private UUID encounterId;
   private Integer tooth;

@@ -31,12 +31,14 @@ public class PatientDocumentController {
       @RequestParam UUID patientId,
       @RequestParam(required = false) UUID categoryId,
       @RequestParam(required = false) UUID encounterId,
+      @RequestParam(required = false) UUID planId,
       @RequestParam(required = false) Integer tooth,
       @RequestParam(required = false) String mediaType,
       @RequestParam(required = false) LocalDate from,
       @RequestParam(required = false) LocalDate to,
       @Valid @ModelAttribute PageQuery query) {
-    return service.list(patientId, categoryId, encounterId, tooth, mediaType, from, to, query);
+    return service.list(
+        patientId, categoryId, encounterId, planId, tooth, mediaType, from, to, query);
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
