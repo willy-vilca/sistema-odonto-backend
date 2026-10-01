@@ -1,0 +1,17 @@
+package com.odontocare.security.model;
+
+public enum Permission {
+  SETTINGS_READ,
+  SETTINGS_WRITE,
+  USERS_READ,
+  USERS_WRITE,
+  ROLES_READ,
+  ROLES_WRITE,
+  DENTISTS_READ,
+  DENTISTS_WRITE,
+  SERVICES_READ,
+  SERVICES_WRITE,
+  SCHEDULES_READ,
+  SCHEDULES_WRITE,
+  AUDIT_READ
+}

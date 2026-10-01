@@ -66,3 +66,19 @@ La fase 0 no es un despliegue para pacientes reales. El despliegue definitivo, T
 Para las fases 6–7 se requerirán: cuenta Twilio con Sandbox de WhatsApp, participantes autorizados inscritos, credenciales del proveedor/modelo y un webhook HTTPS accesible. Las credenciales externas permanecen fuera de Git. No se contrataron servicios ni se crearon cuentas. Preparar estos accesos no condiciona las fases locales. El agente propio utilizará herramientas de los servicios de negocio y bitácora persistente, sin SQL libre ni n8n.
 
 Referencias de integración: [Spring Boot](https://docs.spring.io/spring-boot/system-requirements.html), [Vite](https://vite.dev/guide/), [TailwindCSS con Vite](https://tailwindcss.com/docs/installation/using-vite).
+
+## Decisiones incorporadas en fase 1
+
+Se incorporan users, catalog, dentists, schedules y audit con las mismas capas. security separa política, DTO, sesión, contraseña y filtros. Autenticación de formularios y sesiones de Spring Security, CSRF y BCrypt; el navegador no guarda tokens de acceso. [CSRF en Spring Security](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html).
+
+Las modificaciones administrativas bloquean la única fila de instalación dentro de su transacción. Esto serializa comprobaciones de primer administrador, último administrador, referencias y horarios. version protege ediciones obsoletas. La agenda futura utilizará servicios y restricciones propios; el bloqueo administrativo no se impone a las reservas.
+
+btree_gist y una restricción de exclusión protegen los intervalos semanales activos del mismo tipo por odontólogo y día. El validador comprueba descansos dentro de jornadas y limita a 48 intervalos activos por día. Auditoría con propagación transaccional obligatoria: un cambio revertido no deja un evento de éxito.
+
+Listados con Specifications y Pageable. La búsqueda escapa porcentajes y guiones bajos para interpretar texto literal; orden estable por identificador. Solo DTO de la página solicitada. Las asociaciones seleccionadas se limitan a 100 servicios por profesional. El selector de cuentas habilitadas devuelve únicamente identificador y nombre, con DENTISTS_WRITE.
+
+installation_logo separa bytes del perfil. La identidad pública expone nombre, marca, zona, moneda, formato de fecha y revisión del logo; excluye contactos privados y cuentas. El binario se consulta explícitamente.
+
+Frontend con definiciones de formularios por módulo y componentes reutilizables de editor, selector remoto, tabla y diálogo. Los selectores consultan al abrir su búsqueda. La autorización definitiva permanece en el servidor.
+
+test usa una base separada y comprueba su nombre antes de limpiar datos. Las pruebas de navegador crean una contraseña aleatoria y una sesión por caso. No utilizan cuentas predeterminadas ni preparan datos en la instalación local del usuario.

@@ -1,37 +1,109 @@
 package com.odontocare.security.config;
 
-import com.odontocare.shared.web.ApiProblems;
+import com.odontocare.security.dto.SessionResponse;
+import com.odontocare.security.model.AccountPrincipal;
+import com.odontocare.security.service.*;
+import com.odontocare.security.web.*;
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.*;
+import org.springframework.http.*;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfiguration {
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, ObjectMapper mapper) throws Exception {
-        http.authorizeHttpRequests(authorize -> authorize
-                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/system/installation", "/actuator/health").permitAll()
-                .anyRequest().denyAll());
-        http.exceptionHandling(errors -> errors
-                .authenticationEntryPoint((request, response, exception) -> writeProblem(mapper, response,
-                        HttpStatus.UNAUTHORIZED, "Acceso no autorizado", "Esta operación requiere autorización."))
-                .accessDeniedHandler((request, response, exception) -> writeProblem(mapper, response,
-                        HttpStatus.FORBIDDEN, "Acceso denegado", "No tienes permiso para esta operación.")));
-        return http.build();
-    }
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(12);
+  }
 
-    private void writeProblem(ObjectMapper mapper, HttpServletResponse response, HttpStatus status,
-            String title, String detail) throws IOException {
-        response.setStatus(status.value());
-        response.setContentType("application/problem+json;charset=UTF-8");
-        mapper.writeValue(response.getWriter(), ApiProblems.create(status, title, detail));
-    }
+  @Bean
+  SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      AccountAccessService access,
+      AuthenticationAuditService audit,
+      SecurityProblemWriter problems,
+      ObjectMapper mapper)
+      throws Exception {
+    var throttle = new LoginThrottle();
+    http.authorizeHttpRequests(
+        authorize ->
+            authorize
+                .dispatcherTypeMatchers(DispatcherType.ERROR)
+                .permitAll()
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/v1/system/installation",
+                    "/api/v1/system/logo",
+                    "/api/v1/auth/session",
+                    "/api/v1/auth/csrf",
+                    "/actuator/health")
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/setup", "/api/v1/auth/login")
+                .permitAll()
+                .requestMatchers("/api/v1/**")
+                .authenticated()
+                .anyRequest()
+                .denyAll());
+    http.exceptionHandling(
+        errors ->
+            errors
+                .authenticationEntryPoint(
+                    (request, response, exception) ->
+                        problems.write(
+                            response,
+                            HttpStatus.UNAUTHORIZED,
+                            "Inicia sesión para acceder al sistema."))
+                .accessDeniedHandler(
+                    (request, response, exception) ->
+                        problems.write(
+                            response,
+                            HttpStatus.FORBIDDEN,
+                            "No tienes permiso o la protección de la solicitud caducó. Actualiza e"
+                                + " intenta nuevamente.")));
+    http.formLogin(
+        form ->
+            form.loginProcessingUrl("/api/v1/auth/login")
+                .successHandler(
+                    (request, response, authentication) -> {
+                      var actor = (AccountPrincipal) authentication.getPrincipal();
+                      throttle.clear(request);
+                      audit.login(actor);
+                      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                      mapper.writeValue(response.getWriter(), SessionResponse.of(false, actor));
+                    })
+                .failureHandler(
+                    (request, response, exception) -> {
+                      audit.failure();
+                      problems.write(
+                          response,
+                          HttpStatus.UNAUTHORIZED,
+                          "Usuario o contraseña incorrectos, o cuenta no disponible.");
+                    }));
+    http.logout(
+        logout ->
+            logout
+                .logoutUrl("/api/v1/auth/logout")
+                .addLogoutHandler(
+                    (request, response, authentication) -> {
+                      if (authentication != null
+                          && authentication.getPrincipal() instanceof AccountPrincipal actor)
+                        audit.logout(actor);
+                    })
+                .deleteCookies("JSESSIONID")
+                .logoutSuccessHandler(
+                    (request, response, authentication) ->
+                        response.setStatus(HttpStatus.NO_CONTENT.value())));
+    http.addFilterBefore(
+        new LoginThrottleFilter(throttle, problems), UsernamePasswordAuthenticationFilter.class);
+    http.addFilterBefore(new RefreshAccountFilter(access, problems), AuthorizationFilter.class);
+    return http.build();
+  }
 }

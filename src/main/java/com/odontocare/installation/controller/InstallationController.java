@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/system/installation")
 public class InstallationController {
-    private final InstallationService service;
+  private final InstallationService service;
 
-    public InstallationController(InstallationService service) {
-        this.service = service;
-    }
+  public InstallationController(InstallationService service) {
+    this.service = service;
+  }
 
-    @GetMapping
-    public InstallationResponse getInstallation() {
-        return service.getInstallation();
-    }
+  @GetMapping
+  public InstallationResponse getInstallation() {
+    return service.getInstallation();
+  }
 }

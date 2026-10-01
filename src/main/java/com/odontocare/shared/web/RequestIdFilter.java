@@ -15,13 +15,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RequestIdFilter extends OncePerRequestFilter {
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-            FilterChain chain) throws ServletException, IOException {
-        String requestId = UUID.randomUUID().toString();
-        response.setHeader("X-Request-Id", requestId);
-        try (var ignored = MDC.putCloseable("requestId", requestId)) {
-            chain.doFilter(request, response);
-        }
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+      throws ServletException, IOException {
+    String requestId = UUID.randomUUID().toString();
+    response.setHeader("X-Request-Id", requestId);
+    try (var ignored = MDC.putCloseable("requestId", requestId)) {
+      chain.doFilter(request, response);
     }
+  }
 }

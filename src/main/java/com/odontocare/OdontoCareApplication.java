@@ -7,8 +7,7 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
 public class OdontoCareApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(OdontoCareApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(OdontoCareApplication.class, args);
+  }
 }
