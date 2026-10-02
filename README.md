@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 a 4: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes y cargos con historial. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 5: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes, cargos, cobros, cuotas, egresos y caja con historial. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 
@@ -122,4 +122,27 @@ El procedimiento clínico admite planItemId y unitPrice opcionales. planItemId e
 
 Cancelar puede conservar deuda o, con permiso de ajustes, liberar proporcionalmente lo pendiente. Finalizar exige completar sesiones. Las tablas de cargos, operaciones y sesiones rechazan cambios o borrados; los acuerdos y conceptos aceptados conservan sus datos. La moneda permanece en cada documento/movimiento; los totales se muestran por moneda.
 
-Las atenciones finalizadas antes de fase 4 no generan cargos retroactivos. No se registra dinero recibido, cuotas, anticipos, egresos ni devoluciones todavía: fase 5. Evidencia en [cierre de fase 4](docs/project/cierre-fase-4.md) y [diseño de tratamientos](docs/project/diseno-tratamientos-fase-4.md).
+Las atenciones finalizadas antes de fase 4 no generan cargos retroactivos. La fase 5 incorpora pagos, cuotas, anticipos, egresos, devoluciones y caja, separados del registro de deuda. Evidencia en [cierre de fase 4](docs/project/cierre-fase-4.md) y [diseño de tratamientos](docs/project/diseno-tratamientos-fase-4.md).
+
+
+## Cobros y caja · Fase 5
+
+Finanzas reúne Cuenta del paciente, Egresos, Caja y Categorías. Seleccionar paciente permite consultar deuda generada, dinero recibido neto, dinero aplicado, saldo pendiente y anticipo disponible por moneda. Registrar abono conserva fecha, medio, referencia y responsable; las aplicaciones pueden cubrir uno o varios cargos. Sin aplicaciones, el dinero queda como anticipo. Aplicarlo no crea otro ingreso.
+
+API bajo /api/v1/finance:
+
+- GET /summary?patientId; GET /charges?patientId y /charges/{id}: saldos y cargos netos paginados. GET /movements con patientId, originalId, cashSessionId, kind, method, currency, from/to, búsqueda, página y orden validado.
+- POST /payments; POST /payments/{id}/{apply|release|refund|reverse}. GET /applications?paymentId o chargeId conserva aplicaciones firmadas y motivo.
+- POST /charges/{id}/{discount|void}. Descuento/anulación preservan el cargo original; los ajustes y cancelaciones también rechazan dejar deuda por debajo del dinero aplicado.
+- POST /installments con chargeId e installments de amount/dueOn; GET /installments?patientId, chargeId, active, from/to, búsqueda y página. Cuotas distribuyen el cargo neto completo y no generan deuda. Un nuevo calendario deja histórico el anterior.
+- GET /expense-categories; POST/PUT /expense-categories[/{id}]; POST /expenses; POST /expenses/{id}/reverse. Categorías tienen búsqueda, filtro activo y paginación; sus nombres históricos quedan en el movimiento.
+- GET /cash/current, GET /cash; POST /cash para apertura, POST /cash/{id}/close; GET /cash/{id}/report descarga el arqueo PDF conservado.
+- GET /documents con patientId, movementId, generated, búsqueda y página; POST multipart con metadata (movementId/description) y file; GET /documents/receipt/{paymentId}; POST /documents/statement; GET /documents/{id}/content y /preview?page=0. Metadatos sin BYTEA; binarios recuperados a demanda.
+
+Todos los comandos financieros usan requestKey UUID estable. Correcciones exigen motivo. Reversión completa del pago vigente libera sus aplicaciones; devolución parcial exige liberar el dinero aplicado necesario. No se sobrescriben pagos/cargos. Efectivo requiere caja abierta, moneda coincidente y fecha actual; fondos insuficientes rechazan egresos/devoluciones. Otros medios admiten fecha anterior y se separan del arqueo de efectivo. No hay conversión de monedas.
+
+Permisos: FINANCES_READ para cuentas y sustentos; PAYMENTS_WRITE para cobros/aplicaciones/cuotas; EXPENSES_WRITE para egresos; CASH_READ/WRITE para caja; FINANCE_CONFIG_WRITE para categorías; FINANCES_ADJUST para descuentos, liberaciones y correcciones. Administrador conserva todos; caja recibe consultas, pagos, egresos y caja, con correcciones reservadas inicialmente a administración. Roles editables. Sustentos financieros reutilizan la validación documental sin dar acceso clínico a caja.
+
+PDF históricos incluyen identidad, logo, correlativo y detalle al emitirlos; se guardan en financial_content (BYTEA). El arqueo cerrado conserva también expected/counted/difference. La tipografía Noto Sans se distribuye con su licencia OFL en src/main/resources/fonts; origen: https://github.com/notofonts/noto-fonts.
+
+Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la regresión previa. Guía y resultados en [diseño financiero](docs/project/diseno-financiero-fase-5.md) y [cierre de fase 5](docs/project/cierre-fase-5.md). La integración real de WhatsApp sigue en fase 6; la restauración integral del respaldo, en fase 9.

@@ -114,3 +114,15 @@ La escritura se serializa por paciente antes del plan o atención. Las operacion
 El presupuesto tiene un máximo inicial de 50 conceptos y admite hasta 100 con adicionales. Esta colección acotada se procesa dentro de la transacción de aceptación; los listados HTTP son paginados. Las sumas y el avance se consultan mediante agregados de PostgreSQL. BigDecimal y numeric conservan cálculos monetarios de dos decimales. Cada acuerdo y cargo conserva moneda; no se suman monedas distintas.
 
 V8 incorpora tablas, permisos, claves, índices, protección de acuerdos y vínculo documental con tratamiento. V9 incorpora la revisión de cambios del detalle. Se conservan migraciones anteriores. Las atenciones finalizadas anteriormente no se cobran retroactivamente. Decisiones y comprobaciones en las instantáneas de diseño y cierre de fase 4.
+
+## Fase 5: dinero y trazabilidad
+
+finance incorpora modelos y repositorios separados para movimientos de dinero, aplicaciones, operaciones, cuotas/calendarios, categorías, caja y documentación financiera. CashRegister es un mutex de persistencia del registro único; ChargeBalance consulta una vista agregada de cargos y aplicaciones. No existe un saldo editable en patient.
+
+AccountQueryService consulta cuentas con instantánea consistente y listas acotadas; PaymentService registra, aplica, libera y corrige; ExpenseService gestiona categorías y egresos; CashService conserva el arqueo; InstallmentService distribuye vencimientos; FinanceOperationService comprueba clave y huella; FinancialDocumentService conserva documentos y FinancialPdfService solo renderiza. Controllers validan contratos y permisos; no calculan saldos ni devuelven JPA.
+
+Orden de bloqueos: paciente → registro de caja → perfil cuando corresponde un correlativo. Egresos/caja solo toman registro → perfil; planes toman paciente → perfil. Consultas clínicas no adquieren registro de caja. Cada cambio de deuda y cada aplicación se serializa por paciente; efectivo se serializa con apertura/cierre. La transacción incluye movimiento, aplicaciones, operación, PDF y auditoría; un fallo revierte todo.
+
+V10 añade el registro monetario, aplicaciones, cuotas, categorías, documentos/contenido, registro/cajas y vista de saldo. V11 protege calendarios históricos, vincula documentos con arqueos y añade unicidad de constancias y nombres de categorías. Los movimientos originales y sus binarios no permiten UPDATE/DELETE; caja cerrada queda congelada. Las consultas de archivo no incluyen bytea.
+
+El frontend agrupa finanzas en cuenta, gastos, caja y categorías. Dentro de la cuenta, cargos/pagos/cuotas/archivos se montan según la sección activa. Formularios conservan una clave por operación mientras se reintentan y los selectores consultan páginas del servidor. Las constancias tienen visor de páginas con zoom y descarga autorizada; fechas respetan configuración.
