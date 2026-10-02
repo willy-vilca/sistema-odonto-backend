@@ -28,6 +28,7 @@ public class ChargeLedgerService {
   private final AuditService audit;
   private final ClinicalAccess access;
   private final ObjectMapper mapper;
+  private final com.odontocare.finance.repository.MoneyApplicationRepository applications;
 
   public ChargeLedgerService(
       ChargeEntryRepository entries,
@@ -37,7 +38,8 @@ public class ChargeLedgerService {
       TreatmentPlanRepository plans,
       AuditService audit,
       ClinicalAccess access,
-      ObjectMapper mapper) {
+      ObjectMapper mapper,
+      com.odontocare.finance.repository.MoneyApplicationRepository applications) {
     this.entries = entries;
     this.patients = patients;
     this.items = items;
@@ -46,6 +48,7 @@ public class ChargeLedgerService {
     this.audit = audit;
     this.access = access;
     this.mapper = mapper;
+    this.applications = applications;
   }
 
   public String fingerprint(Object value) {
@@ -113,6 +116,9 @@ public class ChargeLedgerService {
         throw ApiException.conflict("Un plan cancelado conserva su ajuste de cancelación.");
     }
     BigDecimal result = entries.originDebt(originalId).add(request.amount());
+    if (result.compareTo(applications.chargeApplied(originalId)) < 0)
+      throw ApiException.badRequest(
+          "Libera o devuelve el dinero aplicado antes de reducir el cargo.");
     if (result.signum() < 0)
       throw ApiException.badRequest("El ajuste no puede dejar el cargo negativo.");
     if (original.getItemId() != null) {
@@ -122,6 +128,39 @@ public class ChargeLedgerService {
     }
     return response(
         appendAdjustment(original, request.amount(), "ADJUSTMENT", key, hash, request.reason()));
+  }
+
+  @Transactional
+  public EntryResponse discount(
+      UUID id, com.odontocare.finance.dto.PaymentContracts.DiscountRequest r, boolean cancel) {
+    var original = entries.findById(id).orElseThrow(ApiException::notFound);
+    patients.lockById(original.getPatientId()).orElseThrow();
+    if (original.getOriginalId() != null)
+      throw ApiException.badRequest("Selecciona el cargo original.");
+    String key = (cancel ? "void:" : "discount:") + r.requestKey(),
+        hash = fingerprint(List.of(id, r, cancel));
+    var prior = entries.findBySourceKey(key);
+    if (prior.isPresent()) {
+      if (!prior.get().getFingerprint().equals(hash))
+        throw ApiException.conflict("La clave corresponde a otro descuento.");
+      return response(prior.get());
+    }
+    var current = entries.originDebt(id);
+    if (r.amount().compareTo(current) > 0 || cancel && r.amount().compareTo(current) != 0)
+      throw ApiException.badRequest(
+          "El descuento no puede superar el cargo; la anulación es completa.");
+    if (current.subtract(r.amount()).compareTo(applications.chargeApplied(id)) < 0)
+      throw ApiException.badRequest(
+          "Libera o devuelve el dinero aplicado antes de reducir el cargo.");
+    return response(
+        appendAdjustment(
+            original,
+            r.amount().negate(),
+            "ADJUSTMENT",
+            key,
+            hash,
+            (cancel ? "Anulación: " : "Descuento: ")
+                + r.reason().substring(0, Math.min(480, r.reason().length()))));
   }
 
   public BigDecimal performedValue(PlanItem item) {
@@ -136,6 +175,9 @@ public class ChargeLedgerService {
     var current = entries.originDebt(original.getId());
     var retained = performedValue(item);
     var delta = current.subtract(retained).negate();
+    if (retained.compareTo(applications.chargeApplied(original.getId())) < 0)
+      throw ApiException.badRequest(
+          "Libera o devuelve el dinero aplicado antes de cancelar este plan.");
     if (delta.signum() < 0)
       appendAdjustment(
           original,

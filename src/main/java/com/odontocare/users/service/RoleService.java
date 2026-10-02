@@ -65,6 +65,8 @@ public class RoleService {
       throw ApiException.badRequest("Solo el administrador puede modificar la política de roles.");
     for (String permission : permissions) {
       if (permission.endsWith("_WRITE")
+          && !Set.of("PAYMENTS_WRITE", "EXPENSES_WRITE", "FINANCE_CONFIG_WRITE")
+              .contains(permission)
           && !permissions.contains(permission.replace("_WRITE", "_READ"))) {
         throw ApiException.badRequest(
             "Para administrar una función, habilita también su permiso de consulta.");
@@ -99,6 +101,11 @@ public class RoleService {
     if ((permissions.contains("PLANS_READ") || permissions.contains("FINANCES_READ"))
         && !permissions.contains("PATIENTS_READ"))
       throw ApiException.badRequest("Consultar planes o deuda requiere consultar pacientes.");
+    if (permissions.stream()
+            .anyMatch(
+                p -> Set.of("PAYMENTS_WRITE", "EXPENSES_WRITE", "FINANCE_CONFIG_WRITE").contains(p))
+        && !permissions.contains("FINANCES_READ"))
+      throw ApiException.badRequest("Gestionar cobros y egresos requiere consultar finanzas.");
     role.setName(request.name().strip());
     role.replacePermissions(permissions);
     roles.saveAndFlush(role);

@@ -23,7 +23,11 @@ public class DocumentPreviewService {
     var document = documents.download(id, false);
     if (!document.mediaType().equals("application/pdf"))
       throw ApiException.badRequest("La vista por páginas corresponde a un PDF.");
-    try (var pdf = Loader.loadPDF(document.bytes())) {
+    return render(document.bytes(), page);
+  }
+
+  public static PagePreview render(byte[] content, int page) {
+    try (var pdf = Loader.loadPDF(content)) {
       int count = pdf.getNumberOfPages();
       if (page < 0 || page >= count)
         throw ApiException.badRequest("La página solicitada no existe.");

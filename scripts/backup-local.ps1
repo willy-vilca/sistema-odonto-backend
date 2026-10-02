@@ -13,9 +13,9 @@ try {
  & (Join-Path $pgTools 'pg_dump.exe') -h localhost -U postgres -d $Database --format=custom --no-owner --no-acl --file=$destination
  if($LASTEXITCODE -ne 0){throw 'Falló la generación del respaldo.'}
  $archive=& (Join-Path $pgTools 'pg_restore.exe') --list $destination
- if($LASTEXITCODE -ne 0 -or -not($archive -match 'TABLE DATA public document_content') -or -not($archive -match 'TABLE DATA public encounter_revision') -or -not($archive -match 'TABLE DATA public treatment_plan') -or -not($archive -match 'TABLE DATA public charge_entry')){throw 'El respaldo no contiene las tablas clínicas, documentales y financieras.'}
+ if($LASTEXITCODE -ne 0 -or -not($archive -match 'TABLE DATA public document_content') -or -not($archive -match 'TABLE DATA public encounter_revision') -or -not($archive -match 'TABLE DATA public treatment_plan') -or -not($archive -match 'TABLE DATA public charge_entry') -or -not($archive -match 'TABLE DATA public money_movement') -or -not($archive -match 'TABLE DATA public money_application') -or -not($archive -match 'TABLE DATA public financial_content') -or -not($archive -match 'TABLE DATA public cash_session')){throw 'El respaldo no contiene las tablas clínicas, documentales y financieras.'}
  $hash=Get-FileHash -LiteralPath $destination -Algorithm SHA256
- [pscustomobject]@{Database=$Database;Archive=$destination;Bytes=(Get-Item -LiteralPath $destination).Length;SHA256=$hash.Hash;IncludesDocumentContent=$true}
+ [pscustomobject]@{Database=$Database;Archive=$destination;Bytes=(Get-Item -LiteralPath $destination).Length;SHA256=$hash.Hash;IncludesDocumentContent=$true;IncludesFinancialContent=$true}
 } finally {
  if($null -eq $previousPassword){Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue}else{$env:PGPASSWORD=$previousPassword}
 }
