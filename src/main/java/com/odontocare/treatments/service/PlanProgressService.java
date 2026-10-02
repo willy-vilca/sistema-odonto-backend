@@ -36,13 +36,14 @@ public class PlanProgressService {
     var item = items.findById(procedure.planItemId()).orElseThrow(ApiException::notFound);
     var plan = plans.lockById(item.getPlanId()).orElseThrow();
     if (!Set.of("ACCEPTED", "IN_PROGRESS").contains(plan.getStatus()))
-      throw ApiException.conflict("El concepto requiere un plan aceptado y vigente.");
+      throw ApiException.conflict("El tratamiento requiere un plan aceptado y vigente.");
     if (!plan.getPatientId().equals(encounter.getPatientId())
         || !plan.getDentistId().equals(encounter.getDentistId()))
       throw ApiException.badRequest("El plan pertenece a otro paciente o profesional.");
     if (!Objects.equals(item.getServiceId(), procedure.serviceId())
         || !Objects.equals(item.getTooth(), procedure.tooth()))
-      throw ApiException.badRequest("Servicio y pieza deben coincidir con el concepto del plan.");
+      throw ApiException.badRequest(
+          "Servicio y pieza deben coincidir con el tratamiento del plan.");
     return item;
   }
 
@@ -50,7 +51,7 @@ public class PlanProgressService {
   public void complete(Encounter encounter, Procedure procedure, int index) {
     var item = validate(encounter, procedure);
     if (sessions.completed(item.getId()) + procedure.quantity() > item.getSessions())
-      throw ApiException.conflict("La atención supera las sesiones pendientes del concepto.");
+      throw ApiException.conflict("La atención supera las sesiones pendientes del tratamiento.");
     var session = new PlanSession();
     session.setPlanId(item.getPlanId());
     session.setItemId(item.getId());

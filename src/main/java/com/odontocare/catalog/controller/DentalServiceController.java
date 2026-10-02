@@ -29,6 +29,12 @@ public class DentalServiceController {
     return service.list(query, active, categoryId, bookable, dentistId);
   }
 
+  @GetMapping("/{id}")
+  @PreAuthorize("hasAuthority('SERVICES_READ')")
+  public ServiceResponse get(@PathVariable UUID id) {
+    return service.get(id);
+  }
+
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAuthority('SERVICES_WRITE')")

@@ -68,6 +68,11 @@ public class DentalServiceService {
             .map(this::response));
   }
 
+  @Transactional(readOnly = true)
+  public ServiceResponse get(UUID id) {
+    return response(services.findById(id).orElseThrow(ApiException::notFound));
+  }
+
   @Transactional
   public ServiceResponse create(ServiceRequest request) {
     lock.acquire();

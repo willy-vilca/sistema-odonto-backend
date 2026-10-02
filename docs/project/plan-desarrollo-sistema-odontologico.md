@@ -1,8 +1,10 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 2 de octubre de 2026. Versión del plan: 1.6. Alcance de referencia: versión 1.2 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 2 de octubre de 2026. Versión del plan: 1.7. Alcance de referencia: versión 1.3 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
-Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y disponible para revisión. Las fases 6 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
+Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y disponible para revisión. Se incorporan los ajustes solicitados antes de la revisión general: consulta de servicios y precio editable, terminología de tratamientos y notificaciones flotantes. Las fases 6 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
+
+Ajustes previos a la revisión general completados el 02/10/2026: consulta de detalle del servicio protegida, precio autocompletado y editable, terminología de tratamientos y avisos flotantes. 79 pruebas del servidor y 52 del navegador aprobadas, con revisión responsiva y recuperación de reprogramación. [Resultados y correcciones](ajustes-previos-fase-6.md).
 
 ## 1. Objetivo y estrategia
 
@@ -40,6 +42,8 @@ El diseño visual queda a criterio del agente y debe resultar elegante, profesio
 Dirección inicial: interfaz clínica sobria, fondos claros, texto con buen contraste, acentos contenidos, separación visual por espacios y acciones principales fáciles de identificar. La paleta concreta y los componentes se eligen durante la fase 0, manteniendo los colores de estado diferenciados de la marca configurable. No se incorporan imágenes decorativas que dificulten la lectura de la información operativa.
 
 Se construyen componentes consistentes para navegación, formularios, botones, tablas, filtros, paneles de detalle, avisos, estados vacíos, carga y error. Se preservan valores de formularios ante errores recuperables, se explica la validación junto al campo, se evita repetir información y se protegen las acciones sensibles de toques accidentales. Los estados de cita, tratamiento y pago se expresan con texto además de color.
+
+Los resultados de acciones se muestran como notificaciones flotantes compartidas, también con un formulario abierto. Se cierran manualmente o automáticamente (5 segundos para éxito, 8 para error), pausando el tiempo al pasar el puntero por su botón de cierre o enfocarlo. Se mantienen las validaciones junto al campo y los fallos persistentes de carga o permisos. La interfaz utiliza «tratamiento» en presupuestos y «plan de tratamiento» al vincular una atención.
 
 Prioridad de computadora: agenda amplia, tablas legibles y acceso cómodo a ficha, clínica y cuentas. En tablet se ajusta la distribución para interacción táctil; en celular se utilizan formularios y paneles apilados y vistas de agenda adaptadas. El odontograma puede utilizar navegación o desplazamiento contenido conservando su funcionalidad. Ninguna adaptación debe hacer inaccesibles los flujos incluidos.
 

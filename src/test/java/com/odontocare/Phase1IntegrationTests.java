@@ -190,6 +190,30 @@ class Phase1IntegrationTests {
   }
 
   @Test
+  void individualServiceReadReturnsPriceAndPreservesInactiveHistory() throws Exception {
+    var category = category();
+    var record = service(category.get("id").asString(), "Servicio para presupuesto");
+    String endpoint = "/api/v1/services/" + record.get("id").asString();
+    var detail = get(endpoint);
+    assertThat(detail.get("name").asString()).isEqualTo("Servicio para presupuesto");
+    assertThat(detail.get("price").decimalValue()).isEqualByComparingTo("150.25");
+    assertThat(detail.get("durationMinutes").asInt()).isEqualTo(60);
+    var body = serviceBody(category.get("id").asString(), "Servicio para presupuesto");
+    body.put("version", detail.get("version").asLong());
+    body.put("active", false);
+    perform(put(endpoint).with(csrf()), admin, body, 200);
+    assertThat(get(endpoint).get("active").asBoolean()).isFalse();
+    perform(getRequest("/api/v1/services/" + UUID.randomUUID()), admin, null, 404);
+    perform(getRequest(endpoint), null, null, 401);
+    create("/api/v1/users", user("service-reader", "RECEPTION"));
+    var receptionist = login("service-reader", password);
+    perform(getRequest(endpoint), receptionist, null, 200);
+    jdbc.update(
+        "DELETE FROM role_permission WHERE role_code='RECEPTION' AND permission='SERVICES_READ'");
+    perform(getRequest(endpoint), receptionist, null, 403);
+  }
+
+  @Test
   void authenticationCsrfLogoutAndPasswordsAreProtected() throws Exception {
     var session = get("/api/v1/auth/session");
     assertThat(session.get("user").get("username").asString()).isEqualTo(adminUsername);

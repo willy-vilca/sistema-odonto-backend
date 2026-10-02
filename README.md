@@ -146,3 +146,7 @@ Permisos: FINANCES_READ para cuentas y sustentos; PAYMENTS_WRITE para cobros/apl
 PDF históricos incluyen identidad, logo, correlativo y detalle al emitirlos; se guardan en financial_content (BYTEA). El arqueo cerrado conserva también expected/counted/difference. La tipografía Noto Sans se distribuye con su licencia OFL en src/main/resources/fonts; origen: https://github.com/notofonts/noto-fonts.
 
 Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la regresión previa. Guía y resultados en [diseño financiero](docs/project/diseno-financiero-fase-5.md) y [cierre de fase 5](docs/project/cierre-fase-5.md). La integración real de WhatsApp sigue en fase 6; la restauración integral del respaldo, en fase 9.
+
+## Ajustes previos a la revisión general
+
+02/10/2026: GET /api/v1/services/{id} devuelve ServiceResponse con precio vigente y permiso SERVICES_READ; incluye consulta de referencias inactivas sin borrado de historial. La selección en presupuesto puede completar precio y descripción; el importe acordado sigue siendo editable y se conserva en el plan. Los mensajes de reglas de tratamientos utilizan la terminología de la interfaz. No hay cambios de esquema. Verificación completa: 79 pruebas aprobadas. Guías sincronizadas: alcance 1.3, plan 1.7 y docs/project/ajustes-previos-fase-6.md; WhatsApp continúa pendiente de fase 6.

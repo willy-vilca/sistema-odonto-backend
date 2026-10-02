@@ -140,7 +140,7 @@ public class TreatmentPlanService {
         hash,
         action,
         "Registro de presupuesto",
-        "Guardó conceptos e importes propuestos");
+        "Guardó tratamientos e importes propuestos");
     return response(plan);
   }
 
@@ -228,7 +228,8 @@ public class TreatmentPlanService {
       throw ApiException.conflict("El adicional requiere un plan aceptado y vigente.");
     int position = items.lastPosition(id) + 1;
     if (position > 100)
-      throw ApiException.badRequest("El plan admite hasta 100 conceptos, incluidos adicionales.");
+      throw ApiException.badRequest(
+          "El plan admite hasta 100 tratamientos, incluidos adicionales.");
     var item = addItem(plan, request.item(), position);
     items.flush();
     issue(plan, item, request.reason());
@@ -240,7 +241,7 @@ public class TreatmentPlanService {
         hash,
         "ADDITIONAL",
         request.reason(),
-        "Agregó concepto adicional con cargo propio");
+        "Agregó tratamiento adicional con cargo propio");
     return response(plan);
   }
 
