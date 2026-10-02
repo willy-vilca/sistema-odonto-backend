@@ -5,3 +5,11 @@
 *.md text eol=lf
 mvnw text eol=lf
 *.cmd text eol=crlf
+
+# Preserve original upload fixtures, PDF cross-reference offsets and ZIP archives.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.zip binary

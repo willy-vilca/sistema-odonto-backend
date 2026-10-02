@@ -150,3 +150,7 @@ Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la reg
 ## Ajustes previos a la revisión general
 
 02/10/2026: GET /api/v1/services/{id} devuelve ServiceResponse con precio vigente y permiso SERVICES_READ; incluye consulta de referencias inactivas sin borrado de historial. La selección en presupuesto puede completar precio y descripción; el importe acordado sigue siendo editable y se conserva en el plan. Los mensajes de reglas de tratamientos utilizan la terminología de la interfaz. No hay cambios de esquema. Verificación completa: 79 pruebas aprobadas. Guías sincronizadas: alcance 1.3, plan 1.7 y docs/project/ajustes-previos-fase-6.md; WhatsApp continúa pendiente de fase 6.
+
+## Revisión manual antes de fase 6
+
+[Guía secuencial con datos de prueba](docs/project/guia-pruebas-manuales-fases-0-a-5.md) y [registro de resultados](docs/project/registro-revision-manual.md). Reutiliza cinco pacientes para recorrer las funciones implementadas de las fases 0 a 5, con saldos esperados y controles por rol/dispositivo. Archivos ficticios en docs/project/datos-prueba. La ejecución manual está pendiente del usuario; no se marca la integración de WhatsApp como terminada. Instantáneas vigentes: alcance1.3 y plan1.8.
