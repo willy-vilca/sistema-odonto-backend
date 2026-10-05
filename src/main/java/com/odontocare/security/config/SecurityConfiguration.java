@@ -48,10 +48,22 @@ public class SecurityConfiguration {
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/setup", "/api/v1/auth/login")
                 .permitAll()
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/v1/integrations/whatsapp/inbound",
+                    "/api/v1/integrations/whatsapp/status")
+                .permitAll()
                 .requestMatchers("/api/v1/**")
                 .authenticated()
                 .anyRequest()
                 .denyAll());
+    http.csrf(
+        csrf ->
+            csrf.ignoringRequestMatchers(
+                org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+                    .pathPattern(HttpMethod.POST, "/api/v1/integrations/whatsapp/inbound"),
+                org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+                    .pathPattern(HttpMethod.POST, "/api/v1/integrations/whatsapp/status")));
     http.exceptionHandling(
         errors ->
             errors

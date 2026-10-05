@@ -126,3 +126,7 @@ Orden de bloqueos: paciente → registro de caja → perfil cuando corresponde u
 V10 añade el registro monetario, aplicaciones, cuotas, categorías, documentos/contenido, registro/cajas y vista de saldo. V11 protege calendarios históricos, vincula documentos con arqueos y añade unicidad de constancias y nombres de categorías. Los movimientos originales y sus binarios no permiten UPDATE/DELETE; caja cerrada queda congelada. Las consultas de archivo no incluyen bytea.
 
 El frontend agrupa finanzas en cuenta, gastos, caja y categorías. Dentro de la cuenta, cargos/pagos/cuotas/archivos se montan según la sección activa. Formularios conservan una clave por operación mientras se reintentan y los selectores consultan páginas del servidor. Las constancias tienen visor de páginas con zoom y descarga autorizada; fechas respetan configuración.
+
+## Fase 6, primer tramo: conexión de WhatsApp
+
+whatsapp separa configuración privada, controladores, contratos, modelos inmutables, repositorio JDBC, entrada, cola de salida y conector REST. La firma utiliza el SDK oficial; las escrituras y auditoría son transaccionales. La salida se guarda antes de contactar al proveedor y usa correlación para recuperar avisos tempranos. Este primer tramo no crea citas. [Diseño y límites](project/conexion-whatsapp-fase-6.md), [guía de conexión](project/conectar-whatsapp-prueba.md).

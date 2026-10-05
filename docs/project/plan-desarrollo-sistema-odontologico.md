@@ -1,8 +1,8 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 5 de octubre de 2026. Versión del plan: 1.9. Alcance de referencia: versión 1.4 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 5 de octubre de 2026. Versión del plan: 2.0. Alcance de referencia: versión 1.5 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
-Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general pendiente. Se incorporan los ajustes solicitados antes de la revisión general: consulta de servicios y precio editable, terminología de tratamientos y notificaciones flotantes. Las fases 6 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
+Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general informada favorable de manera aproximada, pendiente de anotación individual. Fase 6 en desarrollo por partes: primero conexión y mensajes de WhatsApp, después agente y reservas. Las fases 7 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
 
 Ajustes previos a la revisión general completados el 02/10/2026: consulta de detalle del servicio protegida, precio autocompletado y editable, terminología de tratamientos y avisos flotantes. 79 pruebas del servidor y 52 del navegador aprobadas, con revisión responsiva y recuperación de reprogramación. [Resultados y correcciones](ajustes-previos-fase-6.md).
 
@@ -201,6 +201,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 ### Fase 6. Reserva automática por WhatsApp con agente de IA
 
+**Secuencia acordada el 05/10/2026.** Primero implementar y comprobar recepción, persistencia, consulta y envío; el usuario aún no tiene cuenta Twilio. [Guía de conexión](conectar-whatsapp-prueba.md) y [diseño y estado del primer tramo](conexion-whatsapp-fase-6.md). La cuenta nueva de prueba permite plantillas, por lo que las respuestas personalizadas del agente necesitan habilitación real del proveedor. No se presenta la conexión ni la fase completa como aceptadas con pruebas internas. Tras verificar mensaje real → sistema → respuesta real, se continúa con selección del modelo, herramientas y reserva.
+
 **Objetivo.** Completar una reserva real desde mensajes de texto de WhatsApp utilizando la agenda existente.
 
 **Trabajo incluido.**
@@ -344,7 +346,7 @@ Estados de trabajo: pendiente, en desarrollo, en validación, en ajustes y compl
 | 3 | Completada | 01/10/2026: atenciones versionadas, antecedentes, odontograma, originales PostgreSQL, consentimientos, configuración, permisos y auditoría; 41 pruebas backend y 30 escenarios distintos de navegador aprobados. Revisión visual en computadora, tablet y celular; migración local conserva datos. [Evidencia](cierre-fase-3.md). Revisada y aprobada por el usuario; restauración integral pendiente de fase 9 |
 | 4 | Completada | 01/10/2026: presupuestos, aceptación explícita, sesiones, adicionales y cargos/ajustes inmutables con deuda explicable; 54 pruebas backend y 37 escenarios de navegador aprobados. Migración local y respaldo conservan datos; revisión en computadora, tablet y celular. [Evidencia](cierre-fase-4.md). Revisada y aprobada por el usuario; pagos y caja en fase 5 |
 | 5 | Completada | 02/10/2026: pagos, anticipos, cuotas, saldos, correcciones, egresos, sustentos y caja con PDF históricos y zoom. 77 pruebas backend y 48 escenarios de navegador aprobados, con 11 financieros también comprobados tras el ajuste del visor. Migraciones y respaldo conservan datos locales; revisión en computadora, tablet y celular. [Evidencia](cierre-fase-5.md). Revisada inicialmente por el usuario; revisión manual integral de fases 0 a 5 pendiente según la guía preparada. WhatsApp real pendiente de fase 6 y restauración integral de fase 9 |
-| 6 | Pendiente | Depende de fase 5 y accesos externos de prueba |
+| 6 | En desarrollo | 05/10/2026: conexión, persistencia, bandeja y envío de prueba implementados; 93 pruebas backend, 13 escenarios de navegador y una del receptor aprobados, con revisión en computadora/tablet/celular. Prueba real pendiente de cuenta, teléfono autorizado y HTTPS del usuario. El nuevo trial restringe envíos a plantillas; agente, reservas y A22 siguen pendientes. [Estado y evidencia](conexion-whatsapp-fase-6.md) |
 | 7 | Pendiente | Depende de fase 6 |
 | 8 | Pendiente | Depende de fase 7 |
 | 9 | Pendiente | Depende de fase 8 |

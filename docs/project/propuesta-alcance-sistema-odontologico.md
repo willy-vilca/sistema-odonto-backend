@@ -1,6 +1,6 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
-Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.4. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz confirmados el 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales solicitados el 05/10/2026.
+Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.5. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones actuales del entorno Twilio y la comprobación de conexión previa al agente.
 
 Este documento es la guía funcional y técnica de referencia para elaborar el plan de desarrollo, implementar el sistema y comprobar la primera entrega. Las funciones incluidas son compromisos de esta entrega; las ampliaciones posteriores quedan expresamente fuera de ella. Las decisiones técnicas de prueba adoptadas se distinguen de los requisitos funcionales y pueden ajustarse sin reducirlos.
 
@@ -251,6 +251,8 @@ La aplicación inicial es web. Un ejecutable de escritorio no forma parte de est
 ### WhatsApp para pruebas
 
 Por la prioridad de sencillez, se adopta Twilio Sandbox como decisión técnica inicial de pruebas. Permite recibir y responder mensajes mediante eventos sin registrar todavía un número de consultorio. Los participantes deben incorporarse al entorno autorizado; utiliza un número compartido, tiene límites de prueba y sus sesiones deben renovarse periódicamente. No es un entorno de producción. Se usará la consola compatible indicada por el proveedor. [Documentación oficial de Twilio Sandbox](https://www.twilio.com/docs/whatsapp/sandbox).
+
+Comprobación vigente al 05/10/2026: Twilio distingue el Sandbox clásico de su nuevo trial con Try out WhatsApp. El nuevo trial restringe los envíos a plantillas del proveedor y no admite respuestas directas TwiML. La primera comprobación permite recibir mensajes reales y enviar una plantilla de prueba; no garantiza texto libre en una cuenta nueva. El agente requiere verificar una cuenta que permita respuestas personalizadas o resolver el proveedor antes de su demostración. Actualizar una cuenta con costes será una decisión expresa del usuario. Se mantienen los criterios de reserva real; una respuesta predefinida no cumple A22. [Restricciones oficiales](https://www.twilio.com/docs/usage/trials/try-out-whatsapp), [guía local paso a paso](conectar-whatsapp-prueba.md).
 
 Se demostrará el agente con mensajes reales desde WhatsApp y citas persistidas en PostgreSQL, además de pruebas internas de sus herramientas. Una conversación simulada o la recepción de un evento ficticio por sí solas no cumplen el criterio de integración completa.
 

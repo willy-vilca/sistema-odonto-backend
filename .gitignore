@@ -2,6 +2,7 @@ HELP.md
 target/
 .cache/
 .runtime/
+config/whatsapp.local.properties
 *.log
 .env
 .env.*

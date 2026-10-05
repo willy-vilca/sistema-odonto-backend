@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 a 5: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes, cargos, cobros, cuotas, egresos y caja con historial. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 5: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes, cargos, cobros, cuotas, egresos y caja con historial. Fase 6 en desarrollo: conexión inicial de WhatsApp. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 
@@ -27,7 +27,7 @@ La instalación sin usuarios solicita crear una cuenta administradora propia. No
 
 Sesiones de servidor con cookie HttpOnly, SameSite Strict, CSRF y rotación de sesión al acceder. El perfil prod exige además cookie Secure y HTTPS. Las contraseñas se almacenan mediante BCrypt y nunca se devuelven por HTTP.
 
-Administrador, odontólogo, recepción y caja son roles fijos con nombres y permisos configurables. Los roles operativos consultan configuración, profesionales, servicios y horarios. Recepción registra pacientes y gestiona citas; odontólogo y caja consultan fichas administrativas y agenda. El administrador conserva todos los permisos. El odontólogo dispone también de clínica y documentos; caja y recepción no tienen acceso clínico por defecto. Cobros se incorporarán en las siguientes fases.
+Administrador, odontólogo, recepción y caja son roles fijos con nombres y permisos configurables. Los roles operativos consultan configuración, profesionales, servicios y horarios. Recepción registra pacientes y gestiona citas; odontólogo y caja consultan fichas administrativas y agenda. El administrador conserva todos los permisos. El odontólogo dispone también de clínica y documentos; caja y recepción no tienen acceso clínico por defecto. Caja gestiona cobros y recepción consulta WhatsApp con los permisos correspondientes.
 
 Administrar necesita consultar la función correspondiente. Administrar odontólogos necesita consultar servicios; administrar horarios necesita consultar profesionales. El administrador conserva acceso completo. Se impide desactivar la propia cuenta o retirar el último administrador activo. Cambiar contraseña, usuario, estado o roles invalida sesiones; los permisos de un rol se verifican en cada solicitud.
 
@@ -71,7 +71,7 @@ Para navegador, después de verify, desde frontend:
 
 ~~~powershell
 ./scripts/prepare-e2e.ps1
-java -jar ../backend/target/odontocare-0.0.1-SNAPSHOT.jar --spring.profiles.active=test --spring.config.additional-location=file:../backend/src/test/resources/application-test.properties
+java -jar ../backend/target/odontocare-0.0.1-SNAPSHOT.jar --spring.profiles.active=test --spring.config.additional-location=file:../backend/src/test/resources/application-test.properties,file:../backend/src/test/resources/whatsapp-e2e.properties
 ~~~
 
 En otra terminal de frontend: npm.cmd run test:e2e. Puertos 8081 y 5174. Contraseñas aleatorias únicamente en .runtime, ignorado por Git. La preparación verifica el nombre de la base antes de vaciarla. No ejecutar verify mientras se pruebe el navegador: comparten la base de pruebas.
@@ -82,7 +82,7 @@ En Windows, detener java -jar antes de reconstruir el ejecutable. El arranque sp
 
 prod exige DB_URL, DB_USERNAME y DB_PASSWORD, con PORT y SERVER_ADDRESS opcionales; no hereda credenciales locales. Flyway V2 necesita autorización para instalar btree_gist. Preparar esa extensión con el administrador de PostgreSQL para una instalación productiva.
 
-La fase 2 aplica las reglas a las citas, genera códigos de pacientes y conserva duración e historial. Presupuestos y constancias consumirán sus textos y correlativos en fases posteriores. La clínica está disponible desde fase 3 y los presupuestos y cargos desde fase 4; pagos y WhatsApp se incorporan en las siguientes fases. Despliegue final, respaldos y restauración: fase 9.
+La fase 2 aplica las reglas a las citas, genera códigos de pacientes y conserva duración e historial. Presupuestos y constancias consumirán sus textos y correlativos en fases posteriores. La clínica está disponible desde fase 3, presupuestos y cargos desde fase 4 y pagos desde fase 5. La conexión inicial de WhatsApp se incorpora en fase 6; el agente y la reserva automática siguen pendientes. Despliegue final, respaldos y restauración: fase 9.
 
 Consultar [arquitectura](docs/architecture.md) y [cierre de fase 4](docs/project/cierre-fase-4.md). Las guías maestras están en la raíz; docs/project conserva sus instantáneas exactas.
 
@@ -158,3 +158,11 @@ Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la reg
 ## Consulta paginada de servicios asociados
 
 05/10/2026: GET /api/v1/dentists/{id}/services permite consultar servicios asociados con page, size, search y active. Requiere DENTISTS_READ y devuelve solo id, name y active; no expone precios. Incluye referencias inactivas conservadas y valida tamaño y ordenación por nombre. Sin cambios de esquema. Phase1IntegrationTests: 18 pruebas aprobadas, incluido el permiso de lectura de odontólogos sin acceso al catálogo. [Detalles y revisión visual](docs/project/ajustes-listas-agenda-odontologos.md).
+
+## WhatsApp · Fase 6, conexión inicial
+
+Recepción autenticada con firma Twilio, conversaciones paginadas, mensajes de texto y multimedia marcada como no compatible, salida persistida e idempotente y estados de entrega. Administración y recepción reciben WHATSAPP_READ/WRITE. Aún no se interpretan solicitudes ni se crean citas desde WhatsApp.
+
+La conexión está deshabilitada por defecto. Seguir [la guía desde cero](docs/project/conectar-whatsapp-prueba.md): crear cuenta, autorizar teléfono, copiar config/whatsapp.example.properties a config/whatsapp.local.properties (ignorado), completar credenciales y publicar únicamente los webhooks mediante el receptor local en 8082. El trial nuevo usa TEMPLATE; TEXT requiere habilitación real de la cuenta. La configuración lista en pantalla no certifica la prueba externa.
+
+Prueba del receptor: node --test --test-isolation=none scripts/whatsapp-webhook-gateway.test.mjs. La regresión del servidor incluye WhatsAppIntegrationTests en la base exclusiva de pruebas, sin contactar al proveedor. [Diseño y resultados](docs/project/conexion-whatsapp-fase-6.md). Alcance vigente 1.5 y plan 2.0, con prueba real y A22 pendientes.
