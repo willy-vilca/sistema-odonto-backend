@@ -1,12 +1,14 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 2 de octubre de 2026. Versión del plan: 1.8. Alcance de referencia: versión 1.3 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 5 de octubre de 2026. Versión del plan: 1.9. Alcance de referencia: versión 1.4 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general pendiente. Se incorporan los ajustes solicitados antes de la revisión general: consulta de servicios y precio editable, terminología de tratamientos y notificaciones flotantes. Las fases 6 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
 
 Ajustes previos a la revisión general completados el 02/10/2026: consulta de detalle del servicio protegida, precio autocompletado y editable, terminología de tratamientos y avisos flotantes. 79 pruebas del servidor y 52 del navegador aprobadas, con revisión responsiva y recuperación de reprogramación. [Resultados y correcciones](ajustes-previos-fase-6.md).
 
 Revisión general preparada el 02/10/2026, antes de fase 6: [guía secuencial de las fases 0 a 5](guia-pruebas-manuales-fases-0-a-5.md), [registro de resultados](registro-revision-manual.md) y archivos ficticios en datos-prueba. La guía contrasta las funciones actuales, reutiliza cinco pacientes e incluye variantes de clínica y finanzas, resultados esperados y comprobaciones por roles/tamaños. Su preparación no declara aprobada la ejecución manual. Las incidencias críticas que aparezcan se corregirán antes de avanzar con funciones dependientes.
+
+Revisión del usuario el 05/10/2026: informa que realizó aproximadamente toda la guía y que las funciones probadas parecen correctas. No se asigna aprobación individual a los bloques pendientes de registrar. Se completan sus dos ajustes: resumen de tres servicios con consulta completa remota y mes con tres citas por día más lista paginada y detalle reutilizado. 18 pruebas del servidor y 17 del navegador aprobadas; compilación, lint, formato y revisión visual en tres tamaños aprobados. Validación y límites en [ajustes de servicios y calendario](ajustes-listas-agenda-odontologos.md). La fase 6 permanece pendiente.
 
 ## 1. Objetivo y estrategia
 

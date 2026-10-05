@@ -1,6 +1,6 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
-Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.3. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz confirmados el 02/10/2026 antes de la revisión general.
+Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.4. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz confirmados el 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales solicitados el 05/10/2026.
 
 Este documento es la guía funcional y técnica de referencia para elaborar el plan de desarrollo, implementar el sistema y comprobar la primera entrega. Las funciones incluidas son compromisos de esta entrega; las ampliaciones posteriores quedan expresamente fuera de ella. Las decisiones técnicas de prueba adoptadas se distinguen de los requisitos funcionales y pueden ajustarse sin reducirlos.
 
@@ -50,6 +50,8 @@ Se cuidarán jerarquía visual, tipografía legible, espaciado, contraste, accio
 La adaptación se comprobará en cada fase, incluyendo agenda, odontograma, tablas, formularios, documentos y conversaciones. Las vistas complejas podrán cambiar de disposición o utilizar desplazamiento contenido cuando resulte necesario, evitando desbordamientos de la página y funciones inaccesibles en pantallas pequeñas.
 
 En presupuestos se utiliza «tratamiento» para sus partidas y, en la vinculación de atenciones, «plan de tratamiento». Seleccionar un servicio completa su descripción y precio vigente; el precio unitario sigue siendo editable y se conserva el importe acordado. Los resultados de las acciones se muestran mediante notificaciones flotantes accesibles, con cierre manual y desaparición automática; las validaciones de campo y los fallos que bloquean la carga permanecen en su contexto.
+
+La tabla de odontólogos muestra hasta tres servicios asociados y permite consultar los restantes en un diálogo con búsqueda, filtro de estado y paginación remotos. El mes muestra hasta tres citas por día y «+N citas más» cuando corresponde, manteniendo celdas de altura uniforme. En celular se utiliza un contador para abrir la lista del día. La lista respeta el odontólogo seleccionado, admite búsqueda, estado y paginación del servidor, y abre el detalle existente de cada cita con sus opciones e historial; cerrarlo devuelve a esa lista sin abandonar el mes.
 
 ## 3. Pacientes y contacto inicial
 
@@ -341,6 +343,7 @@ La entrega se comprobará contra esta tabla y contra las reglas de cada módulo.
 | Configuración local | Credenciales PostgreSQL de demostración directamente en application-local.properties; producción y tokens externos usan configuración separada | Excepción explícita autorizada por el usuario |
 | Diseño de interfaz | A criterio del agente; elegante, profesional y atractivo, con muy buena experiencia de usuario; prioridad de computadora y adaptación funcional a tablets y celulares | Confirmado por el usuario |
 | Terminología y avisos | «Tratamiento» en presupuestos, «plan de tratamiento» en atenciones; precio del servicio autocompletado y editable; notificaciones flotantes para las acciones | Ajustes solicitados por el usuario el 02/10/2026 |
+| Resúmenes y consulta completa | Hasta tres servicios por odontólogo y tres citas por día en el mes; diálogos con consulta remota y detalle de cita reutilizado | Ajustes solicitados por el usuario el 05/10/2026 |
 | Agente y evidencia | Implementación propia sencilla, bitácora y demostración verificable; sin necesidad de n8n | Criterio del usuario y decisión técnica adoptada |
 | WhatsApp de prueba | Twilio Sandbox con participantes autorizados; no se necesita un número de consultorio | Decisión técnica adoptada bajo la prioridad de sencillez del usuario |
 | Formatos y tamaño inicial | JPG/JPEG, PNG, WebP y PDF; límite inicial de 20 MiB ajustable | Valores técnicos iniciales adoptados |

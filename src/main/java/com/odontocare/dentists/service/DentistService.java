@@ -1,6 +1,7 @@
 package com.odontocare.dentists.service;
 
 import com.odontocare.audit.service.AuditService;
+import com.odontocare.catalog.model.DentalService;
 import com.odontocare.catalog.repository.DentalServiceRepository;
 import com.odontocare.dentists.dto.*;
 import com.odontocare.dentists.model.Dentist;
@@ -47,6 +48,33 @@ public class DentistService {
                     Map.of(
                         "name", "fullName", "license", "licenseNumber", "createdAt", "createdAt")))
             .map(this::response));
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<AssignedServiceResponse> assignedServices(
+      UUID dentistId, PageQuery query, Boolean active) {
+    if (!dentists.existsById(dentistId)) throw ApiException.notFound();
+    var criteria =
+        SearchSpecifications.<DentalService>text(query.getSearch(), "name")
+            .and(SearchSpecifications.equal("active", active))
+            .and(
+                (root, q, cb) -> {
+                  var assigned = q.subquery(UUID.class);
+                  var dentist = assigned.from(Dentist.class);
+                  assigned
+                      .select(dentist.get("id"))
+                      .where(
+                          cb.equal(dentist.get("id"), dentistId),
+                          cb.equal(dentist.join("services").get("id"), root.get("id")));
+                  return cb.exists(assigned);
+                });
+    return PageResponse.of(
+        services
+            .findAll(criteria, query.pageable(Map.of("name", "name")))
+            .map(
+                service ->
+                    new AssignedServiceResponse(
+                        service.getId(), service.getName(), service.getActive())));
   }
 
   @Transactional(readOnly = true)

@@ -153,4 +153,8 @@ Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la reg
 
 ## Revisión manual antes de fase 6
 
-[Guía secuencial con datos de prueba](docs/project/guia-pruebas-manuales-fases-0-a-5.md) y [registro de resultados](docs/project/registro-revision-manual.md). Reutiliza cinco pacientes para recorrer las funciones implementadas de las fases 0 a 5, con saldos esperados y controles por rol/dispositivo. Archivos ficticios en docs/project/datos-prueba. La ejecución manual está pendiente del usuario; no se marca la integración de WhatsApp como terminada. Instantáneas vigentes: alcance1.3 y plan1.8.
+[Guía secuencial con datos de prueba](docs/project/guia-pruebas-manuales-fases-0-a-5.md) y [registro de resultados](docs/project/registro-revision-manual.md). Reutiliza cinco pacientes para recorrer las funciones implementadas de las fases 0 a 5, con saldos esperados y controles por rol/dispositivo. Archivos ficticios en docs/project/datos-prueba. El usuario informó el 05/10/2026 una ejecución aproximada favorable, pendiente de registrar por bloque; no se marca la integración de WhatsApp como terminada. Instantáneas vigentes: alcance 1.4 y plan 1.9.
+
+## Consulta paginada de servicios asociados
+
+05/10/2026: GET /api/v1/dentists/{id}/services permite consultar servicios asociados con page, size, search y active. Requiere DENTISTS_READ y devuelve solo id, name y active; no expone precios. Incluye referencias inactivas conservadas y valida tamaño y ordenación por nombre. Sin cambios de esquema. Phase1IntegrationTests: 18 pruebas aprobadas, incluido el permiso de lectura de odontólogos sin acceso al catálogo. [Detalles y revisión visual](docs/project/ajustes-listas-agenda-odontologos.md).

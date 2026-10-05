@@ -2,6 +2,8 @@
 
 Este registro corresponde a [la guía secuencial](guia-pruebas-manuales-fases-0-a-5.md). Estado inicial: **pendiente de ejecución por el usuario**. Una guía preparada no es evidencia de pruebas manuales aprobadas.
 
+Actualización 05/10/2026: el usuario informa una ejecución aproximada de toda la guía con resultado favorable. Los estados de cada bloque siguen pendientes de sus anotaciones; no se infiere una aprobación exhaustiva. Los ajustes solicitados de servicios y calendario se documentan por separado en [sus resultados técnicos](ajustes-listas-agenda-odontologos.md).
+
 ## Datos del recorrido
 
 - Persona que prueba:

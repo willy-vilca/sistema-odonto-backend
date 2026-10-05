@@ -586,6 +586,48 @@ class Phase1IntegrationTests {
   }
 
   @Test
+  void assignedServicesArePagedFilteredAndProtectedByDentistReadWithoutExposingPrices()
+      throws Exception {
+    String categoryId = category().get("id").asString();
+    var first = service(categoryId, "Asignado A");
+    var second = service(categoryId, "Asignado B");
+    var third = service(categoryId, "Asignado C");
+    service(categoryId, "Sin relación");
+    var doctor = dentist("assigned", first.get("id").asString());
+    String id = doctor.get("id").asString();
+    var edited = copy(doctor);
+    edited.put(
+        "serviceIds",
+        List.of(
+            first.get("id").asString(), second.get("id").asString(), third.get("id").asString()));
+    perform(put("/api/v1/dentists/" + id).with(csrf()), admin, edited, 200);
+    var inactive = copy(second);
+    inactive.put("active", false);
+    perform(
+        put("/api/v1/services/" + second.get("id").asString()).with(csrf()), admin, inactive, 200);
+    String endpoint = "/api/v1/dentists/" + id + "/services";
+    var page = get(endpoint + "?page=1&size=1");
+    assertThat(page.get("items").size()).isEqualTo(1);
+    assertThat(page.get("totalElements").asLong()).isEqualTo(3);
+    assertThat(page.get("items").get(0).get("name").asString()).isEqualTo("Asignado B");
+    assertThat(page.toString()).doesNotContain("price", "category", "description", "Sin relación");
+    assertThat(get(endpoint + "?active=false").get("totalElements").asLong()).isEqualTo(1);
+    assertThat(get(endpoint + "?active=true&search=Asignado C").get("totalElements").asLong())
+        .isEqualTo(1);
+    perform(getRequest(endpoint + "?size=101"), admin, null, 400);
+    perform(getRequest(endpoint + "?sort=price"), admin, null, 400);
+    perform(getRequest("/api/v1/dentists/" + UUID.randomUUID() + "/services"), admin, null, 404);
+    create("/api/v1/users", user("assignedreader", "RECEPTION"));
+    jdbc.update("DELETE FROM role_permission WHERE role_code='RECEPTION'");
+    jdbc.update(
+        "INSERT INTO role_permission(role_code,permission) VALUES ('RECEPTION','DENTISTS_READ')");
+    var reader = login("assignedreader", password);
+    perform(getRequest(endpoint), reader, null, 200);
+    perform(getRequest("/api/v1/services"), reader, null, 403);
+    perform(getRequest(endpoint), null, null, 401);
+  }
+
+  @Test
   void databaseRejectsIncompletePartialDayBlock() {
     org.assertj.core.api.Assertions.assertThatThrownBy(
             () ->

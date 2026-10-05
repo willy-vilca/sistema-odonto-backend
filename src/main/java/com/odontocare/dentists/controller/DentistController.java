@@ -31,6 +31,15 @@ public class DentistController {
     return service.eligibleUsers(query);
   }
 
+  @GetMapping("/{id}/services")
+  @PreAuthorize("hasAuthority('DENTISTS_READ')")
+  public PageResponse<AssignedServiceResponse> assignedServices(
+      @PathVariable UUID id,
+      @Valid @ModelAttribute PageQuery query,
+      @RequestParam(required = false) Boolean active) {
+    return service.assignedServices(id, query, active);
+  }
+
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAuthority('DENTISTS_WRITE')")

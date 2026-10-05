@@ -1,8 +1,8 @@
 # Guía secuencial de pruebas y demostración: fases 0 a 5
 
-Versión 1.0 · 02/10/2026 · Alcance 1.3 · Plan 1.8.
+Versión 1.1 · 05/10/2026 · Alcance 1.4 · Plan 1.9.
 
-Recorrido de todas las funciones implementadas hasta fase 5, reutilizando cinco pacientes. Incluye datos para copiar, acciones y resultados esperados. **Las pruebas manuales están pendientes hasta que las ejecutes.** Marca cada bloque en [el registro de resultados](registro-revision-manual.md). Si un saldo no coincide, detente y registra el primer paso que falla; los siguientes dependen de él. Un rechazo previsto es correcto si conserva los datos y no deja operaciones parciales.
+Recorrido de todas las funciones implementadas hasta fase 5, reutilizando cinco pacientes. Incluye datos para copiar, acciones y resultados esperados. **Cada bloque se da por revisado cuando anotas su resultado.** Marca cada bloque en [el registro de resultados](registro-revision-manual.md). Si un saldo no coincide, detente y registra el primer paso que falla; los siguientes dependen de él. Un rechazo previsto es correcto si conserva los datos y no deja operaciones parciales.
 
 ## Preparación
 
@@ -123,6 +123,8 @@ En **Configuración → Odontólogos**:
 | Profesional activo | Sí | Sí |
 
 La misma cuenta no puede vincularse a dos profesionales; recepción no debe ser cuenta elegible de odontólogo. Añade y quita una selección de servicio antes de guardar para comprobar el selector múltiple sin registros extra.
+
+En la fila de Ana deben aparecer solo tres servicios y «Y 3 más». Abre **Ver servicios (6)**: consulta los seis, busca **Limpieza**, prueba el filtro Activos y cierra con Escape. No cambia la asignación. La fila de Diego muestra sus tres servicios y también permite consultar su lista completa.
 
 ### 06. Jornadas, descansos y bloqueos
 
@@ -249,6 +251,8 @@ Atendida/Cancelada/No asistió son terminales; no deben permitir reprogramación
 ### 16. Día, semana, mes y lista
 
 En F revisa vistas día/semana/mes, primero todos y después Diego. Comprueba A2/A4/A5 y detalles/historial. En lista busca Carlos y filtra estado; limpia filtros. En celular la lista debe permitir gestionar lo mismo. La revisión de tamaños se concentra en el paso 41, sin volver a reservar todo.
+
+En el mes se muestran como máximo tres citas por día, con «+N citas más» cuando hay más; en celular aparece el contador. Si ya tienes un día con más de tres citas, abre ese botón sin crear reservas redundantes: la ventana debe respetar el profesional elegido, permitir búsqueda y filtro de estado, y abrir **Ver cita** con opciones e historial. Cierra el detalle y después la lista: sigues en el mismo mes. La comprobación técnica de desbordamiento y paginación con 21 citas se registra en [los ajustes](ajustes-listas-agenda-odontologos.md).
 
 ## Presupuestos, clínica y documentos
 
