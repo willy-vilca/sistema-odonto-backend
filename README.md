@@ -166,3 +166,7 @@ Recepción autenticada con firma Twilio, conversaciones paginadas, mensajes de t
 La conexión está deshabilitada por defecto. Seguir [la guía desde cero](docs/project/conectar-whatsapp-prueba.md): crear cuenta, autorizar teléfono, copiar config/whatsapp.example.properties a config/whatsapp.local.properties (ignorado), completar credenciales y publicar únicamente los webhooks mediante el receptor local en 8082. El trial nuevo usa TEMPLATE; TEXT requiere habilitación real de la cuenta. La configuración lista en pantalla no certifica la prueba externa.
 
 Prueba del receptor: node --test --test-isolation=none scripts/whatsapp-webhook-gateway.test.mjs. La regresión del servidor incluye WhatsAppIntegrationTests en la base exclusiva de pruebas, sin contactar al proveedor. [Diseño y resultados](docs/project/conexion-whatsapp-fase-6.md). Alcance vigente 1.5 y plan 2.0, con prueba real y A22 pendientes.
+
+### Prueba externa y texto personalizado
+
+05/10/2026: el usuario confirmó recepción de mensajes y envío de plantillas reales; sus capturas muestran Recibido/Leído y un intento de envío. Texto propio, agente y reserva continúan pendientes. El modo TEXT ya utiliza Body y mantiene ventana de 24 horas, cola y control de duplicados. No se cambió la conexión privada para darlo por habilitado. [Guía de Sandbox, pago por uso y prueba de texto](docs/project/probar-whatsapp-texto-personalizado.md). Plan vigente 2.1 y alcance 1.5.

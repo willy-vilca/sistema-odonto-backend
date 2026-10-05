@@ -1,8 +1,8 @@
 # Fase 6, primer tramo: conexión de WhatsApp
 
-05/10/2026 · Alcance 1.5 · Plan 2.0 · Estado: primer tramo implementado y validado internamente; prueba externa pendiente.
+05/10/2026 · Alcance 1.5 · Plan 2.1 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente.
 
-El usuario autoriza comprobar primero la conexión de mensajes y aún no tiene cuenta Twilio. Este tramo implementa entrada, consulta y salida; modelo, interpretación, herramientas, pacientes provisionales y reservas se desarrollarán después. A22 permanece pendiente.
+El usuario autorizó comprobar primero la conexión de mensajes, creó su cuenta Twilio y confirmó su funcionamiento real mediante la guía. Este tramo implementa entrada, consulta y salida; modelo, interpretación, herramientas, pacientes provisionales y reservas se desarrollarán después. A22 permanece pendiente.
 
 ## Entrada, consulta y salida
 
@@ -37,13 +37,13 @@ V12 añade whatsapp_conversation, whatsapp_message y whatsapp_delivery_event, cl
 
 Solo los dos webhooks POST quedan exentos de sesión/CSRF y exigen autenticidad Twilio. La recepción TEMPLATE responde 200 vacío: el nuevo trial no admite XML directo. TEXT devuelve Response XML vacío para el entorno clásico, sin contestación automática. La salida usa exclusivamente la API y la cola. [Respuesta asíncrona oficial](https://www.twilio.com/docs/api/errors/11200), [webhooks clásicos](https://www.twilio.com/docs/usage/webhooks/messaging-webhooks), [restricciones actuales](https://www.twilio.com/docs/usage/trials/try-out-whatsapp).
 
-## Configuración y prueba pendiente
+## Configuración y habilitación de texto propio
 
 Deshabilitado por defecto. Las claves se guardan en config/whatsapp.local.properties ignorado, con ejemplo sin secretos e importación solo local; producción usa configuración externa. El receptor Node de pruebas escucha en 127.0.0.1:8082, admite únicamente las dos rutas, limita el cuerpo a 32 KiB y no reenvía cookies, autorización ni cabeceras de proxy. ngrok apunta a ese receptor con inspección desactivada.
 
 El nuevo trial restringe envíos a plantillas. No se promete conversación libre ni se actualiza o paga una cuenta por iniciativa del sistema. [Guía paso a paso desde cero](conectar-whatsapp-prueba.md).
 
-Para confirmar externamente la conexión se necesita teléfono autorizado → mensaje real → referencia de Twilio → registro visible en el sistema → respuesta iniciada desde la aplicación → estado de entrega y mensaje en el teléfono. Después se resuelve la habilitación de texto propio y se continúa con agente y reserva. No se cierran A22 ni fase 6 con eventos internos ficticios.
+El usuario confirmó externamente teléfono autorizado → mensaje real → registro visible en el sistema → plantilla enviada desde la aplicación → estado de entrega y mensaje en el teléfono. Ahora se resuelve la habilitación de texto propio y después se continúa con agente y reserva. No se cierran A22 ni fase 6 con esta comprobación parcial.
 
 ## Verificación técnica
 
@@ -57,4 +57,10 @@ La revisión visual y Axe no detectaron desbordamientos horizontales ni infracci
 
 Para reproducir E2E, cargar además src/test/resources/whatsapp-e2e.properties según el README backend: referencias y token ficticios, dominio example.test y worker-enabled=false. El receptor se comprueba con node --test --test-isolation=none scripts/whatsapp-webhook-gateway.test.mjs. Los informes locales están en backend/target/surefire-reports y las trazas del navegador en frontend/test-results, sin versionar credenciales.
 
-La prueba real sigue pendiente de crear la cuenta, incorporar el teléfono, completar el archivo privado, habilitar el túnel y ejecutar los pasos 7 y 8 de la guía. No se verificaron credenciales reales, entrega al teléfono, agente ni reserva. A22 y la fase 6 completa permanecen pendientes.
+## Prueba externa comunicada por el usuario
+
+El 05/10/2026 el usuario informó que completó la configuración y comprobó recepción y salida por WhatsApp. Sus dos capturas muestran los textos entrantes de la guía con estado Recibido y referencias SM, y respuestas de plantilla con referencias MM, estado Leído e Intentos de envío: 1. En las capturas se observan entradas a las 15:19 y 15:21 y salidas a las 15:29 y 15:31. La llegada al teléfono fue confirmada por el usuario; no se atribuye una ejecución propia del agente de desarrollo ni una reserva a esa evidencia.
+
+Resultado del primer tramo: recepción, persistencia, consulta, envío de plantilla y avisos de entrega comprobados externamente según esa evidencia. No se guardan claves ni se reproducen tokens en este registro. Las capturas del navegador versionadas arriba siguen siendo pruebas internas con datos ficticios, distintas de las aportadas por el usuario.
+
+Siguiente comprobación: [texto personalizado y presupuesto de Twilio](probar-whatsapp-texto-personalizado.md). Se propone comprobar primero disponibilidad del Sandbox clásico y, si la restricción trial lo exige, PAYG con recarga mínima revisada por el usuario. El conector ya soporta TEXT con Body y la interfaz su formulario; no se cambiaron código, credenciales, cuenta ni modalidad de envío en este turno. La habilitación en la cuenta concreta y el texto real siguen pendientes. Agente, reserva, A22 y la fase 6 completa permanecen pendientes.

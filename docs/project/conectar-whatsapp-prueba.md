@@ -2,6 +2,8 @@
 
 Fecha: 05/10/2026. Primera parte de la fase 6: recibir mensajes reales, guardarlos, consultarlos y comprobar el envío. La interpretación con IA y la creación automática de citas se incorporan después de verificar esta conexión.
 
+Resultado comunicado el 05/10/2026: el usuario confirmó recepción real y envío de plantillas; sus capturas muestran mensajes Recibido y respuestas Leído. Para continuar con respuestas propias, seguir [prueba de texto personalizado y costes](probar-whatsapp-texto-personalizado.md). El texto libre y la reserva mediante agente aún no están comprobados.
+
 ## Qué vas a preparar
 
 Necesitas tu computadora con el sistema, un teléfono con WhatsApp, una cuenta de Twilio y una cuenta de ngrok. Utiliza tu propio teléfono o el de alguien que haya aceptado participar en la prueba. Los mensajes serán de demostración y no incluirán información clínica.
