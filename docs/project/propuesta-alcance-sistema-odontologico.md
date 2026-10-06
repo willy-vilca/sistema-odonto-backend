@@ -1,6 +1,6 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
-Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.5. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones actuales del entorno Twilio y la comprobación de conexión previa al agente.
+Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.6. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones del entorno Twilio. La versión 1.6 registra la prioridad del 06/10/2026: evaluar un agente con API gratuita y herramientas antes del upgrade de WhatsApp, conservando confirmación y aceptación final.
 
 Este documento es la guía funcional y técnica de referencia para elaborar el plan de desarrollo, implementar el sistema y comprobar la primera entrega. Las funciones incluidas son compromisos de esta entrega; las ampliaciones posteriores quedan expresamente fuera de ella. Las decisiones técnicas de prueba adoptadas se distinguen de los requisitos funcionales y pueden ajustarse sin reducirlos.
 
@@ -265,6 +265,8 @@ La configuración de credenciales estará protegida y separada del código y de 
 ### Agente y disponibilidad del sistema
 
 El agente será un componente propio dentro del backend Spring Boot. Conservará contexto administrativo, estado de solicitud y bitácora en PostgreSQL, y utilizará un modelo de IA externo capaz de seleccionar herramientas y procesar sus resultados. El proveedor y modelo concretos son decisiones técnicas del plan de desarrollo: se eligen con pruebas de comprensión del español, uso de herramientas, tiempo de respuesta, coste y condiciones de datos. No es necesario entrenar ni alojar un modelo propio para esta entrega.
+
+Prioridad solicitada el 06/10/2026: desarrollar y comprobar primero un prototipo de interpretación y uso de herramientas con un modelo vía API, preferentemente gratuito o con pequeño desembolso por consumo, antes de actualizar Twilio. Puede recibir mensajes reales ya habilitados y mostrar en la aplicación respuestas preparadas sin envío por WhatsApp. Se probarán disponibilidad y creación en una agenda de demostración aislada, con datos completos y confirmación explícita de prueba; se conserva la confirmación inequívoca para reservas reales. Esa demostración parcial no cierra A22 ni sustituye la respuesta real por WhatsApp exigida en la primera entrega. [Selección y diseño del prototipo](seleccion-ia-prototipo-fase-6.md).
 
 La interfaz y las reglas del agente solo permitirán las funciones descritas en el apartado 10. La confirmación del paciente desencadena el registro automático; la intervención humana se reserva para solicitudes derivadas o cuando un usuario asume una conversación.
 

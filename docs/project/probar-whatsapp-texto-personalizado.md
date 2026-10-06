@@ -1,6 +1,8 @@
 # Pruebas de WhatsApp con texto personalizado
 
-05/10/2026 · Plan 2.4 · Alcance 1.5. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre antes de integrar el agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+Preparada el 05/10/2026; actualizada el 06/10/2026 · Plan 2.5 · Alcance 1.6. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre para completar la conversación del agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+
+**Prioridad nueva del usuario:** evaluar e implementar primero [el prototipo IA con API gratuita](seleccion-ia-prototipo-fase-6.md), antes del upgrade de Twilio. No esperar a habilitar texto saliente para probar interpretación y herramientas. Este procedimiento de WhatsApp se retoma después de comprobar el prototipo; la condición final de reserva y respuesta real se conserva.
 
 ## Recorrido vigente después de las comprobaciones
 
