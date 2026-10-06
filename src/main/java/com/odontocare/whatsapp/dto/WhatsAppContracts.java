@@ -36,7 +36,8 @@ public final class WhatsAppContracts {
       Instant createdAt,
       String errorCode,
       String errorMessage,
-      int attempts) {
+      int attempts,
+      String source) {
     public static Message of(WhatsAppMessage m) {
       return new Message(
           m.id(),
@@ -49,7 +50,8 @@ public final class WhatsAppContracts {
           m.createdAt(),
           m.errorCode(),
           m.errorMessage(),
-          m.attempts());
+          m.attempts(),
+          m.source());
     }
   }
 }

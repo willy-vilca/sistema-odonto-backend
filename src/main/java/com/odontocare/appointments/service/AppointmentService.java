@@ -62,10 +62,22 @@ public class AppointmentService {
 
   @Transactional
   public AppointmentResponse create(AppointmentRequest request) {
+    return createInternal(request, "MANUAL");
+  }
+
+  /** Internal agent entry point; HTTP callers cannot choose origin or bypass confirmation. */
+  @Transactional
+  public AppointmentResponse createByAgent(AppointmentRequest request, boolean applicationTest) {
+    if (request.serviceId() == null)
+      throw ApiException.badRequest("El agente necesita un servicio del catálogo.");
+    return createInternal(request, applicationTest ? "AI_TEST" : "WHATSAPP");
+  }
+
+  private AppointmentResponse createInternal(AppointmentRequest request, String origin) {
     var profile = profiles.readLockedInstallation().orElseThrow();
     var zone = ZoneId.of(profile.getTimeZone());
     var dentist = dentists.lockById(request.dentistId()).orElseThrow(ApiException::notFound);
-    String fingerprint = fingerprint(request);
+    String fingerprint = fingerprint(request, origin.equals("MANUAL") ? "" : origin);
     var repeated = appointments.findByRequestKey(request.requestKey());
     if (repeated.isPresent()) {
       if (!repeated.get().getRequestFingerprint().equals(fingerprint))
@@ -80,6 +92,8 @@ public class AppointmentService {
             ? null
             : services.findById(request.serviceId()).orElseThrow(ApiException::notFound);
     rules.eligible(dentist, service);
+    if (!origin.equals("MANUAL") && !service.getBookableByAgent())
+      throw ApiException.badRequest("El servicio no está habilitado para reserva automática.");
     int duration =
         service == null
             ? (request.durationMinutes() == null ? 0 : request.durationMinutes())
@@ -100,13 +114,32 @@ public class AppointmentService {
     appointment.setNotes(request.notes().strip());
     appointment.setRequestKey(request.requestKey());
     appointment.setRequestFingerprint(fingerprint);
+    appointment.setOrigin(origin);
+    if (!origin.equals("MANUAL")) appointment.setStatus(AppointmentStatus.CONFIRMED);
     appointments.saveAndFlush(appointment);
-    history.append(appointment, "CREATED", null, null, "Reserva manual");
-    audit.record(
-        "APPOINTMENT_CREATED",
-        "APPOINTMENT",
-        appointment.getId(),
-        "Reservó una cita manual para ficha " + patient.getCode());
+    if (origin.equals("MANUAL")) {
+      history.append(appointment, "CREATED", null, null, "Reserva manual");
+      audit.record(
+          "APPOINTMENT_CREATED",
+          "APPOINTMENT",
+          appointment.getId(),
+          "Reservó una cita manual para ficha " + patient.getCode());
+    } else {
+      history.appendAs(
+          appointment,
+          "CREATED",
+          null,
+          null,
+          "Confirmación explícita de propuesta del agente",
+          "Agente IA");
+      audit.recordAs(
+          null,
+          "Agente IA",
+          "APPOINTMENT_AGENT_CREATED",
+          "APPOINTMENT",
+          appointment.getId(),
+          "Registró cita confirmada por propuesta; origen " + origin);
+    }
     return AppointmentResponse.of(appointment, zone);
   }
 
@@ -206,12 +239,14 @@ public class AppointmentService {
         appointment.getEndsAt().plusSeconds(appointment.getGapMinutes() * 60L));
   }
 
-  private String fingerprint(AppointmentRequest request) {
+  private String fingerprint(AppointmentRequest request, String origin) {
     try {
       return HexFormat.of()
           .formatHex(
               MessageDigest.getInstance("SHA-256")
-                  .digest(mapper.writeValueAsString(request).getBytes(StandardCharsets.UTF_8)));
+                  .digest(
+                      (origin + mapper.writeValueAsString(request))
+                          .getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }

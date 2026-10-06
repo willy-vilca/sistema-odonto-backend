@@ -41,7 +41,25 @@ public class WhatsAppRepository {
               r.getString("error_message"),
               r.getInt("attempts"),
               r.getObject("request_key", UUID.class),
-              r.getString("template_sid"));
+              r.getString("template_sid"),
+              r.getString("source"));
+
+  public UUID testInbound(UUID conversation, String body, UUID key, Instant now) {
+    UUID id = UUID.randomUUID();
+    jdbc.update(
+        "INSERT INTO"
+            + " whatsapp_message(id,conversation_id,direction,kind,body,request_key,status,created_at,updated_at,next_attempt_at,source)"
+            + " VALUES(?,?,'INBOUND','TEXT',?,?,'RECEIVED',?,?,?,'APP_TEST')",
+        id,
+        conversation,
+        body,
+        key,
+        Timestamp.from(now),
+        Timestamp.from(now),
+        Timestamp.from(now));
+    touch(conversation, body, now, true);
+    return id;
+  }
 
   private static Instant instant(ResultSet r, String key) throws SQLException {
     var t = r.getTimestamp(key);

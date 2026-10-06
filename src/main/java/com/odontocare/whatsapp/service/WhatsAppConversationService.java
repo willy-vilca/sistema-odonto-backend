@@ -1,5 +1,7 @@
 package com.odontocare.whatsapp.service;
 
+import com.odontocare.agent.config.AgentProperties;
+import com.odontocare.agent.service.AgentQueueService;
 import com.odontocare.audit.service.AuditService;
 import com.odontocare.shared.pagination.*;
 import com.odontocare.shared.web.ApiException;
@@ -17,12 +19,20 @@ public class WhatsAppConversationService {
   private final WhatsAppRepository repository;
   private final WhatsAppProperties config;
   private final AuditService audit;
+  private final AgentQueueService agentQueue;
+  private final AgentProperties agentConfig;
 
   public WhatsAppConversationService(
-      WhatsAppRepository repository, WhatsAppProperties config, AuditService audit) {
+      WhatsAppRepository repository,
+      WhatsAppProperties config,
+      AuditService audit,
+      AgentQueueService agentQueue,
+      AgentProperties agentConfig) {
     this.repository = repository;
     this.config = config;
     this.audit = audit;
+    this.agentQueue = agentQueue;
+    this.agentConfig = agentConfig;
   }
 
   public Connection connection() {
@@ -37,7 +47,7 @@ public class WhatsAppConversationService {
         config.getSendMode(),
         config.templateReady(),
         config.missing(),
-        false);
+        agentConfig.isEnabled());
   }
 
   @Transactional(readOnly = true)
@@ -140,6 +150,7 @@ public class WhatsAppConversationService {
     var now = Instant.now();
     UUID conversation = repository.inboundConversation(phone, name, now), id = UUID.randomUUID();
     if (repository.inbound(id, conversation, sid, body, text ? "TEXT" : "UNSUPPORTED", now)) {
+      if (text) agentQueue.inbound(id, conversation);
       repository.touch(
           conversation, text ? body : "Mensaje con contenido no compatible", now, true);
       audit.recordAs(

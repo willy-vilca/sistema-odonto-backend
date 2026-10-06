@@ -23,6 +23,23 @@ public class AppointmentHistoryService {
       AppointmentStatus previous,
       Instant previousStart,
       String reason) {
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    String actor =
+        authentication != null
+                && authentication.getPrincipal() instanceof AccountPrincipal principal
+            ? principal.getDisplayName()
+            : "Sistema";
+    appendAs(appointment, action, previous, previousStart, reason, actor);
+  }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void appendAs(
+      Appointment appointment,
+      String action,
+      AppointmentStatus previous,
+      Instant previousStart,
+      String reason,
+      String actor) {
     var entry = new AppointmentHistory();
     entry.setAppointment(appointment);
     entry.setAction(action);
@@ -34,12 +51,7 @@ public class AppointmentHistoryService {
     entry.setDentistId(appointment.getDentist().getId());
     entry.setDentistName(appointment.getDentistName());
     entry.setDurationMinutes(appointment.getDurationMinutes());
-    var authentication = SecurityContextHolder.getContext().getAuthentication();
-    entry.setActorName(
-        authentication != null
-                && authentication.getPrincipal() instanceof AccountPrincipal principal
-            ? principal.getDisplayName()
-            : "Sistema");
+    entry.setActorName(actor);
     entry.setReason(reason);
     history.save(entry);
   }

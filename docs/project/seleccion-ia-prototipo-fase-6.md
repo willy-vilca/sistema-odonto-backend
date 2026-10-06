@@ -1,6 +1,6 @@
 # Selección de IA y prototipo previo al upgrade de WhatsApp
 
-06/10/2026 · Alcance 1.6 · Plan 2.5. Investigación documental; no se crearon cuentas, adquirieron servicios ni ejecutaron llamadas de inferencia. El agente todavía no está implementado ni validado. La recomendación inicial debe pasar las pruebas funcionales en español.
+06/10/2026. Investigación inicial del alcance 1.6 y plan 2.5, conservada como referencia de la selección. En esa investigación no se hicieron compras ni inferencias. Decisión posterior vigente: el usuario eligió GroqCloud/openai/gpt-oss-20b, autorizó la instalación actual con datos ficticios y guardó la clave. El agente está implementado y verificado mediante inferencia real; consultar [evidencia actual](prototipo-agente-groq-fase-6.md) y [configuración](configurar-groq-agente.md), alcance 1.7 y plan 2.6.
 
 ## Recomendación
 
@@ -72,11 +72,11 @@ El usuario pidió desarrollar y comprobar IA antes de pagar Twilio. No se espera
 3. Invocar catálogo y disponibilidad real del backend, con búsqueda/paginación acotadas y horarios de los odontólogos.
 4. Mostrar en la aplicación interpretación, herramientas, resultados y respuesta preparada, etiquetada **sin enviar a WhatsApp**.
 5. Completar los datos y la confirmación en el escenario de demostración: el participante puede leer la propuesta en la aplicación y enviar otro mensaje de WhatsApp con los datos o confirmación. Las pruebas automatizadas pueden usar confirmaciones ficticias, marcadas como tales.
-6. Crear la cita por la herramienta central cuando el paciente, servicio, profesional, fecha/hora y confirmación estén completos. Comprobar registro, idempotencia, historial, origen y conflictos en una agenda aislada de demostración.
+6. Crear la cita por la herramienta central cuando el paciente, servicio, profesional, fecha/hora y confirmación estén completos. Comprobar registro, idempotencia, historial, origen y conflictos en la agenda actual de desarrollo con datos ficticios, autorizada posteriormente por el usuario.
 
 Ejemplo: «quiero reservar una cita para mañana a las 9:00 am para hacerme una limpieza dental» permite detectar reserva, mañana, 09:00 y servicio. El backend debe resolver mañana con su reloj y America/Lima, buscar el servicio activo/reservable y consultar el intervalo según su duración. Todavía no identifica inequívocamente paciente/profesional ni confirma el resumen completo: inicialmente genera una solicitud/propuesta. No inventar paciente, escoger arbitrariamente entre familiares, ocupar un horario inexistente ni crear una cita definitiva en la instalación real por esa frase.
 
-Las reservas de prueba deben conservar esa misma regla: paciente de demostración, datos completos y confirmación de prueba explícita antes de ejecutar creación. El botón de un administrador puede simular confirmación únicamente en pruebas aisladas; no se presenta como confirmación real de un paciente ni como aprobación obligatoria de recepción. La disponibilidad y creación serán servicios reales, no respuestas simuladas del modelo.
+Las reservas de prueba deben conservar esa misma regla: paciente de demostración, datos completos y confirmación de prueba explícita antes de ejecutar creación. El botón de un administrador puede simular confirmación desde la aplicación, identificada como prueba; no se presenta como confirmación real de un paciente ni como aprobación obligatoria de recepción. La disponibilidad y creación serán servicios reales, no respuestas simuladas del modelo.
 
 Para aislamiento: sistema_odontologo_test, datos ficticios y perfil/archivo de configuración verificado; worker de salida WhatsApp deshabilitado. El receptor actual apunta al 8080: para pruebas directas al backend 8081 se debe configurar explícitamente ese destino, manteniendo exposición de solo los webhooks. Nunca activar dos destinos para el mismo evento ni copiar credenciales a registros. No limpiar la base local del consultorio para preparar el prototipo.
 
@@ -92,4 +92,4 @@ El prototipo verifica modelo → herramientas → persistencia en el sistema, pe
 
 Crear una cuenta en [Groq Console](https://console.groq.com), mantener el plan Free, crear una clave API en [API Keys](https://console.groq.com/keys) y revisar los límites del modelo. Activar Zero Data Retention en Data Controls. No habilitar Developer ni introducir una tarjeta para esta primera prueba si el Free disponible cubre los escenarios. No compartir la clave por chat; al implementar se preparará el archivo privado y su importación segura. [Inicio oficial](https://console.groq.com/docs/quickstart).
 
-No se creó ese archivo de configuración todavía ni se llamó al modelo. El siguiente trabajo será implementar el prototipo con una clave válida y verificarlo; la recomendación actual es documental y provisional hasta esas mediciones. Esta secuencia permite evaluar el agente antes de decidir el gasto de WhatsApp.
+Esta preparación ya se ejecutó: config/ai.local.properties está ignorado por Git, el usuario guardó la clave y se comprobó el modelo real con herramientas y reserva confirmada. La prueba utilizó pacientes y agenda actuales ficticios, sin otra instalación. La salida personalizada por WhatsApp continúa pendiente; la implementación y evidencia no cierran A22.

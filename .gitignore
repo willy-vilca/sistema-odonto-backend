@@ -3,6 +3,7 @@ target/
 .cache/
 .runtime/
 config/whatsapp.local.properties
+config/ai.local.properties
 *.log
 .env
 .env.*

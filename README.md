@@ -161,12 +161,22 @@ Validación: 24 pruebas financieras en Phase5IntegrationTests, además de la reg
 
 ## WhatsApp · Fase 6, conexión inicial
 
-Recepción autenticada con firma Twilio, conversaciones paginadas, mensajes de texto y multimedia marcada como no compatible, salida persistida e idempotente y estados de entrega. Administración y recepción reciben WHATSAPP_READ/WRITE. Aún no se interpretan solicitudes ni se crean citas desde WhatsApp.
+Recepción autenticada con firma Twilio, conversaciones paginadas, mensajes de texto y multimedia marcada como no compatible, salida persistida e idempotente y estados de entrega. Administración y recepción reciben WHATSAPP_READ/WRITE. El primer tramo del conector se amplía con el prototipo del agente descrito abajo; la salida personalizada real sigue pendiente.
 
 La conexión está deshabilitada por defecto. Seguir [la guía desde cero](docs/project/conectar-whatsapp-prueba.md): crear cuenta, autorizar teléfono, copiar config/whatsapp.example.properties a config/whatsapp.local.properties (ignorado), completar credenciales y publicar únicamente los webhooks mediante el receptor local en 8082. El trial nuevo usa TEMPLATE; TEXT requiere habilitación real de la cuenta. La configuración lista en pantalla no certifica la prueba externa.
 
-Prueba del receptor: node --test --test-isolation=none scripts/whatsapp-webhook-gateway.test.mjs. La regresión del servidor incluye WhatsAppIntegrationTests en la base exclusiva de pruebas, sin contactar al proveedor. [Diseño y resultados](docs/project/conexion-whatsapp-fase-6.md). Alcance vigente 1.5 y plan 2.0, con prueba real y A22 pendientes.
+Prueba del receptor: node --test --test-isolation=none scripts/whatsapp-webhook-gateway.test.mjs. La regresión del servidor incluye WhatsAppIntegrationTests en la base exclusiva de pruebas, sin contactar al proveedor. [Diseño y resultados](docs/project/conexion-whatsapp-fase-6.md). El usuario confirmó recepción y plantillas; texto propio y A22 siguen pendientes.
 
 ### Prueba externa y texto personalizado
 
 05/10/2026: el usuario confirmó recepción de mensajes y envío de plantillas reales; sus capturas muestran Recibido/Leído y un intento de envío. Texto propio, agente y reserva continúan pendientes. El modo TEXT ya utiliza Body y mantiene ventana de 24 horas, cola y control de duplicados. No se cambió la conexión privada para darlo por habilitado. [Guía de Sandbox, pago por uso y prueba de texto](docs/project/probar-whatsapp-texto-personalizado.md). Plan vigente 2.1 y alcance 1.5.
+
+## Agente Groq · prototipo de fase 6
+
+Modelo openai/gpt-oss-20b mediante API; agente, cola, herramientas, propuestas y confirmación dentro de Spring Boot. Archivo privado config/ai.local.properties, ignorado por Git, importado por el perfil local. Ejemplo sin secretos: config/ai.example.properties. [Guía de configuración](docs/project/configurar-groq-agente.md) y [implementación y resultados](docs/project/prototipo-agente-groq-fase-6.md).
+
+API bajo /api/v1/whatsapp: GET /agent/configuration; POST /agent/test-messages con teléfono E.164, contactName, body y requestKey UUID; GET /conversations/{id}/agent/runs y /agent/proposal; GET /agent/runs/{id} y /steps; POST /agent/runs/{id}/retry. Lecturas requieren WHATSAPP_READ; pruebas y reintentos requieren AGENT_TEST_WRITE, inicialmente para administración. Listados con filtros, búsqueda, paginación y orden permitidos; escrituras con sesión/CSRF.
+
+El usuario autorizó probar con sistema_odontologo y los datos ficticios existentes. Confirmar CONFIRMO código crea una cita transaccional; APP_TEST produce origen AI_TEST. Las respuestas permanecen PREVIEW, sin enviarse por WhatsApp. Se verificó Groq real, una cita, repetición sin duplicación, precio, datos incompletos y negación. A22 y fase 6 permanecen abiertos.
+
+Verificación interna: 107 casos backend aprobados; AgentIntegrationTests y GroqLanguageModelClientTests usan proveedores controlados y la base automática protegida existente. Para el E2E del agente: añadir --odontocare.ai.enabled=true --odontocare.ai.api-key=gsk_test_key --odontocare.ai.worker-enabled=false al backend test, conservar WhatsApp worker-enabled=false y ejecutar los escenarios indicados en frontend/README.md. Nunca usar claves reales en esa regresión. Instantáneas vigentes: alcance 1.7, plan 2.6.

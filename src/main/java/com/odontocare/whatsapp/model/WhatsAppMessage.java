@@ -16,4 +16,5 @@ public record WhatsAppMessage(
     String errorMessage,
     int attempts,
     UUID requestKey,
-    String templateSid) {}
+    String templateSid,
+    String source) {}

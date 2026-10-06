@@ -1,0 +1,452 @@
+{
+    "runs": [
+        {
+            "id": "0f64d71d-a47f-40fa-9c80-e82b893b46d8",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "consultar_servicios"
+                        ],
+                        "input_tokens": 892,
+                        "output_tokens": 42
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "call": 1
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "consultar_servicios",
+                    "state": "OK",
+                    "result": {
+                        "page": 0,
+                        "items": [
+                            {
+                                "id": "7b011249-8c25-4b44-942a-023f4af1eb8b",
+                                "name": "Limpieza dental",
+                                "price": 200.00,
+                                "duration_minutes": 60
+                            }
+                        ],
+                        "currency": "PEN",
+                        "page_size": 5
+                    },
+                    "ordinal": 2,
+                    "arguments": {
+                        "page": 0,
+                        "search": "limpieza"
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "pacientes_contacto"
+                        ],
+                        "input_tokens": 990,
+                        "output_tokens": 35
+                    },
+                    "ordinal": 3,
+                    "arguments": {
+                        "call": 2
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "pacientes_contacto",
+                    "state": "OK",
+                    "result": {
+                        "page": 0,
+                        "items": [
+                            {
+                                "id": "38c845d1-9ea5-4ad0-8d74-de77b74aba0b",
+                                "code": "PAC-000004",
+                                "full_name": "Carlos Ruiz Vega"
+                            }
+                        ],
+                        "page_size": 5
+                    },
+                    "ordinal": 4,
+                    "arguments": {
+                        "page": 0,
+                        "search": "Carlos Ruiz Vega"
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "consultar_horarios"
+                        ],
+                        "input_tokens": 1081,
+                        "output_tokens": 109
+                    },
+                    "ordinal": 5,
+                    "arguments": {
+                        "call": 3
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "consultar_horarios",
+                    "state": "OK",
+                    "result": {
+                        "date": "2026-10-07",
+                        "items": [
+                            {
+                                "slot_id": "32f09638-4aa0-404b-b5f4-568db52eceac",
+                                "local_end": "2026-10-07T10:00",
+                                "dentist_id": "5717c096-1806-4610-9d0d-d496ce199004",
+                                "local_start": "2026-10-07T09:00",
+                                "dentist_name": "Julia Aracelly Huaytalla Alarcon",
+                                "service_name": "Limpieza dental",
+                                "duration_minutes": 60,
+                                "matches_preference": true
+                            }
+                        ],
+                        "message": "Solo estos horarios fueron calculados por la agenda; no están retenidos.",
+                        "time_zone": "America/Lima",
+                        "preferred_time_available": true
+                    },
+                    "ordinal": 6,
+                    "arguments": {
+                        "service_id": "7b011249-8c25-4b44-942a-023f4af1eb8b",
+                        "preferred_time": "09:00",
+                        "days_from_today": 1
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "proponer_cita"
+                        ],
+                        "input_tokens": 1307,
+                        "output_tokens": 85
+                    },
+                    "ordinal": 7,
+                    "arguments": {
+                        "call": 4
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "proponer_cita",
+                    "state": "OK",
+                    "result": {
+                        "summary": "Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos.",
+                        "expires_at": "2026-10-06T19:43:36.607240Z",
+                        "proposal_id": "0b47bc9c-a7fa-4d99-995a-44b4cc80ffd2",
+                        "appointment_created": false,
+                        "confirmation_message": "CONFIRMO 0B47BC9C"
+                    },
+                    "ordinal": 8,
+                    "arguments": {
+                        "slot_id": "32f09638-4aa0-404b-b5f4-568db52eceac",
+                        "patient_id": "38c845d1-9ea5-4ad0-8d74-de77b74aba0b",
+                        "patient_name": "Carlos Ruiz Vega"
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "✅ **Cita propuesta**  \n- **Paciente:** Carlos Ruiz Vega  \n- **Servicio:** Limpieza dental  \n- **Odontólogo:** Julia Aracelly Huaytalla Alarcon  \n- **Fecha y hora:** 07/10/2026 09:00 (America/Lima)  \n- **Duración:** 60 minutos  \n\n**Código de confirmación:** CONFIRMO 0B47BC9C  \nPara confirmar, simplemente envía ese código. Si necesitas cambiar algo, avísame.",
+                        "tool_names": [
+                        ],
+                        "input_tokens": 1518,
+                        "output_tokens": 134
+                    },
+                    "ordinal": 9,
+                    "arguments": {
+                        "call": 5
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "Hola, soy Carlos Ruiz Vega. La cita es para mí. Quiero reservar una Limpieza dental para mañana a las 09:00 con Julia Aracelly Huaytalla Alarcon.",
+            "response": "Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos. Para reservar responde exactamente: CONFIRMO 0B47BC9C. La propuesta vence en 30 minutos y el horario se valida otra vez al confirmar. Esta respuesta está preparada y no se envió a WhatsApp.",
+            "createdAt": "2026-10-06T14:13:34.09445-05:00",
+            "inputTokens": 5788,
+            "outputTokens": 405
+        },
+        {
+            "id": "f8835870-8a76-4f7b-83a6-4cd5c0cd4b46",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "BOOKING",
+                    "name": "crear_cita_confirmada",
+                    "state": "OK",
+                    "result": {
+                        "origin": "AI_TEST",
+                        "status": "CONFIRMED",
+                        "response": "Cita registrada y confirmada. Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos. Referencia: 9ee560e4-2d48-4322-84a2-7a8a8795f0bb. Esta respuesta está preparada en el sistema y aún no se envió a WhatsApp.",
+                        "patient_id": "38c845d1-9ea5-4ad0-8d74-de77b74aba0b",
+                        "appointment_id": "9ee560e4-2d48-4322-84a2-7a8a8795f0bb"
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "proposal_id": "0b47bc9c-a7fa-4d99-995a-44b4cc80ffd2"
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "CONFIRMO 0B47BC9C",
+            "response": "Cita registrada y confirmada. Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos. Referencia: 9ee560e4-2d48-4322-84a2-7a8a8795f0bb. Esta respuesta está preparada en el sistema y aún no se envió a WhatsApp.",
+            "createdAt": "2026-10-06T14:13:37.240886-05:00",
+            "inputTokens": 0,
+            "outputTokens": 0
+        },
+        {
+            "id": "3aeacce4-750d-4fe2-a0cf-52d78246182e",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "BOOKING",
+                    "name": "confirmar_propuesta",
+                    "state": "OK",
+                    "result": {
+                        "repeated": true,
+                        "response": "La cita ya estaba registrada. Referencia: 9ee560e4-2d48-4322-84a2-7a8a8795f0bb. Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos.",
+                        "appointment_id": "9ee560e4-2d48-4322-84a2-7a8a8795f0bb"
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "code": "0B47BC9C"
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "CONFIRMO 0B47BC9C",
+            "response": "La cita ya estaba registrada. Referencia: 9ee560e4-2d48-4322-84a2-7a8a8795f0bb. Paciente: Carlos Ruiz Vega. Servicio: Limpieza dental. Odontólogo: Julia Aracelly Huaytalla Alarcon. Fecha y hora: 07/10/2026 09:00 (America/Lima). Duración: 60 minutos.",
+            "createdAt": "2026-10-06T14:13:37.300404-05:00",
+            "inputTokens": 0,
+            "outputTokens": 0
+        },
+        {
+            "id": "d86dc044-6ad9-49f2-ad53-a3e1efbd507e",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "consultar_servicios"
+                        ],
+                        "input_tokens": 869,
+                        "output_tokens": 45
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "call": 1
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "consultar_servicios",
+                    "state": "OK",
+                    "result": {
+                        "page": 0,
+                        "items": [
+                            {
+                                "id": "7b011249-8c25-4b44-942a-023f4af1eb8b",
+                                "name": "Limpieza dental",
+                                "price": 200.00,
+                                "duration_minutes": 60
+                            }
+                        ],
+                        "currency": "PEN",
+                        "page_size": 5
+                    },
+                    "ordinal": 2,
+                    "arguments": {
+                        "page": 0,
+                        "search": "limpieza"
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "La limpieza dental cuesta **S/. 200.00**. Si necesitas más información o deseas agendar una cita, avísame.",
+                        "tool_names": [
+                        ],
+                        "input_tokens": 967,
+                        "output_tokens": 45
+                    },
+                    "ordinal": 3,
+                    "arguments": {
+                        "call": 2
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "¿Cuánto cuesta la limpieza dental? Solo consulto el precio, no quiero reservar.",
+            "response": "La limpieza dental cuesta **S/. 200.00**. Si necesitas más información o deseas agendar una cita, avísame.",
+            "createdAt": "2026-10-06T14:14:55.5951-05:00",
+            "inputTokens": 1836,
+            "outputTokens": 90
+        },
+        {
+            "id": "f6c326ea-912a-4903-bc25-469a8b319e13",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "",
+                        "tool_names": [
+                            "pacientes_contacto"
+                        ],
+                        "input_tokens": 944,
+                        "output_tokens": 38
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "call": 1
+                    }
+                },
+                {
+                    "kind": "TOOL",
+                    "name": "pacientes_contacto",
+                    "state": "OK",
+                    "result": {
+                        "page": 0,
+                        "items": [
+                            {
+                                "id": "4f4e4e41-0521-44fb-8f9b-f209993e359e",
+                                "code": "PAC-000005",
+                                "full_name": "Lucía Paredes Gómez"
+                            },
+                            {
+                                "id": "6e077cdb-8aa9-4882-b373-aea060deb9ec",
+                                "code": "PAC-000006",
+                                "full_name": "Mateo Paredes Gómez"
+                            }
+                        ],
+                        "page_size": 5
+                    },
+                    "ordinal": 2,
+                    "arguments": {
+                        "page": 0,
+                        "search": ""
+                    }
+                },
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "¿Para quién es la cita? Por favor indícame el nombre completo si es un paciente nuevo.",
+                        "tool_names": [
+                        ],
+                        "input_tokens": 1076,
+                        "output_tokens": 38
+                    },
+                    "ordinal": 3,
+                    "arguments": {
+                        "call": 2
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "Quiero una cita. Todavía no sé qué servicio ni qué día.",
+            "response": "¿Para quién es la cita? Por favor indícame el nombre completo si es un paciente nuevo.",
+            "createdAt": "2026-10-06T14:14:57.056207-05:00",
+            "inputTokens": 2020,
+            "outputTokens": 76
+        },
+        {
+            "id": "113b87ec-5c05-4a99-99c9-0ac7dd10ac80",
+            "model": "openai/gpt-oss-20b",
+            "state": "COMPLETED",
+            "steps": [
+                {
+                    "kind": "MODEL",
+                    "name": "openai/gpt-oss-20b",
+                    "state": "OK",
+                    "result": {
+                        "text": "Entendido, no se realizará ninguna reserva ni propuesta de cita. Si cambias de opinión más adelante, avísame y con gusto te ayudaré.",
+                        "tool_names": [
+                        ],
+                        "input_tokens": 1009,
+                        "output_tokens": 61
+                    },
+                    "ordinal": 1,
+                    "arguments": {
+                        "call": 1
+                    }
+                }
+            ],
+            "source": "APP_TEST",
+            "message": "No me reserves ninguna cita. No confirmo ninguna propuesta.",
+            "response": "Entendido, no se realizará ninguna reserva ni propuesta de cita. Si cambias de opinión más adelante, avísame y con gusto te ayudaré.",
+            "createdAt": "2026-10-06T14:14:58.173325-05:00",
+            "inputTokens": 1009,
+            "outputTokens": 61
+        }
+    ],
+    "after": {
+        "charges": 9,
+        "patients": 8,
+        "movements": 11,
+        "encounters": 5,
+        "appointments": 9,
+        "documentContents": 5,
+        "outboundMessages": 8
+    },
+    "model": "openai/gpt-oss-20b",
+    "before": {
+        "charges": 9,
+        "patients": 8,
+        "movements": 11,
+        "encounters": 5,
+        "appointments": 8,
+        "documentContents": 5,
+        "outboundMessages": 8
+    },
+    "channel": "APP_TEST",
+    "database": "sistema_odontologo",
+    "verifiedOn": "2026-10-06",
+    "appointment": {
+        "id": "9ee560e4-2d48-4322-84a2-7a8a8795f0bb",
+        "origin": "AI_TEST",
+        "status": "CONFIRMED",
+        "ends_at": "2026-10-07T10:00:00-05:00",
+        "starts_at": "2026-10-07T09:00:00-05:00",
+        "dentist_id": "5717c096-1806-4610-9d0d-d496ce199004",
+        "patient_id": "38c845d1-9ea5-4ad0-8d74-de77b74aba0b",
+        "service_id": "7b011249-8c25-4b44-942a-023f4af1eb8b",
+        "duration_minutes": 60
+    },
+    "description": "Real model inference with the existing fictitious installation. Confirmation and repeated confirmation use server validation without additional inference. No WhatsApp messages sent."
+}
