@@ -1,6 +1,6 @@
 # Fase 6, primer tramo: conexión de WhatsApp
 
-05/10/2026 · Alcance 1.5 · Plan 2.3 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente de habilitación de cuenta.
+05/10/2026 · Alcance 1.5 · Plan 2.4 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente de habilitación de cuenta.
 
 El usuario autorizó comprobar primero la conexión de mensajes, creó su cuenta Twilio y confirmó su funcionamiento real mediante la guía. Este tramo implementa entrada, consulta y salida; modelo, interpretación, herramientas, pacientes provisionales y reservas se desarrollarán después. A22 permanece pendiente.
 
@@ -88,3 +88,9 @@ El usuario volvió a Try out WhatsApp y aportó una respuesta exitosa para From 
 Esta prueba confirma que la cuenta acepta el ejemplo permitido del trial nuevo y refuerza la hipótesis de incompatibilidad de la combinación clásica para esta cuenta. No aísla el SID clásico, remitente y variables como causas individuales, ni demuestra que aquel SID esté borrado o sea de otra cuenta. No habilita Body ni mensajes personalizados: sigue siendo una plantilla. No se envió ninguna petición POST desde las herramientas del agente ni se cambió el archivo privado.
 
 Para recuperar desde OdontoCare el entorno gratuito ya comprobado: configurar sender=whatsapp:+17372508034, send-mode=TEMPLATE y test-template-sid=HX7cf5a23fe00549e2ed931e272889fb49; conservar claves y URL pública. Reiniciar backend, actualizar conexión y comprobar que Inbound del mismo Try out WhatsApp apunta al webhook actual. Las pruebas deben escribirse al número temporal correcto, no al número del Sandbox clásico. La siguiente dependencia para el agente sigue siendo habilitar y probar texto propio; una recarga no se presenta como solución comprobada del SID clásico.
+
+## Aclaración del entorno para habilitar texto
+
+La frase «Sandbox incompatible» fue demasiado amplia: la evidencia no demuestra incompatibilidad global, sino rechazo de Body en Trial y de un SID concreto. El usuario ya accedió al Sandbox clásico y recibió mensajes. El recorrido para texto es actualizar la misma cuenta a PAYG y comprobar Body en ese mismo Sandbox, con su participante incorporado y ventana de 24 horas; no buscar un tercer Sandbox gratuito. Try out WhatsApp permanece como entorno funcional de plantillas durante Trial. [Documentación vigente](https://www.twilio.com/docs/whatsapp/sandbox).
+
+No hace falta corregir la plantilla clásica para esa prueba de texto, porque el conector TEXT no envía ContentSid ni ContentVariables. La decisión y recarga siguen en manos del usuario; no se realizó ninguna. No se cambió código ni configuración privada. Después de actualizar se verificará remitente efectivo, webhook, estado de cuenta y entrega real antes de continuar con el agente.

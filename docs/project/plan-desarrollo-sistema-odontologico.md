@@ -1,6 +1,6 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 5 de octubre de 2026. Versión del plan: 2.3. Alcance de referencia: versión 1.5 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 5 de octubre de 2026. Versión del plan: 2.4. Alcance de referencia: versión 1.5 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general informada favorable de manera aproximada, pendiente de anotación individual. Fase 6 en desarrollo por partes: primero conexión y mensajes de WhatsApp, después agente y reservas. Las fases 7 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
 
@@ -208,6 +208,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 **Plantilla clásica y pago.** El usuario aportó la petición de plantilla que falla con 21655. Su SID coincide con el Quickstart clásico y tiene formato válido; las consultas de Content API no permitieron verificar disponibilidad (401/20003), mientras Account API sigue autenticando. Primero comprobar el ejemplo permitido actual de Try out WhatsApp y resolver la compatibilidad con soporte antes de pagar. No atribuir todo error a ser Trial ni prometer que PAYG corrige una plantilla inválida. No se enviaron mensajes ni se modificó la cuenta durante estas consultas.
 
 **Nueva prueba de control.** El usuario volvió a Try out WhatsApp y obtuvo aceptación de plantilla con su remitente temporal y un SID generado por ese entorno, sin variables: errorCode nulo, status=queued. Se confirma que el ejemplo permitido del trial funciona; esa respuesta no acredita entrega por sí sola ni habilita texto propio. La hipótesis de compatibilidad del ejemplo clásico se refuerza sin determinar propiedad o eliminación de su plantilla. [Datos y configuración para volver al entorno funcional](conexion-whatsapp-fase-6.md#retorno-exitoso-al-ejemplo-del-trial-nuevo). Continúan pendientes texto personalizado, agente y A22.
+
+**Recorrido aclarado para texto propio.** No se ha probado incompatibilidad global del Sandbox clásico; el usuario accedió y recibió mensajes. No se busca otro Sandbox gratuito: Try out WhatsApp mantiene plantillas en Trial, y se propone PAYG en la misma cuenta más el Sandbox clásico para verificar Body dentro de 24 horas. Esa prueba no depende de corregir el SID de la plantilla clásica rechazada. El usuario decide la recarga y se comprobará entrega real después; no se compra, configura ni declara éxito por esta guía.
 
 **Objetivo.** Completar una reserva real desde mensajes de texto de WhatsApp utilizando la agenda existente.
 

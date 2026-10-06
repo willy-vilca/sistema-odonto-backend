@@ -1,6 +1,14 @@
 # Pruebas de WhatsApp con texto personalizado
 
-05/10/2026 · Plan 2.3 · Alcance 1.5. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre antes de integrar el agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+05/10/2026 · Plan 2.4 · Alcance 1.5. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre antes de integrar el agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+
+## Recorrido vigente después de las comprobaciones
+
+No se ha demostrado que el Sandbox clásico completo sea incompatible con la cuenta: se rechazaron un envío Body durante Trial y una plantilla concreta. No hay otro Sandbox gratuito documentado que elimine las restricciones del trial nuevo. El entorno gratuito que ya funciona es Try out WhatsApp con sus plantillas permitidas. Para comprobar respuestas propias dentro de Twilio, el recorrido recomendado es actualizar **la misma cuenta** a PAYG y utilizar el Sandbox clásico de la consola anterior, al que el usuario ya pudo acceder y desde el que recibió mensajes. [Trial](https://www.twilio.com/docs/usage/trials/try-out-whatsapp), [Sandbox y respuestas libres](https://www.twilio.com/docs/whatsapp/sandbox#user-initiated-messages-and-replies).
+
+La prueba posterior a la actualización será Body sin ContentSid ni ContentVariables, dentro de las 24 horas del último mensaje del participante. No depende de corregir el SID del ejemplo de plantilla que dio 21655. El pago no se presenta como reparación de esa plantilla; sirve para retirar las limitaciones Trial. La disponibilidad efectiva se comprobará con un intercambio real después del upgrade. El número temporal de Try out WhatsApp no se supone convertido en remitente propio al pagar; utilizar el número mostrado por el Sandbox clásico, documentado como +14155238886.
+
+Para esta cuenta, continuar con los pasos 2 a 7 de abajo: el intento gratuito ya se realizó y fue rechazado. No repetirlo buscando otro enlace. El Sandbox no exige registrar un WABA o alquilar un número propio; si la consola deriva únicamente a un alta empresarial, resolver el acceso al Sandbox antes de contratar productos adicionales. [Requisitos del Sandbox](https://www.twilio.com/docs/whatsapp/sandbox).
 
 **Resultado posterior de la comprobación gratuita en esta cuenta.** El usuario consiguió recibir mensajes desde el Sandbox clásico, pero el envío TEXT falló. La lectura local confirma modo TEXT y remitente del Sandbox clásico; la base registra un mensaje TEXT, FAILED, código 21654, un intento y sin plantilla asociada. La API de Twilio confirmó que la cuenta configurada sigue activa y es Trial mediante un GET de solo lectura. El usuario corrigió la asociación de la prueba de consola: la nueva petición Body sin ContentSid devuelve también 21654; el 21655 anterior corresponde a otra petición no aportada. Por tanto, acceder a la consola anterior no habilitó texto libre en esta cuenta. No repetir ese intento como alternativa gratuita ya verificada. Para avanzar con TEXT se requiere resolver la habilitación de la cuenta con Twilio, contemplando PAYG; el usuario decide y realiza la actualización. [Restricción vigente del trial](https://www.twilio.com/docs/usage/trials/try-out-whatsapp).
 
@@ -42,13 +50,13 @@ Para controlar gastos, deja desactivado **Auto Recharge**, revisa **Billing / Us
 
 ### 1. Confirmar el acceso al Sandbox
 
-Abre el enlace de la consola anterior indicado arriba. Debe mostrar un número de Sandbox y un código de incorporación. No cambies todavía la configuración que funciona si la cuenta no te permite acceder. Si puedes activarlo sin actualizar, realiza los pasos 3 a 7 una vez para comprobar texto gratuito. Si la consola o ese envío exige quitar la restricción trial, realiza el paso 2 y repite la comprobación. Si el texto llega correctamente en trial, no hace falta pagar todavía.
+En esta cuenta el acceso ya se comprobó y el envío gratuito TEXT fue rechazado. El entorno es el Sandbox de la consola anterior, no otro Sandbox nuevo. No repetir los envíos Body mientras siga Trial. Revisar los datos de facturación del paso 2 y, después de la actualización, reabrir ese mismo Sandbox con la misma cuenta.
 
 ### 2. Actualizar a PAYG si es necesario
 
 En tu cuenta actual de Twilio, pulsa **Upgrade** o busca esa palabra en la consola. Completa tus datos reales de facturación y dirección; elige **Pay-as-you-go** si aparecen varias modalidades. Añade el método de pago y revisa el importe final. Desactiva Auto Recharge y confirma únicamente cuando estés conforme con el coste mostrado. El pago lo realizas tú en Twilio.
 
-Comprueba que la cuenta ya figura como actualizada y abre de nuevo el Sandbox clásico. Si no aparece, resuelve su acceso con soporte antes de comprar un número propio. [Ubicación de Upgrade](https://www.twilio.com/docs/usage/trials#upgrade-your-account).
+Comprueba que esa misma cuenta ya figura como actualizada y abre de nuevo el Sandbox clásico. En la consola anterior, el recorrido habitual es **Messaging → Try it out → Send a WhatsApp message → Sandbox settings**; también puedes usar el enlace del Sandbox de esta guía. Si no aparece, resuelve su acceso con soporte antes de comprar un número propio. [Ubicación de Upgrade](https://www.twilio.com/docs/usage/trials#upgrade-your-account), [enlace oficial del Sandbox](https://www.twilio.com/console/sms/whatsapp/sandbox).
 
 ### 3. Incorporar tu teléfono al Sandbox clásico
 
