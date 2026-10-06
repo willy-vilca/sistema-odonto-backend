@@ -1,6 +1,6 @@
 # Fase 6, primer tramo: conexión de WhatsApp
 
-05/10/2026 · Alcance 1.5 · Plan 2.2 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente de habilitación de cuenta.
+05/10/2026 · Alcance 1.5 · Plan 2.3 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente de habilitación de cuenta.
 
 El usuario autorizó comprobar primero la conexión de mensajes, creó su cuenta Twilio y confirmó su funcionamiento real mediante la guía. Este tramo implementa entrada, consulta y salida; modelo, interpretación, herramientas, pacientes provisionales y reservas se desarrollarán después. A22 permanece pendiente.
 
@@ -72,3 +72,11 @@ El usuario probó el Sandbox clásico y confirmó recepción, pero informó rech
 Un GET autenticado de solo lectura a la cuenta configurada confirmó type=Trial y status=active; no se envió ningún mensaje ni se realizó un pago. La restricción publicada del trial nuevo requiere ContentSid de plantilla del proveedor, por lo que este acceso al Sandbox clásico no demuestra ni habilita texto libre en esa cuenta. Se mantiene como dependencia la habilitación real de la cuenta y se evita atribuir el rechazo de texto a un fallo de copia del SID de nuestro archivo. [Trial](https://www.twilio.com/docs/usage/trials/try-out-whatsapp), [21654](https://www.twilio.com/docs/api/errors/21654), [21655](https://www.twilio.com/docs/api/errors/21655).
 
 No se cambió código ni configuración privada, no se vació la base del consultorio y no se repitieron pruebas de envío. La actualización PAYG continúa siendo una decisión del usuario. El 21655 de la otra petición necesitaría revisar su plantilla y cuenta; no se considera diagnosticado ni se afirma que PAYG lo corrija. El resultado de texto propio debe verificarse después de la habilitación y antes del agente.
+
+## Petición de plantilla que devuelve 21655
+
+El usuario aportó después la petición original de plantilla: From del Sandbox clásico, ContentSid HXb5b62575e6e4ff6129ad7c8efe1f983e y variables 1/2 con JSON válido. Ese SID aparece en el Quickstart oficial y cumple el formato HX de 34 caracteres; no se diagnostica como error de escritura. Una plantilla del ejemplo clásico puede no estar habilitada en el trial nuevo, pero es una hipótesis de compatibilidad, no una titularidad comprobada. [Quickstart](https://www.twilio.com/docs/whatsapp/quickstart), [21655](https://www.twilio.com/docs/api/errors/21655).
+
+Se realizaron solo consultas GET, sin mensajes ni compras: ambos SID (el del Quickstart y el del trial que había funcionado) dieron 401/20003 en Content API; Account API dio 200, type=Trial, status=active y SID coincidente. Por tanto, las credenciales autentican en Account API, pero estas consultas no permiten comprobar disponibilidad, borrado ni cuenta propietaria de las plantillas. No se utiliza un valor de titularidad falso derivado de una respuesta de error como evidencia de propiedad.
+
+Siguiente comprobación manual gratuita: generar el ejemplo permitido actual en Try out WhatsApp y usar su From/ContentSid juntos, sin los parámetros adicionales del ejemplo clásico. Si falla, resolver con soporte esa plantilla y la compatibilidad del entorno antes de pagar. Se distingue la restricción de texto libre del trial de la validación de una plantilla concreta; PAYG no se presenta como solución garantizada del 21655.
