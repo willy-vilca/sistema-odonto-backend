@@ -18,6 +18,8 @@ Si solo ves **Try out WhatsApp**, consulta a Twilio sobre acceso al Sandbox clá
 
 Antes de recargar, volver a Try out WhatsApp en la consola nueva y utilizar juntos el From y ContentSid que genere su ejemplo actual permitido, sin añadir ContentVariables al ejemplo del trial. No intercambiar el SID fijo del Quickstart clásico con el remitente temporal del trial ni dar por universal la disponibilidad de aquel SID. Si el ejemplo permitido también falla, consultar soporte de Twilio con la petición sin claves y su error; confirmar además la habilitación del Sandbox/texto tras el upgrade antes de asumir ese coste. La restricción documentada de texto libre del trial sigue vigente, pero no equivale a diagnosticar una plantilla inválida.
 
+**Resultado de esa comprobación de control.** El usuario volvió a Try out WhatsApp y obtuvo éxito con la plantilla actual del entorno: referencia de mensaje, errorCode nulo y queued. La aceptación funciona en el trial nuevo; el texto de esa respuesta proviene de la plantilla y no demuestra salida personalizada. Para restablecer esa modalidad en el sistema, utilizar [la configuración de retorno documentada](conexion-whatsapp-fase-6.md#retorno-exitoso-al-ejemplo-del-trial-nuevo). El siguiente paso para el agente continúa siendo resolver la habilitación de Body y verificarlo con un intercambio real. No se presupone que actualizar la cuenta habilite la plantilla clásica rechazada.
+
 ## Coste y control del presupuesto
 
 Twilio publica **US$0.005 por mensaje recibido o enviado**. Estos ejemplos calculan únicamente su tarifa base, antes de cargos de Meta, impuestos, unidades gratuitas y errores:

@@ -207,6 +207,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Plantilla clásica y pago.** El usuario aportó la petición de plantilla que falla con 21655. Su SID coincide con el Quickstart clásico y tiene formato válido; las consultas de Content API no permitieron verificar disponibilidad (401/20003), mientras Account API sigue autenticando. Primero comprobar el ejemplo permitido actual de Try out WhatsApp y resolver la compatibilidad con soporte antes de pagar. No atribuir todo error a ser Trial ni prometer que PAYG corrige una plantilla inválida. No se enviaron mensajes ni se modificó la cuenta durante estas consultas.
 
+**Nueva prueba de control.** El usuario volvió a Try out WhatsApp y obtuvo aceptación de plantilla con su remitente temporal y un SID generado por ese entorno, sin variables: errorCode nulo, status=queued. Se confirma que el ejemplo permitido del trial funciona; esa respuesta no acredita entrega por sí sola ni habilita texto propio. La hipótesis de compatibilidad del ejemplo clásico se refuerza sin determinar propiedad o eliminación de su plantilla. [Datos y configuración para volver al entorno funcional](conexion-whatsapp-fase-6.md#retorno-exitoso-al-ejemplo-del-trial-nuevo). Continúan pendientes texto personalizado, agente y A22.
+
 **Objetivo.** Completar una reserva real desde mensajes de texto de WhatsApp utilizando la agenda existente.
 
 **Trabajo incluido.**
