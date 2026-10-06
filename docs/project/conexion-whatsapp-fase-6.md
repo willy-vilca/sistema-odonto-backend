@@ -1,6 +1,6 @@
 # Fase 6, primer tramo: conexión de WhatsApp
 
-05/10/2026 · Alcance 1.5 · Plan 2.1 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente.
+05/10/2026 · Alcance 1.5 · Plan 2.2 · Estado: recepción y envío real de plantillas confirmados por el usuario; texto personalizado pendiente de habilitación de cuenta.
 
 El usuario autorizó comprobar primero la conexión de mensajes, creó su cuenta Twilio y confirmó su funcionamiento real mediante la guía. Este tramo implementa entrada, consulta y salida; modelo, interpretación, herramientas, pacientes provisionales y reservas se desarrollarán después. A22 permanece pendiente.
 
@@ -64,3 +64,11 @@ El 05/10/2026 el usuario informó que completó la configuración y comprobó re
 Resultado del primer tramo: recepción, persistencia, consulta, envío de plantilla y avisos de entrega comprobados externamente según esa evidencia. No se guardan claves ni se reproducen tokens en este registro. Las capturas del navegador versionadas arriba siguen siendo pruebas internas con datos ficticios, distintas de las aportadas por el usuario.
 
 Siguiente comprobación: [texto personalizado y presupuesto de Twilio](probar-whatsapp-texto-personalizado.md). Se propone comprobar primero disponibilidad del Sandbox clásico y, si la restricción trial lo exige, PAYG con recarga mínima revisada por el usuario. El conector ya soporta TEXT con Body y la interfaz su formulario; no se cambiaron código, credenciales, cuenta ni modalidad de envío en este turno. La habilitación en la cuenta concreta y el texto real siguen pendientes. Agente, reserva, A22 y la fase 6 completa permanecen pendientes.
+
+## Diagnóstico del intento de texto gratuito
+
+El usuario probó el Sandbox clásico y confirmó recepción, pero informó rechazo de salida. La consulta de solo lectura a PostgreSQL encontró una salida TEXT con FAILED/21654, un intento y template_sid nulo. La configuración privada se inspeccionó únicamente para modo, remitente y habilitación, sin imprimir claves. TwilioSender envía From, To, StatusCallback y Body para TEXT; no añade ContentSid ni ContentVariables. El usuario corrigió la referencia: la petición nueva de la consola usa Body sin ContentSid y devuelve 21654, igual que el sistema; el 21655 inicial pertenece a otra petición no aportada.
+
+Un GET autenticado de solo lectura a la cuenta configurada confirmó type=Trial y status=active; no se envió ningún mensaje ni se realizó un pago. La restricción publicada del trial nuevo requiere ContentSid de plantilla del proveedor, por lo que este acceso al Sandbox clásico no demuestra ni habilita texto libre en esa cuenta. Se mantiene como dependencia la habilitación real de la cuenta y se evita atribuir el rechazo de texto a un fallo de copia del SID de nuestro archivo. [Trial](https://www.twilio.com/docs/usage/trials/try-out-whatsapp), [21654](https://www.twilio.com/docs/api/errors/21654), [21655](https://www.twilio.com/docs/api/errors/21655).
+
+No se cambió código ni configuración privada, no se vació la base del consultorio y no se repitieron pruebas de envío. La actualización PAYG continúa siendo una decisión del usuario. El 21655 de la otra petición necesitaría revisar su plantilla y cuenta; no se considera diagnosticado ni se afirma que PAYG lo corrija. El resultado de texto propio debe verificarse después de la habilitación y antes del agente.

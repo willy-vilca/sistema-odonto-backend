@@ -1,6 +1,6 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 5 de octubre de 2026. Versión del plan: 2.1. Alcance de referencia: versión 1.5 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 5 de octubre de 2026. Versión del plan: 2.2. Alcance de referencia: versión 1.5 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general informada favorable de manera aproximada, pendiente de anotación individual. Fase 6 en desarrollo por partes: primero conexión y mensajes de WhatsApp, después agente y reservas. Las fases 7 a 9 permanecen pendientes. Evidencia y límites en [cierre de fase 0](cierre-fase-0.md), [cierre de fase 1](cierre-fase-1.md), [cierre de fase 2](cierre-fase-2.md), [cierre de fase 3](cierre-fase-3.md), [cierre de fase 4](cierre-fase-4.md) y [cierre de fase 5](cierre-fase-5.md).
 
@@ -202,6 +202,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 ### Fase 6. Reserva automática por WhatsApp con agente de IA
 
 **Secuencia acordada el 05/10/2026.** Primero implementar y comprobar recepción, persistencia, consulta y envío. El usuario ya creó la cuenta Twilio y confirmó mensaje real → sistema → plantilla real, con capturas de recepción y estado Leído. [Guía de conexión](conectar-whatsapp-prueba.md) y [estado del primer tramo](conexion-whatsapp-fase-6.md). Sigue [la habilitación y prueba de texto propio](probar-whatsapp-texto-personalizado.md): comprobar el Sandbox clásico y, si hace falta, PAYG con coste revisado por el usuario. No se ejecuta una compra ni se declara texto libre disponible por esta recomendación. Tras comprobar la respuesta personalizada real, se continúa con selección del modelo, herramientas y reserva. A22 sigue pendiente.
+
+**Resultado de la alternativa gratuita.** El usuario recibió mensajes desde el Sandbox clásico, pero la salida TEXT fue rechazada con 21654 en el sistema; la petición Body sin ContentSid de la consola también dio 21654 según la corrección posterior del usuario; el 21655 corresponde a otra petición. La consulta de solo lectura a Twilio confirmó que la cuenta configurada sigue Trial y activa. Esta cuenta no tiene todavía texto propio habilitado; la siguiente dependencia es resolver esa habilitación, contemplando PAYG con coste aceptado por el usuario. No se considera resuelta cambiando el SID ni se repite como prueba gratuita aprobada.
 
 **Objetivo.** Completar una reserva real desde mensajes de texto de WhatsApp utilizando la agenda existente.
 

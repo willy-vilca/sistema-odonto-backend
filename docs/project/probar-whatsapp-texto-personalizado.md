@@ -1,6 +1,8 @@
 # Pruebas de WhatsApp con texto personalizado
 
-05/10/2026 · Plan 2.1 · Alcance 1.5. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre antes de integrar el agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+05/10/2026 · Plan 2.2 · Alcance 1.5. La recepción real y el envío de plantillas ya fueron confirmados por el usuario. Falta comprobar texto libre antes de integrar el agente. Esta guía no realiza pagos ni cambia las credenciales del archivo privado.
+
+**Resultado posterior de la comprobación gratuita en esta cuenta.** El usuario consiguió recibir mensajes desde el Sandbox clásico, pero el envío TEXT falló. La lectura local confirma modo TEXT y remitente del Sandbox clásico; la base registra un mensaje TEXT, FAILED, código 21654, un intento y sin plantilla asociada. La API de Twilio confirmó que la cuenta configurada sigue activa y es Trial mediante un GET de solo lectura. El usuario corrigió la asociación de la prueba de consola: la nueva petición Body sin ContentSid devuelve también 21654; el 21655 anterior corresponde a otra petición no aportada. Por tanto, acceder a la consola anterior no habilitó texto libre en esta cuenta. No repetir ese intento como alternativa gratuita ya verificada. Para avanzar con TEXT se requiere resolver la habilitación de la cuenta con Twilio, contemplando PAYG; el usuario decide y realiza la actualización. [Restricción vigente del trial](https://www.twilio.com/docs/usage/trials/try-out-whatsapp).
 
 ## Opción recomendada y comprobación gratuita previa
 
@@ -98,6 +100,8 @@ Las respuestas de texto requieren un mensaje del participante en las últimas **
 | Resultado | Qué revisar |
 |---|---|
 | Sigue apareciendo Enviar plantilla de prueba | Confirma send-mode=TEXT, reinicio del backend y Actualizar conexión. |
+| Error 21654 — ContentSid requerido | En general, revisar si se enviaron ContentVariables sin ContentSid. Nuestro modo TEXT no envía ninguno de esos campos: en la cuenta Trial comprobada, contrastar la restricción actual que exige plantilla; no añadir un ContentSid a TEXT para convertirlo en otra prueba de plantilla. [21654](https://www.twilio.com/docs/api/errors/21654). |
+| Error 21655 — ContentSid inválido | En un envío de plantilla, revisar formato HX, existencia y cuenta propietaria. El 21655 inicial del usuario corresponde a otra petición no aportada; no atribuirlo al envío TEXT, cuya prueba corregida devuelve 21654. Para un diagnóstico de plantilla se requiere su petición exacta, sin credenciales. [21655](https://www.twilio.com/docs/api/errors/21655). |
 | La API sigue exigiendo ContentSid | Puede continuar la restricción de trial o estar usándose el remitente temporal anterior. Comprueba la cuenta y el Sandbox activo; revisa el código exacto del error antes de repetir. |
 | Error 63015 | Tu teléfono debe incorporarse a ese Sandbox; puede haber vencido su sesión. |
 | Error 63016 o el sistema pide un mensaje nuevo | Envía desde el teléfono otro texto al Sandbox y confirma que se recibe antes de responder. |
