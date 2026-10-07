@@ -1,9 +1,10 @@
-// Development gateway: expose only the two signed webhook endpoints, never the application.
+// Development gateway: expose only signed webhook endpoints, never the application.
 import http from "node:http";
 import { pathToFileURL } from "node:url";
 const paths = new Set([
     "/api/v1/integrations/whatsapp/inbound",
     "/api/v1/integrations/whatsapp/status",
+    "/api/v1/integrations/kapso/events",
 ]);
 export function createGateway(backendPort = 8080) {
     return http.createServer(async (req, res) => {
@@ -20,10 +21,12 @@ export function createGateway(backendPort = 8080) {
             res.end();
             return;
         }
+        const kapso = url.pathname === "/api/v1/integrations/kapso/events";
+        const contentType = kapso ? "application/json" : "application/x-www-form-urlencoded";
         if (
             !req.headers["content-type"]
                 ?.toLowerCase()
-                .startsWith("application/x-www-form-urlencoded")
+                .startsWith(contentType)
         ) {
             res.writeHead(415);
             res.end();
@@ -34,7 +37,7 @@ export function createGateway(backendPort = 8080) {
         try {
             for await (const chunk of req) {
                 length += chunk.length;
-                if (length > 32768) {
+                if (length > (kapso ? 65536 : 32768)) {
                     res.writeHead(413);
                     res.end();
                     return;
@@ -42,12 +45,17 @@ export function createGateway(backendPort = 8080) {
                 chunks.push(chunk);
             }
             const headers = {
-                "content-type": "application/x-www-form-urlencoded",
+                "content-type": contentType,
                 "content-length": String(length),
             };
-            if (req.headers["x-twilio-signature"])
+            if (!kapso && req.headers["x-twilio-signature"])
                 headers["x-twilio-signature"] =
                     req.headers["x-twilio-signature"];
+            if (kapso) {
+                for (const header of ["x-webhook-signature", "x-webhook-event", "x-idempotency-key", "x-webhook-payload-version", "x-webhook-batch"]) {
+                    if (req.headers[header]) headers[header] = req.headers[header];
+                }
+            }
             const response = await fetch(
                 `http://127.0.0.1:${backendPort}${url.pathname}${url.search}`,
                 {
@@ -78,7 +86,7 @@ if (
     server.headersTimeout = 10000;
     server.listen(8082, "127.0.0.1", () =>
         process.stdout.write(
-            "Receptor de WhatsApp listo en 127.0.0.1:8082. Solo admite los dos webhooks.\n",
+            "Receptor de WhatsApp listo en 127.0.0.1:8082. Solo admite webhooks de Twilio y Kapso.\n",
         ),
     );
 }

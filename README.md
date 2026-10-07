@@ -180,3 +180,13 @@ API bajo /api/v1/whatsapp: GET /agent/configuration; POST /agent/test-messages c
 El usuario autorizó probar con sistema_odontologo y los datos ficticios existentes. Confirmar CONFIRMO código crea una cita transaccional; APP_TEST produce origen AI_TEST. Las respuestas permanecen PREVIEW, sin enviarse por WhatsApp. Se verificó Groq real, una cita, repetición sin duplicación, precio, datos incompletos y negación. A22 y fase 6 permanecen abiertos.
 
 Verificación interna: 107 casos backend aprobados; AgentIntegrationTests y GroqLanguageModelClientTests usan proveedores controlados y la base automática protegida existente. Para el E2E del agente: añadir --odontocare.ai.enabled=true --odontocare.ai.api-key=gsk_test_key --odontocare.ai.worker-enabled=false al backend test, conservar WhatsApp worker-enabled=false y ejecutar los escenarios indicados en frontend/README.md. Nunca usar claves reales en esa regresión. Instantáneas vigentes: alcance 1.7, plan 2.6.
+
+## Kapso · conexión manual experimental
+
+Trabajar en la rama kapso. El módulo kapso recibe JSON v2 firmado y envía texto manual usando la bandeja existente. Configuración privada en config/kapso.local.properties, importada por local e ignorada por Git; ejemplo en config/kapso.example.properties. enabled=true selecciona Kapso y pausa Twilio y el agente; enabled=false restaura Twilio. Se conservan las tablas anteriores y V16 agrega tres tablas propias.
+
+Webhook limitado: POST /api/v1/integrations/kapso/events a través del receptor 8082. HMAC SHA256 del cuerpo original, número/participante autorizados, eventos persistidos y respuesta HTTP rápida. El Sandbox real puede indicar delivered para una entrada; su dirección y evento determinan la clasificación. No conecta IA ni crea pacientes o citas.
+
+[Guía de cuenta, clave, ID, túnel, webhook y prueba](docs/project/conectar-kapso-prueba.md). [Resultados y compatibilidad](docs/project/conexion-kapso-fase-6.md): 123 casos backend verificados, dos del receptor, diez del navegador y un intercambio real Leído con respuesta del participante. Se conserva A22 pendiente.
+
+Para E2E de Kapso, iniciar el JAR con perfil test y spring.config.additional-location=file:src/test/resources/application-test.properties,file:src/test/resources/kapso-e2e.properties. Ese archivo solo contiene credenciales ficticias, worker-enabled=false y agente detenido. Preparar la base protegida desde frontend/scripts/prepare-e2e.ps1 y ejecutar npx playwright test tests/kapso.spec.ts. Las claves reales no se utilizan en la regresión. La prueba manual habitual usa sistema_odontologo con los datos ficticios actuales. Instantáneas vigentes: alcance 1.8, plan 2.8.

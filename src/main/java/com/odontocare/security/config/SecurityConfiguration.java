@@ -51,7 +51,8 @@ public class SecurityConfiguration {
                 .requestMatchers(
                     HttpMethod.POST,
                     "/api/v1/integrations/whatsapp/inbound",
-                    "/api/v1/integrations/whatsapp/status")
+                    "/api/v1/integrations/whatsapp/status",
+                    "/api/v1/integrations/kapso/events")
                 .permitAll()
                 .requestMatchers("/api/v1/**")
                 .authenticated()
@@ -63,7 +64,9 @@ public class SecurityConfiguration {
                 org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
                     .pathPattern(HttpMethod.POST, "/api/v1/integrations/whatsapp/inbound"),
                 org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
-                    .pathPattern(HttpMethod.POST, "/api/v1/integrations/whatsapp/status")));
+                    .pathPattern(HttpMethod.POST, "/api/v1/integrations/whatsapp/status"),
+                org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+                    .pathPattern(HttpMethod.POST, "/api/v1/integrations/kapso/events")));
     http.exceptionHandling(
         errors ->
             errors

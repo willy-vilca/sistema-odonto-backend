@@ -1,5 +1,6 @@
 package com.odontocare.whatsapp.service;
 
+import com.odontocare.kapso.config.KapsoProperties;
 import com.odontocare.shared.web.ApiException;
 import com.odontocare.whatsapp.config.WhatsAppProperties;
 import com.twilio.security.RequestValidator;
@@ -11,13 +12,16 @@ import org.springframework.util.MultiValueMap;
 @Service
 public class WhatsAppSignatureService {
   private final WhatsAppProperties config;
+  private final KapsoProperties kapso;
 
-  public WhatsAppSignatureService(WhatsAppProperties config) {
+  public WhatsAppSignatureService(WhatsAppProperties config, KapsoProperties kapso) {
     this.config = config;
+    this.kapso = kapso;
   }
 
   public Map<String, String> validate(
       String path, String rawQuery, String signature, MultiValueMap<String, String> form) {
+    if (kapso.isEnabled()) throw ApiException.forbidden();
     if (!(path.endsWith("/status") ? config.callbackReady() : config.ready()))
       throw new ApiException(
           HttpStatus.SERVICE_UNAVAILABLE,

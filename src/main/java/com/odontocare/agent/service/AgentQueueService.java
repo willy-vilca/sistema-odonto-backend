@@ -5,6 +5,7 @@ import com.odontocare.agent.dto.AgentContracts.*;
 import com.odontocare.agent.model.AgentRun;
 import com.odontocare.agent.repository.AgentRepository;
 import com.odontocare.audit.service.AuditService;
+import com.odontocare.kapso.config.KapsoProperties;
 import com.odontocare.shared.pagination.*;
 import com.odontocare.shared.web.ApiException;
 import com.odontocare.whatsapp.repository.WhatsAppRepository;
@@ -20,25 +21,28 @@ public class AgentQueueService {
   private final WhatsAppRepository messages;
   private final AuditService audit;
   private final Clock clock;
+  private final KapsoProperties kapso;
 
   public AgentQueueService(
       AgentProperties config,
       AgentRepository runs,
       WhatsAppRepository messages,
       AuditService audit,
-      Clock clock) {
+      Clock clock,
+      KapsoProperties kapso) {
     this.config = config;
     this.runs = runs;
     this.messages = messages;
     this.audit = audit;
     this.clock = clock;
+    this.kapso = kapso;
   }
 
   public Configuration configuration() {
     return new Configuration(
-        config.isEnabled(),
-        config.ready(),
-        config.isWorkerEnabled(),
+        config.isEnabled() && !kapso.isEnabled(),
+        config.ready() && !kapso.isEnabled(),
+        config.isWorkerEnabled() && !kapso.isEnabled(),
         config.getProvider(),
         config.getModel(),
         "PREVIEW",
@@ -54,6 +58,9 @@ public class AgentQueueService {
 
   @Transactional
   public TestResult test(TestMessage request) {
+    if (kapso.isEnabled())
+      throw ApiException.badRequest(
+          "Esta prueba de Kapso incluye únicamente mensajes manuales; el agente está desactivado.");
     if (!config.ready())
       throw ApiException.badRequest(
           "Activa el agente y completa la clave privada de Groq antes de probarlo.");
@@ -122,6 +129,9 @@ public class AgentQueueService {
 
   @Transactional
   public AgentRun retry(UUID id) {
+    if (kapso.isEnabled())
+      throw ApiException.badRequest(
+          "El agente está desactivado durante la prueba manual de Kapso.");
     if (!config.ready()) throw ApiException.badRequest("El agente no está configurado.");
     var run = runs.get(id, true).orElseThrow(ApiException::notFound);
     if (!run.state().equals("FAILED") || run.attempts() >= 3)

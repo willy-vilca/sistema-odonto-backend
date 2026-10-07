@@ -3,6 +3,8 @@ package com.odontocare.whatsapp.service;
 import com.odontocare.agent.config.AgentProperties;
 import com.odontocare.agent.service.AgentQueueService;
 import com.odontocare.audit.service.AuditService;
+import com.odontocare.kapso.config.KapsoProperties;
+import com.odontocare.kapso.service.KapsoMessagingService;
 import com.odontocare.shared.pagination.*;
 import com.odontocare.shared.web.ApiException;
 import com.odontocare.whatsapp.config.WhatsAppProperties;
@@ -21,21 +23,28 @@ public class WhatsAppConversationService {
   private final AuditService audit;
   private final AgentQueueService agentQueue;
   private final AgentProperties agentConfig;
+  private final KapsoProperties kapsoConfig;
+  private final KapsoMessagingService kapso;
 
   public WhatsAppConversationService(
       WhatsAppRepository repository,
       WhatsAppProperties config,
       AuditService audit,
       AgentQueueService agentQueue,
-      AgentProperties agentConfig) {
+      AgentProperties agentConfig,
+      KapsoProperties kapsoConfig,
+      KapsoMessagingService kapso) {
     this.repository = repository;
     this.config = config;
     this.audit = audit;
     this.agentQueue = agentQueue;
     this.agentConfig = agentConfig;
+    this.kapsoConfig = kapsoConfig;
+    this.kapso = kapso;
   }
 
   public Connection connection() {
+    if (kapsoConfig.isEnabled()) return kapso.connection();
     return new Connection(
         config.isEnabled(),
         config.ready(),
@@ -52,16 +61,19 @@ public class WhatsAppConversationService {
 
   @Transactional(readOnly = true)
   public PageResponse<WhatsAppConversation> list(PageQuery query) {
+    if (kapsoConfig.isEnabled()) return kapso.list(query);
     return repository.conversations(query);
   }
 
   @Transactional(readOnly = true)
   public WhatsAppConversation get(UUID id) {
+    if (kapsoConfig.isEnabled()) return kapso.get(id);
     return repository.conversation(id, false).orElseThrow(ApiException::notFound);
   }
 
   @Transactional(readOnly = true)
   public PageResponse<Message> messages(UUID id, PageQuery query, String direction, String status) {
+    if (kapsoConfig.isEnabled()) return kapso.messages(id, query, direction, status);
     get(id);
     if (direction != null
         && !direction.isBlank()
@@ -92,6 +104,12 @@ public class WhatsAppConversationService {
 
   @Transactional
   public Message enqueue(UUID id, String body, UUID key, boolean template) {
+    if (kapsoConfig.isEnabled()) {
+      if (template)
+        throw ApiException.badRequest(
+            "El Sandbox de Kapso admite texto personalizado, no plantillas.");
+      return kapso.enqueue(id, body, key);
+    }
     repository.keyLock(key);
     var prior = repository.byKey(key);
     String content = template ? "Plantilla de prueba de Twilio" : body.strip(),
@@ -131,6 +149,7 @@ public class WhatsAppConversationService {
 
   @Transactional
   public void receive(Map<String, String> form) {
+    if (kapsoConfig.isEnabled()) throw ApiException.forbidden();
     if (!config.getSender().equals(form.get("To"))) throw ApiException.forbidden();
     String address = form.getOrDefault("From", "");
     if (!address.startsWith("whatsapp:")) throw ApiException.forbidden();

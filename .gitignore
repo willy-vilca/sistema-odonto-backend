@@ -4,6 +4,7 @@ target/
 .runtime/
 config/whatsapp.local.properties
 config/ai.local.properties
+config/kapso.local.properties
 *.log
 .env
 .env.*
