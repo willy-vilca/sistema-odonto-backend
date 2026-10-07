@@ -2,6 +2,8 @@
 
 06/10/2026 · Alcance 1.7 · Plan 2.6. **Prototipo implementado y conectado al modelo real; fase 6 y A22 siguen abiertos.** Las respuestas se preparan en la aplicación. El envío personalizado por WhatsApp y la demostración completa con entrega al teléfono se completarán en el siguiente tramo.
 
+Revisión posterior del usuario, 06/10/2026: informa que probó el agente con mensajes de la aplicación y mensajes enviados desde WhatsApp, con resultado favorable general, y confirma conservar GroqCloud/openai/gpt-oss-20b. No aportó una aprobación por escenario ni entrega de respuestas personalizadas. Antes de pagar Twilio solicita evaluar Kapso; ver [investigación del proveedor](evaluacion-kapso-whatsapp-fase-6.md) y plan 2.7. Esta revisión no cierra A22.
+
 ## Funcionamiento entregado
 
 El backend usa GroqCloud con openai/gpt-oss-20b mediante HTTPS. El modelo interpreta y elige herramientas; los servicios del sistema validan y ejecutan las operaciones. No se instala un modelo, GPU, n8n ni servidor de IA adicional. La clave se carga desde config/ai.local.properties, ignorado por Git; la interfaz solo recibe estado de configuración y campos públicos.
