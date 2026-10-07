@@ -10,7 +10,6 @@ import com.odontocare.installation.repository.InstallationProfileRepository;
 import com.odontocare.patients.dto.PatientRequest;
 import com.odontocare.patients.service.PatientService;
 import com.odontocare.shared.web.ApiException;
-import com.odontocare.whatsapp.repository.WhatsAppRepository;
 import java.time.*;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -20,22 +19,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class AgentBookingService {
   private final AgentRepository runs;
   private final AgentCatalogRepository catalog;
-  private final WhatsAppRepository messages;
+  private final AgentInboxRepository messages;
   private final AppointmentService appointments;
   private final PatientService patients;
   private final InstallationProfileRepository profiles;
   private final AuditService audit;
   private final Clock clock;
+  private final AgentReplyService replies;
 
   public AgentBookingService(
       AgentRepository runs,
       AgentCatalogRepository catalog,
-      WhatsAppRepository messages,
+      AgentInboxRepository messages,
       AppointmentService appointments,
       PatientService patients,
       InstallationProfileRepository profiles,
       AuditService audit,
-      Clock clock) {
+      Clock clock,
+      AgentReplyService replies) {
     this.runs = runs;
     this.catalog = catalog;
     this.messages = messages;
@@ -44,17 +45,18 @@ public class AgentBookingService {
     this.profiles = profiles;
     this.audit = audit;
     this.clock = clock;
+    this.replies = replies;
   }
 
-  @Transactional
+  @Transactional(timeout = 15)
   public Map<String, Object> confirm(AgentRun run, String code) {
     var message = messages.message(run.messageId(), false).orElseThrow(ApiException::notFound);
     if (!message.direction().equals("INBOUND")
-        || !message.body().strip().matches("(?i)CONFIRMO\\s+" + code + "[.!]?"))
-      throw ApiException.forbidden();
+        || !(message.body().strip().matches("(?i)CONFIRMO\\s+" + code + "[.!]?")
+            || AgentConfirmation.natural(message.body()))) throw ApiException.forbidden();
     var conversation =
         messages.conversation(run.conversationId(), true).orElseThrow(ApiException::notFound);
-    if (!Objects.equals(runs.latestInbound(run.conversationId()), message.id()))
+    if (!Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), message.id()))
       throw ApiException.conflict(
           "Llegó otro mensaje; no se reserva con una confirmación anterior.");
     var p =
@@ -63,6 +65,17 @@ public class AgentBookingService {
                 () ->
                     ApiException.badRequest(
                         "El código no corresponde a una propuesta de este contacto."));
+    var original =
+        messages.message(runs.get(p.runId(), false).orElseThrow().messageId(), false).orElseThrow();
+    if (!original.source().equals(message.source())) throw ApiException.forbidden();
+    if (message.source().equals("KAPSO")
+        && !runs.naturalConfirmationAllowed(p.runId(), message.id()))
+      throw ApiException.badRequest(
+          "Primero revisa la propuesta completa enviada y confirma esos datos.");
+    if (AgentConfirmation.code(message.body()).isEmpty()
+        && !runs.naturalConfirmationAllowed(p.runId(), message.id()))
+      throw ApiException.badRequest(
+          "Primero revisa la propuesta completa enviada y confirma esos datos.");
     if (p.state().equals("CONFIRMED"))
       return Map.of(
           "appointment_id",
@@ -177,11 +190,14 @@ public class AgentBookingService {
             "origin",
             booking.origin(),
             "response",
-            "Cita registrada y confirmada. "
+            "¡Tu cita quedó confirmada! "
                 + p.summary()
                 + " Referencia: "
                 + booking.id()
-                + ". Esta respuesta está preparada en el sistema y aún no se envió a WhatsApp.");
+                + (message.source().equals("APP_TEST")
+                        || messages.provider(run.conversationId()).equals("TWILIO")
+                    ? ". Esta respuesta está preparada en el sistema y aún no se envió a WhatsApp."
+                    : ". Te esperamos."));
     runs.step(
         run.id(),
         "BOOKING",
@@ -190,8 +206,7 @@ public class AgentBookingService {
         result,
         "OK",
         clock.instant());
-    runs.finish(
-        run.id(), "COMPLETED", result.get("response").toString(), null, null, clock.instant());
+    replies.complete(run.id(), result.get("response").toString());
     return result;
   }
 }

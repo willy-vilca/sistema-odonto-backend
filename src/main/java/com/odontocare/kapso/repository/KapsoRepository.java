@@ -42,7 +42,7 @@ public class KapsoRepository {
               r.getInt("attempts"),
               r.getObject("request_key", UUID.class),
               null,
-              "KAPSO");
+              r.getString("source"));
 
   private static Instant instant(ResultSet result, String name) throws SQLException {
     var time = result.getTimestamp(name);
@@ -232,11 +232,37 @@ public class KapsoRepository {
   }
 
   public WhatsAppMessage enqueue(UUID conversation, String body, UUID key, Instant now) {
+    return enqueue(conversation, body, key, now, "KAPSO");
+  }
+
+  private WhatsAppMessage enqueue(
+      UUID conversation, String body, UUID key, Instant now, String source) {
     UUID id = UUID.randomUUID();
     jdbc.update(
         "INSERT INTO"
-            + " kapso_message(id,conversation_id,direction,kind,body,request_key,status,created_at,updated_at,next_attempt_at)"
-            + " VALUES(?,?,'OUTBOUND','TEXT',?,?,'QUEUED',?,?,?)",
+            + " kapso_message(id,conversation_id,direction,kind,body,request_key,status,created_at,updated_at,next_attempt_at,source)"
+            + " VALUES(?,?,'OUTBOUND','TEXT',?,?,'QUEUED',?,?,?,?)",
+        id,
+        conversation,
+        body,
+        key,
+        Timestamp.from(now),
+        Timestamp.from(now),
+        Timestamp.from(now),
+        source);
+    return message(id, false).orElseThrow();
+  }
+
+  public WhatsAppMessage enqueueAgent(UUID conversation, String body, UUID key, Instant now) {
+    return enqueue(conversation, body, key, now, "AGENT");
+  }
+
+  public UUID testInbound(UUID conversation, String body, UUID key, Instant now) {
+    UUID id = UUID.randomUUID();
+    jdbc.update(
+        "INSERT INTO"
+            + " kapso_message(id,conversation_id,direction,kind,body,request_key,status,created_at,updated_at,next_attempt_at,source)"
+            + " VALUES(?,?,'INBOUND','TEXT',?,?,'RECEIVED',?,?,?,'APP_TEST')",
         id,
         conversation,
         body,
@@ -244,7 +270,18 @@ public class KapsoRepository {
         Timestamp.from(now),
         Timestamp.from(now),
         Timestamp.from(now));
-    return message(id, false).orElseThrow();
+    touch(conversation, body, now, false);
+    return id;
+  }
+
+  public void retryReply(UUID id, Instant now) {
+    jdbc.update(
+        "UPDATE kapso_message SET"
+            + " status='QUEUED',next_attempt_at=?,updated_at=?,error_code=NULL,error_message=NULL"
+            + " WHERE id=?",
+        Timestamp.from(now),
+        Timestamp.from(now),
+        id);
   }
 
   public Optional<WhatsAppMessage> claim(String number, Instant now) {

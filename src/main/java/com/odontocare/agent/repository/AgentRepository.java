@@ -70,12 +70,14 @@ public class AgentRepository {
 
   public AgentRun enqueue(UUID message, UUID conversation, String model, Instant now) {
     jdbc.update(
-        "INSERT INTO agent_run(id,message_id,conversation_id,state,model,created_at,updated_at)"
-            + " VALUES(?,?,?,'QUEUED',?,?,?) ON CONFLICT(message_id) DO NOTHING",
+        "INSERT INTO"
+            + " agent_run(id,message_id,conversation_id,state,model,created_at,updated_at,next_attempt_at)"
+            + " VALUES(?,?,?,'QUEUED',?,?,?,?) ON CONFLICT(message_id) DO NOTHING",
         UUID.randomUUID(),
         message,
         conversation,
         model,
+        Timestamp.from(now),
         Timestamp.from(now),
         Timestamp.from(now));
     return jdbc.query("SELECT * FROM agent_run WHERE message_id=?", RUN, message).getFirst();
@@ -88,22 +90,41 @@ public class AgentRepository {
         .findFirst();
   }
 
-  public Optional<AgentRun> claim(Instant now) {
+  public Optional<AgentRun> claim(Instant now, String provider, int debounce) {
     jdbc.update(
-        "UPDATE agent_run SET state='FAILED',error_code='INTERRUPTED',error_message='El proceso"
-            + " quedó interrumpido; puede reintentarse sin duplicar la cita.',updated_at=? WHERE"
-            + " state='PROCESSING' AND updated_at<?",
+        "UPDATE agent_run SET state=CASE WHEN attempts<3 THEN 'QUEUED' ELSE 'FAILED'"
+            + " END,error_code='INTERRUPTED',error_message='El proceso quedó interrumpido; se"
+            + " recupera sin duplicar la cita.',updated_at=? WHERE state='PROCESSING' AND"
+            + " updated_at<?",
         Timestamp.from(now),
         Timestamp.from(now.minusSeconds(300)));
     var rows =
         jdbc.query(
-            "SELECT r.* FROM agent_run r WHERE r.state='QUEUED' AND NOT EXISTS(SELECT 1 FROM"
-                + " agent_run x WHERE x.conversation_id=r.conversation_id AND (x.state='PROCESSING'"
-                + " OR (x.state='QUEUED' AND x.sequence_no<r.sequence_no))) ORDER BY"
-                + " r.sequence_no LIMIT 1 FOR UPDATE OF r SKIP LOCKED",
-            RUN);
+            "SELECT r.* FROM agent_run r JOIN agent_conversation_source c ON c.id=r.conversation_id"
+                + " JOIN agent_inbox_message current_input ON current_input.id=r.message_id WHERE"
+                + " c.provider=? AND r.state='QUEUED' AND r.next_attempt_at<=? AND r.created_at<=?"
+                + " AND NOT EXISTS(SELECT 1 FROM agent_run x WHERE"
+                + " x.conversation_id=r.conversation_id AND (x.state='PROCESSING' OR"
+                + " (x.state='QUEUED' AND x.sequence_no>r.sequence_no AND EXISTS(SELECT 1 FROM"
+                + " agent_inbox_message xm WHERE xm.id=x.message_id AND"
+                + " xm.source=current_input.source)))) ORDER BY r.sequence_no LIMIT 1 FOR UPDATE OF"
+                + " r SKIP LOCKED",
+            RUN,
+            provider,
+            Timestamp.from(now),
+            Timestamp.from(now.minusMillis(debounce)));
     if (rows.isEmpty()) return Optional.empty();
     var run = rows.getFirst();
+    jdbc.update(
+        "UPDATE agent_run SET state='GROUPED',grouped_into_run_id=?,updated_at=? WHERE"
+            + " conversation_id=? AND state='QUEUED' AND sequence_no<? AND message_id IN (SELECT id"
+            + " FROM agent_inbox_message WHERE source=(SELECT source FROM agent_inbox_message WHERE"
+            + " id=?))",
+        run.id(),
+        Timestamp.from(now),
+        run.conversationId(),
+        jdbc.queryForObject("SELECT sequence_no FROM agent_run WHERE id=?", Long.class, run.id()),
+        run.messageId());
     jdbc.update(
         "UPDATE agent_run SET"
             + " state='PROCESSING',attempts=attempts+1,error_code=NULL,error_message=NULL,updated_at=?"
@@ -127,8 +148,10 @@ public class AgentRepository {
 
   public void retry(UUID id, Instant now) {
     jdbc.update(
-        "UPDATE agent_run SET state='QUEUED',error_code=NULL,error_message=NULL,updated_at=? WHERE"
-            + " id=?",
+        "UPDATE agent_run SET"
+            + " state='QUEUED',error_code=NULL,error_message=NULL,updated_at=?,next_attempt_at=?"
+            + " WHERE id=?",
+        Timestamp.from(now),
         Timestamp.from(now),
         id);
   }
@@ -183,7 +206,7 @@ public class AgentRepository {
       args.add(search);
       args.add(search);
     }
-    String join = " FROM agent_run r JOIN whatsapp_message m ON m.id=r.message_id";
+    String join = " FROM agent_run r JOIN agent_inbox_message m ON m.id=r.message_id";
     long count = jdbc.queryForObject("SELECT count(*)" + join + where, Long.class, args.toArray());
     args.add(pageable.getPageSize());
     args.add(pageable.getOffset());
@@ -253,11 +276,16 @@ public class AgentRepository {
     // Use only messages preceding this event. Later inbound events have their own ordered run.
     var rows =
         jdbc.queryForList(
-            "SELECT m.body,m.created_at,r.response_text FROM whatsapp_message m LEFT JOIN agent_run"
-                + " r ON r.message_id=m.id AND r.state='COMPLETED' WHERE m.conversation_id=? AND"
+            "SELECT m.body,m.created_at,CASE WHEN m.source='APP_TEST' OR m.provider='TWILIO' OR"
+                + " reply.status IN ('SENT','DELIVERED','READ') THEN r.response_text ELSE NULL END"
+                + " response_text FROM agent_inbox_message m LEFT JOIN agent_run r ON"
+                + " r.message_id=m.id AND r.state IN ('COMPLETED','FAILED') LEFT JOIN kapso_message"
+                + " reply ON reply.id=r.reply_message_id WHERE m.conversation_id=? AND"
                 + " m.direction='INBOUND' AND m.kind='TEXT' AND m.sequence_no<=(SELECT sequence_no"
-                + " FROM whatsapp_message WHERE id=?) ORDER BY m.sequence_no DESC LIMIT ?",
+                + " FROM agent_inbox_message WHERE id=?) AND m.source=(SELECT source FROM"
+                + " agent_inbox_message WHERE id=?) ORDER BY m.sequence_no DESC LIMIT ?",
             conversation,
+            message,
             message,
             limit);
     Collections.reverse(rows);
@@ -282,11 +310,59 @@ public class AgentRepository {
   public UUID latestInbound(UUID conversation) {
     var ids =
         jdbc.queryForList(
-            "SELECT id FROM whatsapp_message WHERE conversation_id=? AND direction='INBOUND' ORDER"
-                + " BY sequence_no DESC LIMIT 1",
+            "SELECT id FROM agent_inbox_message WHERE conversation_id=? AND direction='INBOUND'"
+                + " ORDER BY sequence_no DESC LIMIT 1",
             UUID.class,
             conversation);
     return ids.isEmpty() ? null : ids.getFirst();
+  }
+
+  public void attachReply(UUID run, UUID reply) {
+    jdbc.update("UPDATE agent_run SET reply_message_id=? WHERE id=?", reply, run);
+  }
+
+  public UUID latestInbound(UUID conversation, UUID current) {
+    var ids =
+        jdbc.queryForList(
+            "SELECT id FROM agent_inbox_message WHERE conversation_id=? AND direction='INBOUND' AND"
+                + " source=(SELECT source FROM agent_inbox_message WHERE id=?) ORDER BY sequence_no"
+                + " DESC LIMIT 1",
+            UUID.class,
+            conversation,
+            current);
+    return ids.isEmpty() ? null : ids.getFirst();
+  }
+
+  public void group(UUID run, UUID target, Instant now) {
+    jdbc.update(
+        "UPDATE agent_run SET state='GROUPED',grouped_into_run_id=?,updated_at=? WHERE id=?",
+        target,
+        Timestamp.from(now),
+        run);
+  }
+
+  public void scheduleRetry(UUID run, Instant time) {
+    jdbc.update(
+        "UPDATE agent_run SET"
+            + " state='QUEUED',next_attempt_at=?,error_code='RATE_LIMIT',error_message='El"
+            + " proveedor pidió esperar; reintento automático pendiente.' WHERE id=?",
+        Timestamp.from(time),
+        run);
+  }
+
+  public boolean naturalConfirmationAllowed(UUID proposalRun, UUID currentMessage) {
+    return Boolean.TRUE.equals(
+        jdbc.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM agent_run r JOIN agent_inbox_message incoming ON"
+                + " incoming.id=? JOIN agent_inbox_message original ON original.id=r.message_id"
+                + " LEFT JOIN kapso_message reply ON reply.id=r.reply_message_id WHERE r.id=? AND"
+                + " incoming.conversation_id=r.conversation_id AND incoming.source=original.source"
+                + " AND r.state='COMPLETED' AND (incoming.source='APP_TEST' OR (reply.status IN"
+                + " ('SENT','DELIVERED','READ') AND"
+                + " incoming.created_at>=date_trunc('second',reply.created_at))))",
+            Boolean.class,
+            currentMessage,
+            proposalRun));
   }
 
   public Slot addSlot(

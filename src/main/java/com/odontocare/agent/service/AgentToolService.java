@@ -3,12 +3,12 @@ package com.odontocare.agent.service;
 import com.odontocare.agent.dto.AgentContracts.*;
 import com.odontocare.agent.model.AgentRun;
 import com.odontocare.agent.repository.*;
+import com.odontocare.agent.repository.AgentInboxRepository;
 import com.odontocare.appointments.service.AvailabilityService;
 import com.odontocare.audit.service.AuditService;
 import com.odontocare.installation.repository.InstallationProfileRepository;
 import com.odontocare.shared.pagination.PageQuery;
 import com.odontocare.shared.web.ApiException;
-import com.odontocare.whatsapp.repository.WhatsAppRepository;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -20,7 +20,7 @@ import tools.jackson.databind.JsonNode;
 public class AgentToolService {
   private final AgentRepository runs;
   private final AgentCatalogRepository catalog;
-  private final WhatsAppRepository conversations;
+  private final AgentInboxRepository conversations;
   private final InstallationProfileRepository profiles;
   private final AvailabilityService availability;
   private final AuditService audit;
@@ -29,7 +29,7 @@ public class AgentToolService {
   public AgentToolService(
       AgentRepository runs,
       AgentCatalogRepository catalog,
-      WhatsAppRepository conversations,
+      AgentInboxRepository conversations,
       InstallationProfileRepository profiles,
       AvailabilityService availability,
       AuditService audit,
@@ -43,7 +43,7 @@ public class AgentToolService {
     this.clock = clock;
   }
 
-  @Transactional
+  @Transactional(timeout = 10)
   public Object execute(AgentRun run, String name, JsonNode args) {
     if (!args.isObject())
       throw ApiException.badRequest("Los argumentos de la herramienta deben ser un objeto.");
@@ -90,6 +90,44 @@ public class AgentToolService {
       }
       default -> throw ApiException.forbidden();
     };
+  }
+
+  @Transactional(timeout = 10)
+  public String conflictAlternatives(AgentRun run) {
+    conversations.conversation(run.conversationId(), true).orElseThrow();
+    var proposal = runs.currentProposal(run.conversationId()).orElseThrow();
+    var previous = runs.slot(proposal.slotId()).orElseThrow();
+    runs.proposalState(proposal.id(), "CONFLICT");
+    var args = tools.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+    args.put("service_id", previous.serviceId().toString());
+    args.put("dentist_id", previous.dentistId().toString());
+    args.put("date", previous.localStart().toLocalDate().toString());
+    @SuppressWarnings("unchecked")
+    var result = (Map<String, Object>) slots(run, args);
+    runs.step(run.id(), "TOOL", "consultar_horarios", args, result, "OK", clock.instant());
+    @SuppressWarnings("unchecked")
+    var offered = (List<Map<String, Object>>) result.get("items");
+    if (offered.isEmpty())
+      return "Ese horario ya no está disponible. No se creó la cita. ¿Qué otra fecha prefieres para"
+          + " "
+          + previous.serviceName()
+          + "?";
+    String choices =
+        offered.stream()
+            .map(x -> LocalDateTime.parse(x.get("local_start").toString()).toLocalTime().toString())
+            .distinct()
+            .limit(3)
+            .reduce((a, b) -> a + ", " + b)
+            .orElseThrow();
+    return "Ese horario acaba de ocuparse; no se creó otra cita. Para "
+        + previous.serviceName()
+        + " con "
+        + previous.dentistName()
+        + " el "
+        + previous.localStart().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        + " puedo ofrecerte "
+        + choices
+        + ". ¿Cuál prefieres?";
   }
 
   private Object slots(AgentRun run, JsonNode args) {
@@ -189,7 +227,7 @@ public class AgentToolService {
 
   private Object propose(AgentRun run, JsonNode args) {
     conversations.conversation(run.conversationId(), true).orElseThrow();
-    if (!Objects.equals(runs.latestInbound(run.conversationId()), run.messageId()))
+    if (!Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), run.messageId()))
       throw ApiException.conflict(
           "Llegó otro mensaje; procesa la solicitud más reciente antes de proponer.");
     var slot = runs.slot(uuid(args, "slot_id", true)).orElseThrow(ApiException::notFound);

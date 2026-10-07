@@ -14,6 +14,15 @@ public class AgentProperties {
       requestTimeoutSeconds = 12,
       runTimeoutSeconds = 75,
       contextMessages = 6;
+  private int debounceMilliseconds = 1500;
+
+  public int getDebounceMilliseconds() {
+    return debounceMilliseconds;
+  }
+
+  public void setDebounceMilliseconds(int value) {
+    debounceMilliseconds = value;
+  }
 
   public boolean isEnabled() {
     return enabled;
@@ -108,6 +117,8 @@ public class AgentProperties {
     if (runTimeoutSeconds < requestTimeoutSeconds || runTimeoutSeconds > 180)
       fields.add("Tiempo por mensaje (máximo 180 s)");
     if (contextMessages < 1 || contextMessages > 12) fields.add("Contexto (1–12 mensajes)");
+    if (debounceMilliseconds < 0 || debounceMilliseconds > 5000)
+      fields.add("Agrupación de mensajes (0–5000 ms)");
     return List.copyOf(fields);
   }
 

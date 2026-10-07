@@ -1,5 +1,7 @@
 package com.odontocare.kapso.service;
 
+import com.odontocare.agent.config.AgentProperties;
+import com.odontocare.agent.service.AgentQueueService;
 import com.odontocare.audit.service.AuditService;
 import com.odontocare.kapso.config.KapsoProperties;
 import com.odontocare.kapso.repository.KapsoRepository;
@@ -17,12 +19,20 @@ public class KapsoMessagingService {
   private final KapsoProperties config;
   private final KapsoRepository repository;
   private final AuditService audit;
+  private final AgentQueueService agent;
+  private final AgentProperties ai;
 
   public KapsoMessagingService(
-      KapsoProperties config, KapsoRepository repository, AuditService audit) {
+      KapsoProperties config,
+      KapsoRepository repository,
+      AuditService audit,
+      AgentQueueService agent,
+      AgentProperties ai) {
     this.config = config;
     this.repository = repository;
     this.audit = audit;
+    this.agent = agent;
+    this.ai = ai;
   }
 
   public Connection connection() {
@@ -37,7 +47,7 @@ public class KapsoMessagingService {
         "TEXT",
         false,
         config.missing(),
-        false);
+        config.isAgentEnabled() && ai.isEnabled());
   }
 
   @Transactional(readOnly = true)
@@ -200,6 +210,8 @@ public class KapsoMessagingService {
           incoming.kind().equals("TEXT") ? incoming.body() : "Contenido no admitido en esta prueba",
           incoming.timestamp(),
           true);
+      if (config.isAgentEnabled() && incoming.kind().equals("TEXT"))
+        agent.inbound("KAPSO", id, conversation);
       audit.recordAs(
           null,
           "Kapso",

@@ -9,6 +9,16 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("odontocare.kapso")
 public class KapsoProperties {
   private boolean enabled, workerEnabled = true;
+  private boolean agentEnabled;
+
+  public boolean isAgentEnabled() {
+    return agentEnabled;
+  }
+
+  public void setAgentEnabled(boolean value) {
+    agentEnabled = value;
+  }
+
   private String apiKey = "",
       phoneNumberId = "",
       webhookSecret = "",

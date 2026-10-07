@@ -65,4 +65,10 @@ public class AgentController {
   public AgentRun retry(@PathVariable UUID id) {
     return queue.retry(id);
   }
+
+  @PostMapping("/agent/runs/{id}/reply/retry")
+  @PreAuthorize("hasAuthority('WHATSAPP_WRITE')")
+  public com.odontocare.whatsapp.dto.WhatsAppContracts.Message retryReply(@PathVariable UUID id) {
+    return queue.retryReply(id);
+  }
 }

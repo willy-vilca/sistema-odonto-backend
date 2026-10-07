@@ -22,7 +22,9 @@ public class AgentWorker {
 
   @Scheduled(fixedDelay = 4000, initialDelay = 8000)
   public void processPending() {
-    if (kapso.isEnabled() || !config.ready() || !config.isWorkerEnabled()) return;
+    if ((kapso.isEnabled() && (!kapso.isAgentEnabled() || !kapso.ready()))
+        || !config.ready()
+        || !config.isWorkerEnabled()) return;
     try {
       queue.claim().ifPresent(agent::process);
     } catch (RuntimeException failure) {

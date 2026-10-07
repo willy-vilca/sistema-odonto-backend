@@ -190,3 +190,11 @@ Webhook limitado: POST /api/v1/integrations/kapso/events a través del receptor 
 [Guía de cuenta, clave, ID, túnel, webhook y prueba](docs/project/conectar-kapso-prueba.md). [Resultados y compatibilidad](docs/project/conexion-kapso-fase-6.md): 123 casos backend verificados, dos del receptor, diez del navegador y un intercambio real Leído con respuesta del participante. Se conserva A22 pendiente.
 
 Para E2E de Kapso, iniciar el JAR con perfil test y spring.config.additional-location=file:src/test/resources/application-test.properties,file:src/test/resources/kapso-e2e.properties. Ese archivo solo contiene credenciales ficticias, worker-enabled=false y agente detenido. Preparar la base protegida desde frontend/scripts/prepare-e2e.ps1 y ejecutar npx playwright test tests/kapso.spec.ts. Las claves reales no se utilizan en la regresión. La prueba manual habitual usa sistema_odontologo con los datos ficticios actuales. Instantáneas vigentes: alcance 1.8, plan 2.8.
+
+## Fase 6 · agente autónomo por Kapso
+
+Activar odontocare.kapso.agent-enabled=true junto con los trabajadores del modelo y del conector. Se reutilizan las claves privadas y el webhook; no se importan solicitudes históricas. La fuente del agente conserva FK a Twilio/Kapso, contexto separado de pruebas, agrupación breve y referencias de respuesta. Confirmar después del resumen enviado crea cita y tarea de respuesta en una transacción. Las confirmaciones naturales inequívocas y los códigos se validan en el servidor.
+
+POST /api/v1/whatsapp/agent/runs/{id}/reply/retry requiere WHATSAPP_WRITE y reintenta únicamente rechazos confirmados sin referencia, dentro de la ventana y límite. Los resultados inciertos se verifican en Kapso. La bitácora incluye la respuesta y su estado; no se repite la reserva si falla el envío. Modo APP_TEST es vista previa sin WhatsApp.
+
+[Guía de prueba](docs/project/probar-agente-kapso-fase-6.md) y [implementación y validación](docs/project/integracion-agente-kapso-fase-6.md). 138 casos backend y seis de interfaz aprobados; la prueba real completa A22 sigue pendiente del participante y fase 6 está en validación. Instantáneas: alcance 1.9, plan 2.9. Tests KapsoAgentIntegrationTests y AgentConfirmationTests cubren atomicidad, concurrencia, límites y lenguaje inequívoco. kapso-agent-e2e.properties configura solo claves ficticias y trabajadores detenidos.
