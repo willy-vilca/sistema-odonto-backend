@@ -190,6 +190,18 @@ La cita sigue CONFIRMED/versión 1, 20/10 09:00–10:00. Conserva dos eventos de
 
 Siguiente bloque: proponer otro horario libre del 20/10, sin confirmar; ocuparlo después mediante una cita manual temporal para otro paciente ficticio, y confirmar para comprobar conflicto con conservación de la cita del 20/10 09:00. No se crea la ocupación antes de recibir la propuesta. Tras verificar, cancelar únicamente la cita temporal con motivo de prueba, conservando su historial. No hay pruebas de carga sobre Kapso.
 
+## Prueba 10: propuesta y ocupación manual posterior — preparada
+
+El participante pidió el 20/10/2026 a las 11:00 con Julia, recibió la propuesta A4BC2579 y todavía no la confirmó. Ejecución `4ee9ab6f-9ad2-411b-8dc0-a942f9482855`, secuencia 56, COMPLETED/READ, un intento y sin error; 7 460 tokens de entrada y 283 de salida. Entrada `5942b9cc-5772-403e-91a0-629b99d10d84`; respuesta `1a2ca61a-ac5e-4852-a514-7081d853acba`. Respuesta persistida a los 7,203 segundos del registro de ejecución.
+
+Propuesta `a4bc2579-a454-47c4-aa3b-8b4d3af2f355`, RESCHEDULE/PENDING, sobre la misma cita y versión 1, de 20/10 09:00 a 20/10 11:00, 60 minutos. Creada el 08/10 a las 18:52:26 Lima, vence a las 19:22:26.
+
+Después de recibir la propuesta se creó una reserva manual temporal mediante AppointmentService.create, las mismas reglas centrales del módulo manual. Actor auditado Sistema (ensayo local autorizado), no se simula un clic ni una cuenta de recepción. Paciente existente Carlos Ruiz Vega `38c845d1-9ea5-4ad0-8d74-de77b74aba0b`, Julia, Limpieza dental, 20/10 11:00–12:00, origen MANUAL/RESERVED. Cita temporal `ec4a37c6-b4a3-47a2-b5c3-698dc9733612`, clave idempotente `937de26f-ffc9-3fcd-997b-e243df1929d2`, creada el 08/10 después de las 18:54; nota de prueba vinculada a A4BC2579. No se enviaron mensajes ni se creó otro paciente.
+
+El ensayo comprobó igualdad de la fila completa de Willy antes/después, historial y finanzas, y número de mensajes salientes. Cita de Willy permanece CONFIRMED/versión 1, 09:00–10:00 y dos historiales. Ahora hay 9 pacientes, 13 citas, 9 cargos y 11 movimientos; la cita adicional es la ocupación temporal. La propuesta sigue vigente/PENDING. Falta la confirmación real para demostrar el rechazo del conflicto; esta preparación por sí sola no lo declara aprobado.
+
+Tras verificar el conflicto se cancelará exclusivamente la temporal, conservando su historial, con motivo «Fin de prueba de concurrencia fase 7». Helper y registro ignorados: `.runtime/Phase7ManualConflict.java`, `.runtime/phase7-manual-conflict-created.log`. No hay pruebas de carga sobre Kapso.
+
 ## Casos restantes
 
 Conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
