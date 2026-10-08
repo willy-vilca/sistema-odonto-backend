@@ -20,14 +20,21 @@ public final class AgentConfirmation {
 
   public static boolean natural(String text) {
     if (text.contains("?") || text.contains("¿")) return false;
-    String normalized =
-        Normalizer.normalize(text, Normalizer.Form.NFD)
-            .replaceAll("\\p{M}", "")
-            .toLowerCase(Locale.ROOT)
-            .replaceAll("[¡!¿?,.;:]", " ")
-            .strip()
-            .replaceAll("\\s+", " ");
+    String normalized = normalize(text);
     return normalized.matches("(?:si )?confirmo(?: (?:la|esa|esta) cita)?(?: por favor)?")
         || normalized.matches("si quiero reservar (?:la|esa|esta) cita");
+  }
+
+  public static boolean ambiguous(String text) {
+    return normalize(text).matches("si|ok|vale|de acuerdo|claro|confirmo");
+  }
+
+  private static String normalize(String text) {
+    return Normalizer.normalize(text, Normalizer.Form.NFD)
+        .replaceAll("\\p{M}", "")
+        .toLowerCase(Locale.ROOT)
+        .replaceAll("[¡!¿?,.;:]", " ")
+        .strip()
+        .replaceAll("\\s+", " ");
   }
 }

@@ -29,6 +29,10 @@ public class AgentToolDefinitions {
                 text("ID del servicio obtenido del catálogo"),
                 "dentist_id",
                 text("ID opcional del profesional; omitir para consultar disponibles"),
+                "dentist_name",
+                text(
+                    "Nombre solicitado, por ejemplo Julia Huaytalla. Usa este campo si no conoces"
+                        + " su ID; nunca pongas un nombre en dentist_id."),
                 "date",
                 text("Fecha absoluta YYYY-MM-DD, omitir si es relativa"),
                 "days_from_today",

@@ -73,7 +73,14 @@ public class AgentToolService {
             5);
       }
       case "consultar_horarios" -> {
-        fields(args, "service_id", "dentist_id", "date", "days_from_today", "preferred_time");
+        fields(
+            args,
+            "service_id",
+            "dentist_id",
+            "dentist_name",
+            "date",
+            "days_from_today",
+            "preferred_time");
         yield slots(run, args);
       }
       case "proponer_cita" -> {
@@ -83,7 +90,9 @@ public class AgentToolService {
       case "descartar_propuesta" -> {
         fields(args);
         conversations.conversation(run.conversationId(), true).orElseThrow();
-        runs.currentProposal(run.conversationId())
+        runs.currentProposal(
+                run.conversationId(),
+                conversations.message(run.messageId(), false).orElseThrow().source())
             .filter(p -> p.state().equals("PENDING"))
             .ifPresent(p -> runs.proposalState(p.id(), "SUPERSEDED"));
         yield Map.of("discarded", true, "appointment_created", false);
@@ -95,7 +104,11 @@ public class AgentToolService {
   @Transactional(timeout = 10)
   public String conflictAlternatives(AgentRun run) {
     conversations.conversation(run.conversationId(), true).orElseThrow();
-    var proposal = runs.currentProposal(run.conversationId()).orElseThrow();
+    var proposal =
+        runs.currentProposal(
+                run.conversationId(),
+                conversations.message(run.messageId(), false).orElseThrow().source())
+            .orElseThrow();
     var previous = runs.slot(proposal.slotId()).orElseThrow();
     runs.proposalState(proposal.id(), "CONFLICT");
     var args = tools.jackson.databind.node.JsonNodeFactory.instance.objectNode();
@@ -139,13 +152,14 @@ public class AgentToolService {
                 () -> ApiException.badRequest("El servicio no está habilitado para el agente."));
     var profile = profiles.findById((short) 1).orElseThrow();
     ZoneId zone = ZoneId.of(profile.getTimeZone());
+    var incoming = conversations.message(run.messageId(), false).orElseThrow();
+    var receivedDate = incoming.createdAt().atZone(zone).toLocalDate();
     LocalDate today = LocalDate.now(clock.withZone(zone)), date;
     if (args.hasNonNull("days_from_today")) {
       if (args.hasNonNull("date") && !args.path("date").asString("").isBlank())
         throw ApiException.badRequest("Utiliza fecha absoluta o relativa, no ambas.");
       int days = number(args, "days_from_today", 0, 60);
-      var incoming = conversations.message(run.messageId(), false).orElseThrow();
-      date = incoming.createdAt().atZone(zone).toLocalDate().plusDays(days);
+      date = receivedDate.plusDays(days);
     } else {
       try {
         date = LocalDate.parse(text(args, "date", 10, true));
@@ -153,6 +167,7 @@ public class AgentToolService {
         throw ApiException.badRequest("La fecha debe ser YYYY-MM-DD.");
       }
     }
+    date = AgentRequestedDate.resolve(incoming.body(), receivedDate).orElse(date);
     if (date.isBefore(today) || date.isAfter(today.plusDays(60)))
       throw ApiException.badRequest("Consulta una fecha entre hoy y los próximos 60 días.");
     String preferred = text(args, "preferred_time", 5, false);
@@ -162,7 +177,7 @@ public class AgentToolService {
       } catch (DateTimeException failure) {
         throw ApiException.badRequest("La hora debe ser HH:mm.");
       }
-    var dentists = catalog.dentists(service, dentist);
+    var dentists = catalog.dentists(service, dentist, text(args, "dentist_name", 160, false));
     var results = new ArrayList<Map<String, Object>>();
     boolean preferredFound = false;
     for (var professional : dentists) {
@@ -231,6 +246,13 @@ public class AgentToolService {
       throw ApiException.conflict(
           "Llegó otro mensaje; procesa la solicitud más reciente antes de proponer.");
     var slot = runs.slot(uuid(args, "slot_id", true)).orElseThrow(ApiException::notFound);
+    var inputSource = conversations.message(run.messageId(), false).orElseThrow().source();
+    var slotSource =
+        conversations
+            .message(runs.get(slot.runId(), false).orElseThrow().messageId(), false)
+            .orElseThrow()
+            .source();
+    if (!inputSource.equals(slotSource)) throw ApiException.forbidden();
     if (!slot.conversationId().equals(run.conversationId())
         || !slot.expiresAt().isAfter(clock.instant()))
       throw ApiException.badRequest("Ese horario ofrecido venció o no pertenece al contacto.");
@@ -254,6 +276,14 @@ public class AgentToolService {
     if (!profile.getTimeZone().equals(slot.timeZone())
         || ((Number) service.get("duration_minutes")).intValue() != slot.durationMinutes())
       throw ApiException.conflict("Cambió la zona o duración; consulta y confirma otro horario.");
+    var incoming = conversations.message(run.messageId(), false).orElseThrow();
+    var requestedDate =
+        AgentRequestedDate.resolve(
+            incoming.body(),
+            incoming.createdAt().atZone(ZoneId.of(profile.getTimeZone())).toLocalDate());
+    if (requestedDate.isPresent() && !requestedDate.get().equals(slot.localStart().toLocalDate()))
+      throw ApiException.badRequest(
+          "Ese horario no coincide con el día solicitado; consulta la fecha correcta.");
     availability.requireAvailable(
         slot.dentistId(),
         slot.localStart().atZone(ZoneId.of(slot.timeZone())).toInstant(),
@@ -279,7 +309,10 @@ public class AgentToolService {
             + ". Odontólogo: "
             + dentist.getFirst().get("full_name")
             + ". Fecha y hora: "
-            + slot.localStart().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            + slot.localStart()
+                .format(
+                    DateTimeFormatter.ofPattern(
+                        "EEEE dd/MM/yyyy HH:mm", Locale.forLanguageTag("es")))
             + " ("
             + slot.timeZone()
             + "). Duración: "

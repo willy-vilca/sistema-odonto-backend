@@ -98,6 +98,14 @@ public class AgentBookingService {
     }
     var slot = runs.slot(p.slotId()).orElseThrow();
     var profile = profiles.findById((short) 1).orElseThrow();
+    var requestedDate =
+        AgentRequestedDate.resolve(
+            original.body(),
+            original.createdAt().atZone(ZoneId.of(profile.getTimeZone())).toLocalDate());
+    if (requestedDate.isPresent() && !requestedDate.get().equals(slot.localStart().toLocalDate()))
+      throw ApiException.badRequest(
+          "La propuesta no coincide con el día solicitado. No se creó la cita; pide una nueva"
+              + " propuesta.");
     var service =
         catalog
             .service(slot.serviceId())

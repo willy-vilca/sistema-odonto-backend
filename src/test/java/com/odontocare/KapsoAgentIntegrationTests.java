@@ -247,6 +247,47 @@ class KapsoAgentIntegrationTests {
     return queue.detail(run.id()).run();
   }
 
+  @Test
+  void correctsUngroundedCatalogueClaimsBeforeSendingAnyResponse() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(new LanguageModelClient.Reply("S/. 120 y 50 minutos", List.of(), 30, 10))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
+        .thenReturn(
+            new LanguageModelClient.Reply(
+                "La limpieza cuesta PEN 100.00 y dura 60 minutos.", List.of(), 30, 10));
+    submit("¿Cuánto cuesta y dura la limpieza? Solo información.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText())
+        .contains("100.00", "60 minutos")
+        .doesNotContain("120", "50 minutos");
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM appointment", Integer.class)).isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM kapso_message WHERE direction='OUTBOUND'", Integer.class))
+        .isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT body FROM kapso_message WHERE direction='OUTBOUND'", String.class))
+        .isEqualTo(done.responseText());
+    verify(model, times(3)).reply(anyList(), anyList());
+  }
+
+  @Test
+  void boundedFailureNeverSendsRepeatedInventedPrices() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(new LanguageModelClient.Reply("S/. 120 y 50 minutos", List.of(), 30, 10));
+    submit("¿Cuánto cuesta la limpieza? Solo información.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("FAILED");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT body FROM kapso_message WHERE direction='OUTBOUND'", String.class))
+        .doesNotContain("120", "50 minutos");
+    assertThat(jdbc.queryForObject("SELECT count(*) FROM appointment", Integer.class)).isZero();
+    verify(model, times(6)).reply(anyList(), anyList());
+  }
+
   private void scriptProposal(UUID patient, String name) {
     var index = new AtomicInteger();
     when(model.reply(anyList(), anyList()))
@@ -270,6 +311,84 @@ class KapsoAgentIntegrationTests {
               }
               return new LanguageModelClient.Reply("Oferta preparada", List.of(), 30, 10);
             });
+  }
+
+  @Test
+  void requestedWeekdayOverridesIncorrectModelOffsetAndRespectsHoliday() {
+    var requested =
+        LocalDate.now(ZoneId.of("America/Lima"))
+            .with(java.time.temporal.TemporalAdjusters.next(DayOfWeek.MONDAY));
+    jdbc.update(
+        "INSERT INTO schedule_exception(id,kind,start_date,end_date,reason)"
+            + " VALUES(?,'HOLIDAY',?,?,'Cierre general')",
+        UUID.randomUUID(),
+        requested,
+        requested);
+    submit("Paciente Agente quiere limpieza con Doctora Demo el próximo lunes a las 9");
+    var run = queue.claim().orElseThrow();
+    var result =
+        mapper.valueToTree(
+            tools.execute(
+                run,
+                "consultar_horarios",
+                mapper.valueToTree(
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "dentist_name",
+                        "Doctora Demo",
+                        "days_from_today",
+                        2,
+                        "preferred_time",
+                        "09:00"))));
+    assertThat(result.path("date").asString()).isEqualTo(requested.toString());
+    assertThat(result.path("items").size()).isZero();
+    var wrongSlot =
+        runs.addSlot(
+            run.id(),
+            run.conversationId(),
+            doctorId,
+            serviceId,
+            requested.plusDays(1).atTime(9, 0),
+            60,
+            "America/Lima",
+            Instant.now().plusSeconds(1800),
+            "Limpieza dental",
+            "Doctora Demo");
+    assertThatThrownBy(
+            () ->
+                tools.execute(
+                    run,
+                    "proponer_cita",
+                    mapper.valueToTree(
+                        Map.of(
+                            "slot_id",
+                            wrongSlot.id(),
+                            "patient_name",
+                            "Paciente Agente",
+                            "patient_id",
+                            patientId))))
+        .isInstanceOf(com.odontocare.shared.web.ApiException.class)
+        .hasMessageContaining("día solicitado");
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void rejectsLegacyProposalForAnotherWeekdayEvenAfterExpressConfirmation() throws Exception {
+    var proposal = offered();
+    String requested =
+        LocalDate.now(ZoneId.of("America/Lima")).plusDays(1).getDayOfWeek() == DayOfWeek.MONDAY
+            ? "martes"
+            : "lunes";
+    jdbc.update(
+        "UPDATE kapso_message SET body=? WHERE id=(SELECT message_id FROM agent_run WHERE id=?)",
+        "Paciente Agente solicitó limpieza el próximo " + requested + " a las 9",
+        proposal.runId());
+    submit("Sí, confirmo la cita");
+    var done = process();
+    assertThat(done.state()).isEqualTo("FAILED");
+    assertThat(done.errorCode()).isEqualTo("BOOKING_VALIDATION");
+    assertThat(appointments()).isZero();
   }
 
   private LanguageModelClient.Reply tool(String name, Object args) {
@@ -367,6 +486,57 @@ class KapsoAgentIntegrationTests {
 
   private long count(String table) {
     return jdbc.queryForObject("SELECT count(*) FROM " + table, Long.class);
+  }
+
+  @Test
+  void appProposalAndDiscardNeverDisplaceRealPendingBooking() throws Exception {
+    var real = offered();
+    scriptProposal(patientId, "Paciente Agente");
+    var preview =
+        queue.test(
+            new TestMessage(
+                phone, "Demo", "Paciente Agente quiere limpieza mañana 9", UUID.randomUUID()));
+    process();
+    var app = queue.proposal(preview.conversationId());
+    assertThat(
+            runs.proposalByCode(real.conversationId(), real.confirmationCode())
+                .orElseThrow()
+                .state())
+        .isEqualTo("PENDING");
+    assertThat(app.id()).isNotEqualTo(real.id());
+    queue.test(new TestMessage(phone, "Demo", "No reserves", UUID.randomUUID()));
+    var discarded = queue.claim().orElseThrow();
+    tools.execute(discarded, "descartar_propuesta", mapper.createObjectNode());
+    queue.finish(discarded.id(), "Propuesta de prueba descartada.");
+    assertThat(
+            runs.proposalByCode(app.conversationId(), app.confirmationCode()).orElseThrow().state())
+        .isEqualTo("SUPERSEDED");
+    assertThat(
+            runs.proposalByCode(real.conversationId(), real.confirmationCode())
+                .orElseThrow()
+                .state())
+        .isEqualTo("PENDING");
+    submit("Sí, confirmo la cita");
+    assertThat(process().state()).isEqualTo("COMPLETED");
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(
+            runs.proposalByCode(real.conversationId(), real.confirmationCode())
+                .orElseThrow()
+                .state())
+        .isEqualTo("CONFIRMED");
+  }
+
+  @Test
+  void ambiguousAcknowledgementClarifiesWithoutModelCallOrNewProposal() throws Exception {
+    var proposal = offered();
+    clearInvocations(model);
+    submit("sí");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("confirmación expresa", proposal.confirmationCode());
+    assertThat(appointments()).isZero();
+    assertThat(queue.proposal(done.conversationId()).id()).isEqualTo(proposal.id());
+    verifyNoInteractions(model);
   }
 
   @Test
@@ -628,7 +798,10 @@ class KapsoAgentIntegrationTests {
               assertThat(result.path("items").path(0).path("local_start").asString())
                   .endsWith("10:00");
               return new LanguageModelClient.Reply(
-                  "Las 9 están ocupadas; tengo las 10:00. ¿Te funciona?", List.of(), 20, 10);
+                  "Las 9 están ocupadas por tu cita confirmada; tengo las 10:00. ¿Te funciona?",
+                  List.of(),
+                  20,
+                  10);
             });
     submit("Quiero limpieza mañana a las 9");
     assertThat(process().responseText()).contains("10:00");
@@ -647,6 +820,13 @@ class KapsoAgentIntegrationTests {
     assertThat(queue.detail(proposal.runId()).reply()).isNull();
     submit("CONFIRMO " + proposal.confirmationCode());
     assertThat(process().state()).isEqualTo("FAILED");
+    assertThat(appointments()).isZero();
+    submit("Sí, confirmo la cita");
+    var actual = process();
+    assertThat(actual.state()).isEqualTo("COMPLETED");
+    assertThat(actual.responseText())
+        .contains("Primero necesito proponerte")
+        .doesNotContain(proposal.confirmationCode());
     assertThat(appointments()).isZero();
   }
 

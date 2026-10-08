@@ -415,6 +415,19 @@ public class AgentRepository {
         .findFirst();
   }
 
+  public Optional<Proposal> currentProposal(UUID conversation, String source) {
+    return jdbc
+        .query(
+            "SELECT p.* FROM agent_proposal p JOIN agent_run r ON r.id=p.run_id JOIN"
+                + " agent_inbox_message m ON m.id=r.message_id WHERE p.conversation_id=? AND"
+                + " m.source=? ORDER BY r.sequence_no DESC LIMIT 1",
+            PROPOSAL,
+            conversation,
+            source)
+        .stream()
+        .findFirst();
+  }
+
   public Optional<Proposal> proposalByCode(UUID conversation, String code) {
     return jdbc
         .query(
@@ -436,8 +449,13 @@ public class AgentRepository {
       String summary,
       Instant now) {
     jdbc.update(
-        "UPDATE agent_proposal SET state='SUPERSEDED' WHERE conversation_id=? AND state='PENDING'",
-        conversation);
+        "UPDATE agent_proposal SET state='SUPERSEDED' WHERE conversation_id=? AND state='PENDING'"
+            + " AND run_id IN (SELECT prior.id FROM agent_run prior JOIN agent_inbox_message m ON"
+            + " m.id=prior.message_id WHERE m.source=(SELECT incoming.source FROM agent_run"
+            + " current_run JOIN agent_inbox_message incoming ON incoming.id=current_run.message_id"
+            + " WHERE current_run.id=?))",
+        conversation,
+        run);
     UUID id = UUID.randomUUID();
     String code = id.toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
     jdbc.update(

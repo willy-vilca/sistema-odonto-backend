@@ -40,7 +40,8 @@ public class GroqLanguageModelClient implements LanguageModelClient {
     body.put("tools", tools);
     body.put("tool_choice", "auto");
     body.put("parallel_tool_calls", false);
-    body.put("reasoning_effort", "low");
+    body.put("reasoning_effort", "medium");
+    body.put("temperature", 0);
     body.put("include_reasoning", false);
     body.put("max_completion_tokens", config.getMaxCompletionTokens());
     body.put("stream", false);

@@ -22,13 +22,27 @@ public class AgentCatalogRepository {
   }
 
   public List<Map<String, Object>> dentists(UUID service, UUID dentist) {
+    return dentists(service, dentist, "");
+  }
+
+  public List<Map<String, Object>> dentists(UUID service, UUID dentist, String name) {
+    var parameters = new ArrayList<Object>();
+    parameters.add(service);
+    if (dentist != null) parameters.add(dentist);
+    var filter = new StringBuilder();
+    for (String word : name.strip().split("\\s+")) {
+      if (word.isBlank()) continue;
+      filter.append(" AND lower(d.full_name) LIKE ? ESCAPE '!'");
+      parameters.add(pattern(word));
+    }
     return jdbc.queryForList(
         "SELECT d.id,d.full_name FROM dentist d JOIN user_account u ON u.id=d.user_id JOIN"
             + " dentist_service ds ON ds.dentist_id=d.id WHERE d.active AND u.active AND"
             + " ds.service_id=?"
             + (dentist == null ? "" : " AND d.id=?")
+            + filter
             + " ORDER BY d.full_name,d.id LIMIT 5",
-        dentist == null ? new Object[] {service} : new Object[] {service, dentist});
+        parameters.toArray());
   }
 
   public List<Map<String, Object>> patients(String phone, String search, int page) {

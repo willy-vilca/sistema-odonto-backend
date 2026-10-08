@@ -31,4 +31,12 @@ class AgentConfirmationTests {
           "Confirmo pago"
         }) assertThat(AgentConfirmation.natural(text)).as(text).isFalse();
   }
+
+  @Test
+  void identifiesShortAcknowledgementsForClarificationWithoutTreatingThemAsConsent() {
+    for (String text : new String[] {"sí", "OK", "vale", "¿Confirmo?"})
+      assertThat(AgentConfirmation.ambiguous(text)).as(text).isTrue();
+    assertThat(AgentConfirmation.ambiguous("No confirmo")).isFalse();
+    assertThat(AgentConfirmation.ambiguous("Sí, confirmo la cita")).isFalse();
+  }
 }
