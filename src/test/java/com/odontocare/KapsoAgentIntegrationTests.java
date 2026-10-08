@@ -1479,6 +1479,69 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void confirmingDiscardedChangeCannotInvalidateThePreviouslyConfirmedBooking() throws Exception {
+    var reservation = offered();
+    submit("CONFIRMO " + reservation.confirmationCode());
+    var booked = process();
+    UUID original = queue.detail(reservation.runId()).proposal().appointmentId();
+    delivered(booked.id());
+    var change = rescheduleProposal(original);
+    var declined = identifiedRequest("No confirmo el cambio. No reprogrames mi cita.");
+    tools.execute(declined, "descartar_propuesta", mapper.createObjectNode());
+    queue.finish(declined.id(), "La cita original se conserva.");
+    clearInvocations(model);
+    submit("CONFIRMO " + change.confirmationCode());
+    var rejected = process();
+    assertThat(rejected.state()).isEqualTo("COMPLETED");
+    assertThat(rejected.responseText())
+        .contains("descartada", "original se conserva", "nueva propuesta");
+    assertThat(queue.detail(reservation.runId()).proposal().state()).isEqualTo("CONFIRMED");
+    assertThat(changes.byRun(change.runId()).orElseThrow().state()).isEqualTo("SUPERSEDED");
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM appointment_history WHERE appointment_id=?",
+                Integer.class,
+                original))
+        .isEqualTo(1);
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(count("charge_entry")).isZero();
+    assertThat(count("money_movement")).isZero();
+    verify(model, never()).reply(anyList(), anyList());
+  }
+
+  @Test
+  void failedOldChangeCodeCannotMarkANewerPendingChangeAsConflicted() throws Exception {
+    UUID original = createOriginal(1, 9);
+    var old = rescheduleProposal(original);
+    var current = rescheduleProposal(original);
+    submit("CONFIRMO " + old.confirmationCode());
+    var run = queue.claim().orElseThrow();
+    assertThatThrownBy(() -> changes.conflict(run, "Fallo de referencia anterior"))
+        .isInstanceOf(com.odontocare.shared.web.ApiException.class);
+    assertThat(changes.byRun(current.runId()).orElseThrow().state()).isEqualTo("PENDING");
+    agent.process(run);
+    assertThat(queue.detail(run.id()).run().responseText()).contains("descartada");
+    assertThat(changes.byRun(current.runId()).orElseThrow().state()).isEqualTo("PENDING");
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+  }
+
+  @Test
+  void conflictAlternativesNeverInvalidateAnotherPendingBookingReference() throws Exception {
+    var pending = offered();
+    submit("CONFIRMO AAAAAAAA");
+    var run = queue.claim().orElseThrow();
+    assertThatThrownBy(() -> tools.conflictAlternatives(run))
+        .isInstanceOf(com.odontocare.shared.web.ApiException.class);
+    assertThat(queue.detail(pending.runId()).proposal().state()).isEqualTo("PENDING");
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
   void cancellingRequiresDeliveredSummaryAndPreservesHistoryAndMoney() throws Exception {
     UUID original = createOriginal(1, 9);
     var run = identifiedRequest("Quiero cancelar mi cita por viaje.");
@@ -1713,7 +1776,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.4");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.5");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

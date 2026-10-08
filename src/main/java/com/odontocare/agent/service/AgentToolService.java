@@ -146,12 +146,18 @@ public class AgentToolService {
 
   @Transactional(timeout = 10)
   public String conflictAlternatives(AgentRun run) {
+    supervision.requireAutomatic(run);
     conversations.conversation(run.conversationId(), true).orElseThrow();
     var proposal =
         runs.currentProposal(
                 run.conversationId(),
                 conversations.message(run.messageId(), false).orElseThrow().source())
             .orElseThrow();
+    var code =
+        AgentConfirmation.code(conversations.message(run.messageId(), false).orElseThrow().body());
+    if (!proposal.state().equals("PENDING")
+        || code.filter(c -> !c.equals(proposal.confirmationCode())).isPresent())
+      throw ApiException.conflict("La propuesta de reserva ya no está vigente; solicita otra.");
     var previous = runs.slot(proposal.slotId()).orElseThrow();
     runs.proposalState(proposal.id(), "CONFLICT");
     var args = tools.jackson.databind.node.JsonNodeFactory.instance.objectNode();

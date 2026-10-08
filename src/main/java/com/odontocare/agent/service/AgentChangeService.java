@@ -304,6 +304,11 @@ public class AgentChangeService {
       return Map.of(
           "response",
           "La propuesta de cambio venció. La cita original se conserva; solicita otra propuesta.");
+    if (p.state().equals("SUPERSEDED"))
+      return Map.of(
+          "response",
+          "Esa propuesta de cambio fue descartada. La cita original se conserva; solicita una nueva"
+              + " propuesta si deseas cambiarla.");
     if (!p.state().equals("PENDING"))
       throw ApiException.conflict("La propuesta de cambio ya no está vigente; solicita otra.");
     if (!p.expiresAt().isAfter(clock.instant())) {
@@ -412,7 +417,12 @@ public class AgentChangeService {
 
   @Transactional
   public String conflict(AgentRun run, String detail) {
+    supervision.requireAutomatic(run);
     var p = current(run).orElseThrow();
+    var code = AgentConfirmation.code(inbox.message(run.messageId(), false).orElseThrow().body());
+    if (!p.state().equals("PENDING")
+        || code.filter(c -> !c.equals(p.confirmationCode())).isPresent())
+      throw ApiException.conflict("La propuesta de cambio ya no está vigente; solicita otra.");
     changes.state(p.id(), "CONFLICT");
     supervision.request(
         run, "INFORMATION_PENDING", p.summary(), p.patientId(), "", p.appointmentId());

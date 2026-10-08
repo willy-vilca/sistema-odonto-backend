@@ -1,6 +1,6 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 8 de octubre de 2026. Versión del plan: 3.4. Alcance de referencia: versión 1.9 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 8 de octubre de 2026. Versión del plan: 3.5. Alcance de referencia: versión 1.9 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general informada favorable de manera aproximada, pendiente de anotación individual. Fase 6 completada y validada con WhatsApp real. Fase 7 en validación real: consulta propia, disponibilidad y preparación/entrega de propuesta aprobadas después de corregir incidencias. La cita original permanece intacta; negación, confirmación de cambios y demás casos pendientes. Fases 8 y 9 pendientes. Evidencia y límites en los cierres de [fase 0](cierre-fase-0.md), [fase 1](cierre-fase-1.md), [fase 2](cierre-fase-2.md), [fase 3](cierre-fase-3.md), [fase 4](cierre-fase-4.md), [fase 5](cierre-fase-5.md), [fase 6](cierre-fase-6.md) e [implementación de fase 7](gestion-conversaciones-agente-fase-7.md).
 
@@ -263,6 +263,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 **Filtro de cita propia corregido el 08/10.** La entrada completa verificó al paciente, pero el modelo filtró servicios por el nombre del paciente y respondió que no encontró citas. Cita y contexto estaban conservados. v7.4 elimina únicamente el filtro que corresponde exactamente al nombre completo verificado, mantiene la búsqueda paginada/limitada al paciente y distingue falta de coincidencias de falta de citas. 72 pruebas del agente aprobadas; Groq real preparó el resumen correcto en APP_TEST en 10,708 segundos sin cambiar la cita ni enviar mensajes. Se repite la entrada real antes de probar su negación; fase 7 permanece abierta. [Resultado y límites](validacion-real-agente-kapso-fase-7.md).
 
 **Propuesta real aprobada el 08/10.** El participante recibió el resumen correcto del cambio del 13/10 al 20/10 a las 09:00 con Julia, duración 60 minutos y motivo. Secuencia 46/KAPSO, ejecución 30b537e0-6e37-4aec-a1f6-a076b24873be, COMPLETED y respuesta READ; propuesta PENDING, sin confirmación. Cita original versión 0, historial y finanzas conservados. Se continúa con negación y después una propuesta nueva para confirmar; no se declara reprogramación aplicada ni cierre de fase 7. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
+**Negación real aprobada y código descartado preparado.** Secuencia 47, COMPLETED/READ: propuesta 233B4896 SUPERSEDED, cita original versión 0 e historial/finanzas intactos. Revisión previa del siguiente ensayo detectó un posible cruce del rechazo con la reserva anterior; se corrigió en v7.5 antes de ejecutarlo realmente. Un código descartado devuelve una respuesta sin IA; la recuperación de conflictos exige referencia y propuesta pendiente correctas, con control revalidado. 75 casos distintos del agente comprobados entre el bloque de regresión y una repetición aislada de la aserción de preparación corregida; empaquetado correcto. Código descartado, cambio efectivo y demás casos reales siguen pendientes. [Trazas y validación](validacion-real-agente-kapso-fase-7.md).
 
 **Trabajo incluido.**
 

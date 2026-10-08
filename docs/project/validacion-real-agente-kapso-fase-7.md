@@ -60,7 +60,7 @@ La cita original sigue CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un even
 
 La sesión agrupa primero el flujo de cambios y después los límites de acceso; cubre los mismos casos de [la guía preparada](probar-cambios-agente-kapso-fase-7.md), sin exigir su orden literal.
 
-## Prueba 3: preparar cambio y después rechazarlo — propuesta real aprobada; negación pendiente
+## Prueba 3: preparar cambio y después rechazarlo — propuesta y negación reales aprobadas
 
 Se solicita enviar:
 
@@ -112,8 +112,22 @@ Propuesta `233b4896-72b0-4ccf-bc98-0afa9119f5c9`, fuente KAPSO, RESCHEDULE/PENDI
 
 Cita original todavía CONFIRMED/versión 0, martes 13/10 09:00–10:00, con un evento de historial; sin cambios financieros. Permanecen 9 pacientes, 12 citas, 9 cargos, 11 movimientos y AUTO/generación 4. **La preparación y entrega real de la propuesta quedan aprobadas; no se declara aplicada una reprogramación.** El siguiente caso es rechazar esta propuesta y comprobar que el código no permite aplicar un cambio descartado.
 
+## Prueba 4: rechazar el cambio — aprobada
+
+El participante envió «No confirmo el cambio. No reprogrames mi cita; conserva la del martes 13/10/2026 a las 09:00» y recibió: «Entendido. Tu cita sigue programada para el martes 13/10/2026 a las 09:00 con Julia Huaytalla. Si necesitas algo más, avísame».
+
+Ejecución `4194823b-7b16-4ffb-92b5-d2022aaffb48`, secuencia 47, KAPSO/COMPLETED, `supervised-v7.4`, un intento y sin errores. Entrada `02f1967e-57b8-405f-b60d-9c0dea1c0eaa`, respuesta `e6b11ad7-fc5e-45be-b396-a4b01ba7d309` READ. Herramienta descartar_propuesta OK; no creación ni cambio de cita. 3 946 tokens de entrada, 83 de salida; 4,053 segundos desde registrar la ejecución hasta persistir la respuesta.
+
+La propuesta 233B4896 pasó a SUPERSEDED antes de vencer y conserva confirmation_message_id vacío. La cita original sigue CONFIRMED/versión 0, 13/10/2026 09:00–10:00, un evento de historial. Permanecen 9 pacientes, 12 citas, 9 cargos, 11 movimientos y AUTO/generación 4. La negación queda comprobada realmente, sin confundirse con una cancelación.
+
+Al preparar el siguiente caso, revisión del servidor detectó que un rechazo de código descartado podía entrar en la recuperación genérica de conflictos y modificar el estado de una propuesta anterior de reserva confirmada. **No se había ejecutado ese intento en la instalación actual ni alterado su reserva**. Se corrige antes de pedir el mensaje: un cambio descartado devuelve su rechazo sin aplicarlo ni usar IA; los mecanismos de conflicto exigen una propuesta PENDING y la referencia correcta, y revalidan el control humano. Se conserva la reserva de fase 6 y se prepara la comprobación real del código 233B4896.
+
+Corrección `supervised-v7.5` empaquetada. 75 casos distintos del agente verificados: el bloque inicial pasó 74 y falló únicamente una aserción del nuevo ensayo que contaba también inferencias de preparación de su reserva; al limitar el contador a la confirmación rechazada, ese caso pasó en una repetición aislada. No se presentan los dos bloques como una sola ejecución sin fallos. Los tres ensayos nuevos verifican que el código descartado no invalida una reserva ya confirmada, no marca otra propuesta pendiente como conflictiva y no usa el modelo para responder. Logs locales ignorados: `phase7-discarded-change-tests.log` y `phase7-discarded-change-final.log`.
+
+La prueba real del código descartado aún está pendiente; no se ha enviado ese mensaje por cuenta del participante. La cita y su propuesta de reserva original de fase 6 permanecen CONFIRMED, y la propuesta de cambio real continúa SUPERSEDED.
+
 ## Casos restantes
 
-Negación de la propuesta; confirmación expresa de una nueva propuesta e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Rechazo del código descartado; confirmación expresa de una nueva propuesta e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
