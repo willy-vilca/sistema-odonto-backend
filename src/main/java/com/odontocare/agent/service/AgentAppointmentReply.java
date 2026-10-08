@@ -31,7 +31,11 @@ public class AgentAppointmentReply {
                 + " minutos.");
     response =
         lines.isEmpty()
-            ? "No encontré próximas citas activas del paciente verificado."
+            ? (data.get("search_applied") instanceof String search && !search.isBlank()
+                ? "No encontré próximas citas del paciente verificado que coincidan con la"
+                    + " búsqueda. Puedes consultar sin filtro o indicar solo el servicio o el"
+                    + " profesional."
+                : "No encontré próximas citas activas del paciente verificado.")
             : "Próximas citas del paciente verificado:\n"
                 + String.join("\n", lines)
                 + "\nSi deseas un cambio, indica cuál cita y el motivo.";

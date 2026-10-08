@@ -793,6 +793,32 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void verifiedPatientNameIsIdentityRatherThanAnAppointmentServiceFilter() {
+    UUID original = createOriginal(1, 9);
+    var run = identifiedRequest("Soy Paciente Agente. Quiero consultar mi cita.");
+    var own = mapper.valueToTree(changes.ownAppointments(run, "  PACIENTE ÁGENTE  ", 0));
+    assertThat(own.path("items")).hasSize(1);
+    assertThat(own.path("items").path(0).path("patient_name").asString())
+        .isEqualTo("Paciente Agente");
+    assertThat(own.path("search_applied").asString()).isEmpty();
+    var filtered = changes.ownAppointments(run, "Paciente Distinto", 0);
+    assertThat(mapper.valueToTree(filtered).path("items")).isEmpty();
+    assertThat(mapper.valueToTree(filtered).path("search_applied").asString())
+        .isEqualTo("Paciente Distinto");
+    var reply = new AgentAppointmentReply();
+    reply.record("consultar_mis_citas", filtered);
+    assertThat(reply.response().orElseThrow())
+        .contains("coincidan con la búsqueda", "sin filtro")
+        .doesNotContain("No encontré próximas citas activas");
+    assertThat(mapper.valueToTree(changes.ownAppointments(run, "limpieza", 0)).path("items"))
+        .hasSize(1);
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+    assertThat(appointments()).isEqualTo(1);
+  }
+
+  @Test
   void ownAppointmentsAlsoShowsManualVisitsWithoutCatalogueService() {
     manual.create(
         new com.odontocare.appointments.dto.AppointmentRequest(
@@ -831,7 +857,8 @@ class KapsoAgentIntegrationTests {
                 return tool(
                     "verificar_paciente",
                     Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
-              if (step == 1) return tool("consultar_mis_citas", Map.of("search", "limpieza"));
+              if (step == 1)
+                return tool("consultar_mis_citas", Map.of("search", "Paciente Agente"));
               List<Map<String, Object>> context = i.getArgument(0);
               var result = mapper.readTree(context.getLast().get("content").toString());
               if (step == 2) {
@@ -1686,7 +1713,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.3");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.4");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

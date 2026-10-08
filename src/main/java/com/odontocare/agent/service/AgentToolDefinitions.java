@@ -59,10 +59,13 @@ public class AgentToolDefinitions {
         tool(
             "consultar_mis_citas",
             "Citas propias verificadas; devuelve appointment_ref, service_id y dentist_id para"
-                + " cambios, sin consultar el catálogo de nuevo.",
+                + " cambios, sin consultar el catálogo de nuevo. search filtra servicio o"
+                + " profesional; usa vacío para todas las propias, nunca el nombre del paciente.",
             Map.of(
                 "search",
-                text("Buscar por servicio o profesional"),
+                text(
+                    "Una palabra del servicio o profesional, o vacío. No usar el nombre del"
+                        + " paciente."),
                 "page",
                 integer("Página desde 0")),
             List.of("search")),

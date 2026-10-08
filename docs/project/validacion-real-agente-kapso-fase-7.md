@@ -86,6 +86,20 @@ El usuario pidió corregir y guardar el estado, aplazando nuevos intercambios ha
 
 Solo se devolvió a AUTO la derivación automática conocida de esta prueba, sin responsable humano; generación 4 y requiere instrucción nueva. Se mantienen 9 pacientes, 12 citas, 9 cargos y 11 movimientos. La siguiente comprobación real debe preparar otra propuesta correcta antes de probar su negación; no confirmar códigos APP_TEST ni antiguos.
 
+### Reanudación del 08/10: filtro incorrecto de la consulta propia
+
+Entrada nueva y completa: «Soy Willy Vilca Huaytalla. La cita es para mí. Elijo el martes 20/10/2026 a las 09:00 con Julia Huaytalla. Reprograma mi limpieza dental por el cambio de horario de trabajo». El participante recibió «No encontré próximas citas activas del paciente verificado». Ejecución `8a5acf3c-4018-4cc0-9129-f8d52bd799c4`, secuencia 44, KAPSO/COMPLETED, un intento, `supervised-v7.3`, 5 694 tokens de entrada y 153 de salida. La ejecución terminó, pero **la prueba funcional falló**.
+
+La identidad se verificó correctamente como SELF y paciente `7e5ff960-c0b8-4fb2-941c-5a93af361d95`. El contexto administrativo conservaba al paciente y su solicitud. El modelo llamó consultar_mis_citas con search «Willy Vilca Huaytalla»; ese filtro buscaba servicios/profesionales y devolvió cero resultados. La cita seguía activa. No fue una pérdida de la cita o del contexto ni un error de cuota en esta ejecución.
+
+Corrección `supervised-v7.4`: el nombre completo del paciente ya verificado se trata como identidad redundante, no como filtro de servicio. Solo se elimina ese filtro cuando coincide exactamente después de normalizar; otro texto continúa filtrando. La consulta permanece limitada al UUID del paciente verificado, en el servidor y con páginas de cinco. Devuelve search_applied y distingue una búsqueda vacía de una búsqueda sin coincidencias para no afirmar que no existen citas al fallar un filtro. Se aclararon herramienta e instrucciones del modelo.
+
+72 regresiones del agente/cliente/fechas/herramientas aprobadas, cero fallos/errores/omitidos y empaquetado correcto. Incluyen 44 Kapso/agente, reproducción del filtro de nombre durante el flujo de propuesta, conservación de filtros legítimos y protección de identidad. Se conserva aparte la regresión completa anterior de 187 casos, sin presentarla como repetida aquí.
+
+Groq real preparó la propuesta correcta en APP_TEST `1d657b85-1289-433b-8a9f-708200fb689c`, COMPLETED, dos intentos, cuatro inferencias aceptadas, 10,708 segundos incluidos unos siete de espera por cuota. 8 935 tokens de entrada y 303 de salida. Verificó al paciente, consultó sin filtro, recuperó la cita del 13/10, consultó el 20/10 a las 09:00 y preparó el resumen con motivo. No se confirmó, no se envió WhatsApp ni se modificó cita, historial o finanzas. Los códigos APP_TEST siguen sin servir en el canal real.
+
+Backend actualizado para repetir la misma entrada por WhatsApp. Cita original CONFIRMED/versión 0, 13/10/2026 09:00–10:00, un evento de historial; control AUTO/generación 4. La propuesta real continúa pendiente de verificación, antes de probar su rechazo. No se declara fase 7 cerrada.
+
 ## Casos restantes
 
 Propuesta de cambio y negación; confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.

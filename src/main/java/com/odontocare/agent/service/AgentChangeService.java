@@ -75,9 +75,13 @@ public class AgentChangeService {
     UUID patient = (UUID) verified.get("patient_id");
     if (patient == null) return Map.of("items", List.of(), "page", page, "page_size", 5);
     identity.require(run, patient, verified.get("patient_name").toString());
+    String appliedSearch = search.strip();
+    if (AgentIdentityService.normalize(appliedSearch)
+        .equals(AgentIdentityService.normalize(verified.get("patient_name").toString())))
+      appliedSearch = "";
     var zone = ZoneId.of(profiles.findById((short) 1).orElseThrow().getTimeZone());
     var items = new ArrayList<Map<String, Object>>();
-    for (var a : changes.appointments(patient, search, page)) {
+    for (var a : changes.appointments(patient, appliedSearch, page)) {
       var item =
           new LinkedHashMap<String, Object>(
               Map.of(
@@ -109,7 +113,17 @@ public class AgentChangeService {
       if (a.get("service_id") != null) item.put("service_id", a.get("service_id"));
       items.add(item);
     }
-    return Map.of("items", items, "page", page, "page_size", 5, "time_zone", zone.getId());
+    return Map.of(
+        "items",
+        items,
+        "page",
+        page,
+        "page_size",
+        5,
+        "time_zone",
+        zone.getId(),
+        "search_applied",
+        appliedSearch);
   }
 
   @Transactional

@@ -1,12 +1,14 @@
 # Fase 7: conversaciones, cambios y recuperación del agente
 
-Fecha: 07/10/2026. Plan 3.3; alcance funcional 1.9. Backend y frontend: rama `kapso`.
+Actualización: 08/10/2026. Plan 3.4; alcance funcional 1.9. Backend y frontend: rama `kapso`.
 
-**Estado: implementación y validación interna completas; nuevos mensajes reales aplazados hasta el regreso del participante.** Consulta propia y disponibilidad reales aprobadas. La preparación del cambio real volvió a fallar por cuota/rechazo del proveedor; v7.3 se comprobó internamente con Groq y conserva la cita. La propuesta correcta, los cambios y demás casos todavía necesitan demostración real. El usuario pidió terminar correcciones y documentación sin solicitar mensajes durante su ausencia. La fase 6 conserva su cierre; fase 7 en validación y fase 8 pendiente. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md), [diagnóstico y punto para retomar](diagnostico-groq-reserva-fase-7.md).
+**Estado: implementación y validación interna completas; demostración real reanudada el 08/10.** Consulta propia y disponibilidad reales aprobadas. Se respetó la ausencia del participante, que ahora autorizó continuar. Tras las incidencias de cuota/rechazo se detectó un filtro incorrecto del nombre del paciente, corregido en v7.4 con Groq y cita conservada. La propuesta correcta, los cambios y demás casos todavía necesitan demostración real. Fase 6 conserva su cierre; fase 7 en validación y fase 8 pendiente. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md), [diagnóstico acumulado](diagnostico-groq-reserva-fase-7.md).
 
 ## Uso desde la aplicación
 
 Verificación final de la corrección v7.3: 187 casos backend aprobados, cero fallos/errores/omitidos, empaquetado correcto. Incluye 43 casos Kapso/agente, 11 del cliente Groq y dos de etapas de herramientas. Groq real preparó la propuesta correcta en APP_TEST con conservación de cita, historial, finanzas y mensajes salientes. No se repitieron pruebas de interfaz porque no hubo cambios visuales; se conserva la evidencia previa de los tres tamaños. [Mediciones, límites y casos para retomar](diagnostico-groq-reserva-fase-7.md).
+
+Corrección posterior v7.4: el nombre completo verificado no se utiliza como filtro de servicios en las citas propias; se informa la búsqueda aplicada y se diferencia una consulta sin coincidencias. 72 pruebas del agente aprobadas, con 44 Kapso/agente; Groq real preparó la propuesta correcta sin aplicarla. La consulta sigue paginada y limitada al paciente autorizado. [Incidencia real y nueva comprobación pendiente](validacion-real-agente-kapso-fase-7.md).
 
 En **WhatsApp**, la bandeja permite buscar contacto, mensaje, paciente y resumen. Los filtros **Control** y **Solicitud** y la paginación se ejecutan en el servidor. Cada conversación muestra su modo, solicitud administrativa, responsable, paciente identificado y enlace al detalle e historial de la cita cuando existe, recuperados a demanda y con permisos.
 
