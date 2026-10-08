@@ -180,8 +180,18 @@ Se separa el formato de confirmación del resumen de propuesta: datos de la cita
 
 Flujo `supervised-v7.7`, 83 pruebas aprobadas (48 Kapso/agente, tres de formato y las regresiones previas), sin fallos/errores/omitidas; empaquetado correcto. Incluye reprogramación posterior manual seguida de repetición: muestra el horario actual, conserva versión/historial y no vuelve a aplicar el cambio. Los mensajes históricos no se editan; el ajuste se aplica a futuras confirmaciones/repeticiones y también mantiene legible la confirmación de cancelación. No requiere inferencia ni cambios de frontend. La prueba real de repetición sigue pendiente.
 
+## Prueba 9: confirmación repetida y formato nuevo — aprobada
+
+El participante repitió «Sí, confirmo el cambio de mi cita». Recibió «La reprogramación ya estaba registrada» y los datos actuales en líneas: Willy, Limpieza dental, Julia, martes 20/10/2026, 09:00–10:00, 60 minutos, Confirmada y la referencia original. No apareció la fecha del 13/10 en el mensaje.
+
+Ejecución `42862837-db35-4763-b896-39f345536e95`, secuencia 55, KAPSO/COMPLETED, `supervised-v7.7`, un intento, cero inferencias/tokens. Entrada `3b22f4db-6e6d-4a45-9b4c-7a7675fb646a`; respuesta `5181d0b0-9237-4eeb-a6be-cb793457b5fb` READ. Resultado repeated=true y misma cita; 3,006 segundos desde registro hasta respuesta persistida.
+
+La cita sigue CONFIRMED/versión 1, 20/10 09:00–10:00. Conserva dos eventos de historial y exactamente un RESCHEDULED. La propuesta F4160577 mantiene CONFIRMED y el mensaje original de aceptación, sin reemplazarlo por la repetición. Pacientes/citas/cargos/movimientos 9/12/9/11 y AUTO/generación 6. Idempotencia y nuevo formato quedan demostrados realmente.
+
+Siguiente bloque: proponer otro horario libre del 20/10, sin confirmar; ocuparlo después mediante una cita manual temporal para otro paciente ficticio, y confirmar para comprobar conflicto con conservación de la cita del 20/10 09:00. No se crea la ocupación antes de recibir la propuesta. Tras verificar, cancelar únicamente la cita temporal con motivo de prueba, conservando su historial. No hay pruebas de carga sobre Kapso.
+
 ## Casos restantes
 
-Idempotencia de la reprogramación confirmada; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
