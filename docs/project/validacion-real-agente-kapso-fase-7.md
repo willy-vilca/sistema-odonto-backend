@@ -126,8 +126,18 @@ Corrección `supervised-v7.5` empaquetada. 75 casos distintos del agente verific
 
 La prueba real del código descartado aún está pendiente; no se ha enviado ese mensaje por cuenta del participante. La cita y su propuesta de reserva original de fase 6 permanecen CONFIRMED, y la propuesta de cambio real continúa SUPERSEDED.
 
+## Prueba 5: confirmar un código descartado — aprobada
+
+El participante envió «CONFIRMO 233B4896» y recibió: «Esa propuesta de cambio fue descartada. La cita original se conserva; solicita una nueva propuesta si deseas cambiarla».
+
+Ejecución `a1ebed5a-d851-4304-807f-9b6bb7c81842`, secuencia 48, KAPSO/COMPLETED, `supervised-v7.5`, un intento, cero tokens de entrada/salida y ninguna llamada al modelo. Entrada `13c40e00-d92e-4075-a2d2-66fa334a44ec`, respuesta `5e28b4e8-f523-40b5-a6d7-fddfcd029947` READ, sin errores. 2,920 segundos desde registrar la ejecución hasta persistir la respuesta.
+
+La propuesta de cambio sigue SUPERSEDED y la reserva original de fase 6 sigue CONFIRMED, vinculada a `fc272d39-566d-4b65-a610-0302e86d50b5`. La cita mantiene CONFIRMED/versión 0, martes 13/10/2026 09:00–10:00 y un evento de historial. 9 pacientes, 12 citas, 9 cargos, 11 movimientos; AUTO/generación 4. No se convirtió el código rechazado en un conflicto de otra reserva ni se reprogramó/canceló nada. El rechazo queda demostrado en WhatsApp real.
+
+Se continúa con una propuesta nueva del martes 20/10 a las 09:00 con Julia, sin confirmarla todavía. Se comprobarán confirmación ambigua, confirmación expresa e idempotencia antes de los demás flujos.
+
 ## Casos restantes
 
-Rechazo del código descartado; confirmación expresa de una nueva propuesta e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Propuesta nueva, confirmación ambigua, confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
