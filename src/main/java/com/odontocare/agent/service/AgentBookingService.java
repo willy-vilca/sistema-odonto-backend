@@ -25,7 +25,9 @@ public class AgentBookingService {
   private final InstallationProfileRepository profiles;
   private final AuditService audit;
   private final Clock clock;
+  private final AgentSupervisionService supervision;
   private final AgentReplyService replies;
+  private final AgentIdentityService identity;
 
   public AgentBookingService(
       AgentRepository runs,
@@ -35,8 +37,10 @@ public class AgentBookingService {
       PatientService patients,
       InstallationProfileRepository profiles,
       AuditService audit,
+      AgentSupervisionService supervision,
       Clock clock,
-      AgentReplyService replies) {
+      AgentReplyService replies,
+      AgentIdentityService identity) {
     this.runs = runs;
     this.catalog = catalog;
     this.messages = messages;
@@ -45,12 +49,18 @@ public class AgentBookingService {
     this.profiles = profiles;
     this.audit = audit;
     this.clock = clock;
+    this.supervision = supervision;
     this.replies = replies;
+    this.identity = identity;
   }
 
   @Transactional(timeout = 15)
   public Map<String, Object> confirm(AgentRun run, String code) {
+    supervision.requireAction(run);
     var message = messages.message(run.messageId(), false).orElseThrow(ApiException::notFound);
+    if (!AgentConsent.matchesAction(message.body(), "BOOK"))
+      throw ApiException.badRequest(
+          "Esa confirmación corresponde a un cambio; revisa la propuesta de reserva.");
     if (!message.direction().equals("INBOUND")
         || !(message.body().strip().matches("(?i)CONFIRMO\\s+" + code + "[.!]?")
             || AgentConfirmation.natural(message.body()))) throw ApiException.forbidden();
@@ -84,6 +94,12 @@ public class AgentBookingService {
           "La cita ya estaba registrada. Referencia: " + p.appointmentId() + ". " + p.summary(),
           "repeated",
           true);
+    if (p.state().equals("EXPIRED"))
+      return Map.of(
+          "response",
+          "La propuesta venció. Solicita un nuevo horario; no se creó una cita.",
+          "appointment_created",
+          false);
     if (!p.state().equals("PENDING"))
       throw ApiException.conflict(
           "Esa propuesta fue descartada o ya no está vigente; solicita otra.");
@@ -118,6 +134,7 @@ public class AgentBookingService {
       throw ApiException.conflict(
           "Cambió la duración o zona horaria; solicita una nueva propuesta.");
     UUID patient = p.patientId();
+    var verified = identity.require(run, patient, p.patientName());
     var dentist = catalog.dentists(slot.serviceId(), slot.dentistId());
     if (dentist.isEmpty()
         || !slot.serviceName().equals(service.get("name"))
@@ -132,14 +149,18 @@ public class AgentBookingService {
             "Cambió la ficha del paciente; confirma una propuesta actualizada.");
     } else {
       var existing =
-          catalog.patients(conversation.phone(), p.patientName(), 0).stream()
-              .filter(x -> x.get("full_name").toString().equalsIgnoreCase(p.patientName()))
+          catalog
+              .exactPatients(conversation.phone(), AgentIdentityService.normalize(p.patientName()))
+              .stream()
               .toList();
       if (existing.size() > 1)
         throw ApiException.conflict(
             "Hay varias fichas con ese nombre. Selecciona explícitamente una antes de reservar.");
-      if (existing.size() == 1) patient = (UUID) existing.getFirst().get("id");
-      else
+      if (existing.size() == 1) {
+        patient = (UUID) existing.getFirst().get("id");
+        identity.requireRelationship(
+            patient, conversation.phone(), verified.get("relationship").toString());
+      } else
         patient =
             patients
                 .create(
@@ -162,8 +183,10 @@ public class AgentBookingService {
                                 conversation.contactName().isBlank()
                                     ? p.patientName()
                                     : conversation.contactName(),
-                                "Contacto WhatsApp",
-                                false,
+                                verified.get("relationship").equals("GUARDIAN")
+                                    ? "Tutor WhatsApp"
+                                    : "Paciente",
+                                verified.get("relationship").equals("GUARDIAN"),
                                 true))))
                 .id();
     }
@@ -180,6 +203,8 @@ public class AgentBookingService {
                 p.id()),
             message.source().equals("APP_TEST"));
     runs.confirmed(p.id(), booking.id(), message.id());
+    supervision.request(
+        run, "COMPLETED", p.summary(), booking.patientId(), p.patientName(), booking.id());
     audit.recordAs(
         null,
         "Agente IA",
@@ -215,6 +240,7 @@ public class AgentBookingService {
         "OK",
         clock.instant());
     replies.complete(run.id(), result.get("response").toString());
+    supervision.completed(run, "BOOKED");
     return result;
   }
 }

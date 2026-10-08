@@ -284,6 +284,13 @@ public class KapsoRepository {
         id);
   }
 
+  public void markHandoffNotice(UUID run) {
+    jdbc.update(
+        "UPDATE kapso_message SET error_code='HANDOFF_NOTICE' WHERE id=(SELECT reply_message_id"
+            + " FROM agent_run WHERE id=?)",
+        run);
+  }
+
   public Optional<WhatsAppMessage> claim(String number, Instant now) {
     jdbc.update(
         "UPDATE kapso_message SET status='UNKNOWN',error_message='El envío quedó interrumpido;"

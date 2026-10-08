@@ -68,7 +68,12 @@ class AgentIntegrationTests {
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
         "TRUNCATE"
+            + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
             + " agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
+    jdbc.update(
+        "UPDATE agent_policy SET"
+            + " enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true"
+            + " WHERE id=1");
     jdbc.update(
         "UPDATE installation_profile SET"
             + " time_zone='America/Lima',minimum_lead_minutes=0,appointment_gap_minutes=0,patient_next_number=1,version=0");
@@ -232,13 +237,16 @@ class AgentIntegrationTests {
         .thenAnswer(
             invocation -> {
               int step = index.getAndIncrement();
-              if (step == 0) return tool("consultar_servicios", Map.of("search", "limpieza"));
-              if (step == 1)
+              if (step == 0)
+                return tool(
+                    "verificar_paciente", Map.of("patient_name", name, "relationship", "SELF"));
+              if (step == 1) return tool("consultar_servicios", Map.of("search", "limpieza"));
+              if (step == 2)
                 return tool(
                     "consultar_horarios",
                     Map.of(
                         "service_id", serviceId, "days_from_today", 1, "preferred_time", "09:00"));
-              if (step == 2) {
+              if (step == 3) {
                 List<Map<String, Object>> messages = invocation.getArgument(0);
                 var result = mapper.readTree(messages.getLast().get("content").toString());
                 var args = new LinkedHashMap<String, Object>();

@@ -21,18 +21,21 @@ public class KapsoMessagingService {
   private final AuditService audit;
   private final AgentQueueService agent;
   private final AgentProperties ai;
+  private final com.odontocare.agent.repository.AgentSupervisionRepository supervision;
 
   public KapsoMessagingService(
       KapsoProperties config,
       KapsoRepository repository,
       AuditService audit,
       AgentQueueService agent,
-      AgentProperties ai) {
+      AgentProperties ai,
+      com.odontocare.agent.repository.AgentSupervisionRepository supervision) {
     this.config = config;
     this.repository = repository;
     this.audit = audit;
     this.agent = agent;
     this.ai = ai;
+    this.supervision = supervision;
   }
 
   public Connection connection() {
@@ -139,6 +142,9 @@ public class KapsoMessagingService {
   public String destination(WhatsAppMessage message) {
     var conversation = repository.conversation(message.conversationId(), false).orElseThrow();
     try {
+      if (message.source().equals("AGENT") && !supervision.replyAllowed(message.id()))
+        throw ApiException.conflict(
+            "Recepción asumió el control; el envío automático fue suprimido.");
       requireReplyAllowed(conversation);
     } catch (ApiException failure) {
       finish(

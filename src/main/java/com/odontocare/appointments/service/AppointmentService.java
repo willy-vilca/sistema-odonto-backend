@@ -145,6 +145,16 @@ public class AppointmentService {
 
   @Transactional
   public AppointmentResponse reschedule(UUID id, RescheduleRequest request) {
+    return rescheduleInternal(id, request, false);
+  }
+
+  @Transactional
+  public AppointmentResponse rescheduleByAgent(UUID id, RescheduleRequest request) {
+    return rescheduleInternal(id, request, true);
+  }
+
+  private AppointmentResponse rescheduleInternal(
+      UUID id, RescheduleRequest request, boolean agent) {
     var profile = profiles.readLockedInstallation().orElseThrow();
     var appointment = appointments.lockById(id).orElseThrow(ApiException::notFound);
     appointment.checkVersion(request.version());
@@ -157,6 +167,9 @@ public class AppointmentService {
             key -> locked.put(key, dentists.lockById(key).orElseThrow(ApiException::notFound)));
     var dentist = locked.get(request.dentistId());
     rules.eligible(dentist, appointment.getService());
+    if (agent
+        && (appointment.getService() == null || !appointment.getService().getBookableByAgent()))
+      throw ApiException.conflict("El servicio requiere reprogramación por recepción.");
     if (!appointment.getPatient().getActive())
       throw ApiException.badRequest("El paciente está inactivo.");
     int duration =
@@ -173,20 +186,48 @@ public class AppointmentService {
     appointment.setDurationMinutes(duration);
     appointment.setGapMinutes(profile.getAppointmentGapMinutes());
     setInterval(appointment, start);
-    appointment.setStatus(AppointmentStatus.RESERVED);
+    appointment.setStatus(agent ? AppointmentStatus.CONFIRMED : AppointmentStatus.RESERVED);
     appointments.saveAndFlush(appointment);
-    history.append(
-        appointment, "RESCHEDULED", previousStatus, previousStart, request.reason().strip());
-    audit.record(
-        "APPOINTMENT_RESCHEDULED",
-        "APPOINTMENT",
-        id,
-        "Reprogramó cita y solicitó una nueva confirmación");
+    if (agent)
+      history.appendAs(
+          appointment,
+          "RESCHEDULED",
+          previousStatus,
+          previousStart,
+          request.reason().strip(),
+          "Agente IA");
+    else
+      history.append(
+          appointment, "RESCHEDULED", previousStatus, previousStart, request.reason().strip());
+    if (agent)
+      audit.recordAs(
+          null,
+          "Agente IA",
+          "APPOINTMENT_RESCHEDULED",
+          "APPOINTMENT",
+          id,
+          "Reprogramó cita tras la confirmación expresa del paciente");
+    else
+      audit.record(
+          "APPOINTMENT_RESCHEDULED",
+          "APPOINTMENT",
+          id,
+          "Reprogramó cita y solicitó una nueva confirmación");
     return AppointmentResponse.of(appointment, zone);
   }
 
   @Transactional
   public AppointmentResponse changeStatus(UUID id, StatusRequest request) {
+    return changeStatusInternal(id, request, false);
+  }
+
+  @Transactional
+  public AppointmentResponse changeStatusByAgent(UUID id, StatusRequest request) {
+    if (request.status() != AppointmentStatus.CANCELLED) throw ApiException.forbidden();
+    return changeStatusInternal(id, request, true);
+  }
+
+  private AppointmentResponse changeStatusInternal(UUID id, StatusRequest request, boolean agent) {
     var profile = profiles.readLockedInstallation().orElseThrow();
     var appointment = appointments.lockById(id).orElseThrow(ApiException::notFound);
     appointment.checkVersion(request.version());
@@ -195,17 +236,35 @@ public class AppointmentService {
     var previous = appointment.getStatus();
     appointment.setStatus(request.status());
     appointments.saveAndFlush(appointment);
-    history.append(
-        appointment,
-        request.status() == AppointmentStatus.CANCELLED ? "CANCELLED" : "STATUS_CHANGED",
-        previous,
-        appointment.getStartsAt(),
-        request.reason().strip());
-    audit.record(
-        "APPOINTMENT_STATUS",
-        "APPOINTMENT",
-        id,
-        "Cambió estado de " + previous + " a " + request.status());
+    if (agent)
+      history.appendAs(
+          appointment,
+          "CANCELLED",
+          previous,
+          appointment.getStartsAt(),
+          request.reason().strip(),
+          "Agente IA");
+    else
+      history.append(
+          appointment,
+          request.status() == AppointmentStatus.CANCELLED ? "CANCELLED" : "STATUS_CHANGED",
+          previous,
+          appointment.getStartsAt(),
+          request.reason().strip());
+    if (agent)
+      audit.recordAs(
+          null,
+          "Agente IA",
+          "APPOINTMENT_STATUS",
+          "APPOINTMENT",
+          id,
+          "Canceló cita tras la confirmación expresa del paciente");
+    else
+      audit.record(
+          "APPOINTMENT_STATUS",
+          "APPOINTMENT",
+          id,
+          "Cambió estado de " + previous + " a " + request.status());
     return AppointmentResponse.of(appointment, ZoneId.of(profile.getTimeZone()));
   }
 

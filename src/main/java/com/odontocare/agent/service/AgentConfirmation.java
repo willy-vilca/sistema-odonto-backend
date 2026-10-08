@@ -22,6 +22,9 @@ public final class AgentConfirmation {
     if (text.contains("?") || text.contains("¿")) return false;
     String normalized = normalize(text);
     return normalized.matches("(?:si )?confirmo(?: (?:la|esa|esta) cita)?(?: por favor)?")
+        || normalized.matches(
+            "(?:si )?confirmo (?:la cancelacion|la reprogramacion|el cambio)(?: de (?:la|mi)"
+                + " cita)?(?: por favor)?")
         || normalized.matches("si quiero reservar (?:la|esa|esta) cita");
   }
 

@@ -66,6 +66,16 @@ public class AgentCatalogRepository {
         .findFirst();
   }
 
+  public List<Map<String, Object>> exactPatients(String phone, String name) {
+    return jdbc.queryForList(
+        "SELECT DISTINCT p.id,p.full_name FROM patient p JOIN patient_contact c ON"
+            + " c.patient_id=p.id WHERE p.active AND c.phone=? AND"
+            + " regexp_replace(translate(lower(p.full_name),'áéíóúüñ','aeiouun'),'[^a-z0-9]+','"
+            + " ','g')=? ORDER BY p.id LIMIT 5",
+        phone,
+        name);
+  }
+
   public Optional<Map<String, Object>> service(UUID id) {
     return jdbc
         .queryForList(

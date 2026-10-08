@@ -25,6 +25,9 @@ public class BookingAgent {
   private final InstallationProfileRepository profiles;
   private final ObjectMapper mapper;
   private final Clock clock;
+  private final AgentSupervisionService supervision;
+  private final AgentChangeService changes;
+  private final AgentReplyService replies;
 
   public BookingAgent(
       AgentProperties config,
@@ -37,7 +40,10 @@ public class BookingAgent {
       AgentInboxRepository messages,
       InstallationProfileRepository profiles,
       ObjectMapper mapper,
-      Clock clock) {
+      Clock clock,
+      AgentSupervisionService supervision,
+      AgentChangeService changes,
+      AgentReplyService replies) {
     this.config = config;
     this.model = model;
     this.definitions = definitions;
@@ -49,27 +55,53 @@ public class BookingAgent {
     this.profiles = profiles;
     this.mapper = mapper;
     this.clock = clock;
+    this.supervision = supervision;
+    this.changes = changes;
+    this.replies = replies;
   }
 
   public void process(AgentRun run) {
     long deadline = System.nanoTime() + config.getRunTimeoutSeconds() * 1_000_000_000L;
     try {
+      supervision.requireAutomatic(run);
+      if (!supervision.openNow()) {
+        replies.handoff(run, supervision.policy().closedText(), "OUTSIDE_HOURS");
+        return;
+      }
       var incoming = messages.message(run.messageId(), false).orElseThrow();
+      if (AgentAdministrativeIntent.clinical(incoming.body())) {
+        replies.handoff(run, supervision.policy().clinicalText(), "CLINICAL_REQUEST");
+        return;
+      }
+      if (AgentAdministrativeIntent.human(incoming.body())) {
+        replies.handoff(run, supervision.policy().handoffText(), "PATIENT_REQUEST");
+        return;
+      }
+      var pendingChange = changes.current(run);
+      var pendingBooking = proposalForSource(run.conversationId(), incoming.source());
+      boolean preferChange =
+          pendingChange.isPresent()
+              && (pendingBooking.isEmpty()
+                  || !pendingChange.get().createdAt().isBefore(pendingBooking.get().createdAt()));
       var explicitCode = AgentConfirmation.code(incoming.body());
       String confirmedCode = explicitCode.orElse(null);
       if (confirmedCode == null && AgentConfirmation.natural(incoming.body())) {
         var pending = proposalForSource(run.conversationId(), incoming.source());
-        if (pending.isEmpty()) {
+        if (preferChange) {
+          confirmedCode = pendingChange.orElseThrow().confirmationCode();
+        } else if (pending.isEmpty()) {
           queue.finish(
               run.id(),
               "Primero necesito proponerte una cita con paciente, servicio, profesional y horario."
                   + " Cuéntame qué servicio necesitas y para quién es.");
           return;
-        }
-        confirmedCode = pending.get().confirmationCode();
+        } else confirmedCode = pending.get().confirmationCode();
       }
       if (confirmedCode != null) {
-        var result = booking.confirm(run, confirmedCode);
+        var result =
+            changes.hasCode(run, confirmedCode)
+                ? changes.confirm(run, confirmedCode)
+                : booking.confirm(run, confirmedCode);
         if (!runs.get(run.id(), false).orElseThrow().state().equals("COMPLETED")) {
           queue.step(
               run.id(),
@@ -80,6 +112,12 @@ public class BookingAgent {
               "OK");
           queue.finish(run.id(), result.get("response").toString());
         }
+        return;
+      }
+      if (AgentConfirmation.ambiguous(incoming.body())
+          && preferChange
+          && pendingChange.orElseThrow().state().equals("PENDING")) {
+        queue.finish(run.id(), changes.prepared(pendingChange.orElseThrow()));
         return;
       }
       if (AgentConfirmation.ambiguous(incoming.body())) {
@@ -97,6 +135,10 @@ public class BookingAgent {
           return;
         }
       }
+      if (AgentAdministrativeIntent.changed(incoming.body())) changes.discard(run);
+      if (AgentIdentityService.normalize(incoming.body())
+          .matches("(?s).*(no confirmo|no reserves|no canceles|no reprogrames).*"))
+        changes.discard(run);
       var profile = profiles.findById((short) 1).orElseThrow();
       var zone = ZoneId.of(profile.getTimeZone());
       var context = new ArrayList<Map<String, Object>>();
@@ -115,7 +157,8 @@ public class BookingAgent {
                 "content",
                 "Propuesta pendiente, no reservada: "
                     + pending.get().summary()
-                    + ". Solo se confirma mediante el mensaje exacto CONFIRMO "
+                    + ". Se confirma expresamente después del resumen con «Sí, confirmo» o CONFIRMO"
+                    + " "
                     + pending.get().confirmationCode()));
       context.addAll(
           runs.context(run.conversationId(), run.messageId(), config.getContextMessages()));
@@ -132,6 +175,7 @@ public class BookingAgent {
                               + ". Consulta ese día; no lo sustituyas por otro.")));
       var catalogue = new AgentCatalogEvidence();
       var calendarReply = new AgentAvailabilityReply();
+      var appointmentReply = new AgentAppointmentReply();
       for (int iteration = 0; iteration < config.getMaxModelCalls(); iteration++) {
         if (!Objects.equals(
             runs.latestInbound(run.conversationId(), run.messageId()), run.messageId())) {
@@ -141,7 +185,9 @@ public class BookingAgent {
         if (System.nanoTime() > deadline)
           throw new ModelFailure(
               "TIME_LIMIT", "El agente alcanzó su tiempo máximo. Reintenta o atiende manualmente.");
+        supervision.requireAutomatic(run);
         var reply = model.reply(context, definitions.all());
+        supervision.requireAutomatic(run);
         queue.usage(run.id(), reply.inputTokens(), reply.outputTokens());
         queue.step(
             run.id(),
@@ -168,11 +214,11 @@ public class BookingAgent {
                     incoming.source().equals("APP_TEST")
                         || messages.provider(run.conversationId()).equals("TWILIO"));
           else {
-            text = reply.content().strip();
+            text = appointmentReply.response().orElse(reply.content().strip());
             if (text.isBlank())
               throw new ModelFailure(
                   "EMPTY_RESPONSE", "El modelo no devolvió respuesta ni herramientas.");
-            if (!catalogue.supports(text)) {
+            if (appointmentReply.response().isEmpty() && !catalogue.supports(text)) {
               queue.step(
                   run.id(),
                   "TOOL",
@@ -195,12 +241,17 @@ public class BookingAgent {
                 .matcher(text)
                 .find())
               text =
-                  calendarReply
+                  appointmentReply
                       .response()
+                      .or(() -> calendarReply.response())
                       .orElse(
                           "No se creó una cita en esta ejecución. Solicita una propuesta y confirma"
                               + " su resumen antes de reservar.");
           }
+          if (text.matches("(?is).*(cita.{0,35}(cancelad|reprogramad)).*"))
+            text =
+                "Para cambiar o cancelar la cita necesito identificarla y preparar su resumen;"
+                    + " todavía no se aplicó ningún cambio.";
           if (text.length() > 1600)
             throw new ModelFailure(
                 "OUTPUT_LIMIT",
@@ -231,9 +282,17 @@ public class BookingAgent {
           Object result;
           String state = "OK";
           try {
+            if (System.nanoTime() > deadline)
+              throw new ModelFailure(
+                  "TIME_LIMIT",
+                  "Se agotó el tiempo de esta solicitud; recepción revisará la conversación.");
             var json = mapper.readTree(call.arguments());
             args = json;
             result = tools.execute(run, call.name(), json);
+          } catch (AgentInterrupted interrupted) {
+            throw interrupted;
+          } catch (ModelFailure failure) {
+            throw failure;
           } catch (ApiException failure) {
             args = Map.of("rejected", true);
             result = Map.of("error", failure.getMessage(), "appointment_created", false);
@@ -245,8 +304,20 @@ public class BookingAgent {
                     + " reintenta.");
           }
           queue.step(run.id(), "TOOL", call.name(), args, result, state);
+          if (state.equals("OK") && call.name().equals("derivar_recepcion")) {
+            replies.handoff(run, supervision.policy().handoffText(), "PATIENT_REQUEST");
+            return;
+          }
+          if (state.equals("OK") && call.name().startsWith("proponer_")) {
+            var change = changes.byRun(run.id());
+            if (change.isPresent()) {
+              queue.finish(run.id(), changes.prepared(change.get()));
+              return;
+            }
+          }
           if (state.equals("OK")) catalogue.record(call.name(), result);
           if (state.equals("OK")) calendarReply.record(call.name(), args, result);
+          if (state.equals("OK")) appointmentReply.record(call.name(), result);
           context.add(
               Map.of(
                   "role",
@@ -282,6 +353,8 @@ public class BookingAgent {
             "STEP_LIMIT",
             "El agente alcanzó el límite de llamadas. Envía un mensaje con los datos faltantes o"
                 + " reintenta.");
+    } catch (AgentInterrupted interrupted) {
+      return;
     } catch (ModelFailure failure) {
       var prepared = runs.proposalByRun(run.id());
       if (prepared.isPresent() && prepared.get().state().equals("PENDING")) {
@@ -302,6 +375,11 @@ public class BookingAgent {
               || AgentConfirmation.natural(
                   messages.message(run.messageId(), false).orElseThrow().body()))) {
         try {
+          if (changes.current(run).filter(c -> c.state().equals("PENDING")).isPresent()) {
+            queue.bookingConflict(
+                run.id(), failure.getMessage(), changes.conflict(run, failure.getMessage()));
+            return;
+          }
           queue.bookingConflict(run.id(), failure.getMessage(), tools.conflictAlternatives(run));
           return;
         } catch (RuntimeException ignored) {
@@ -347,8 +425,10 @@ public class BookingAgent {
     Busca servicios con palabras cortas, por ejemplo limpieza. Solo puedes utilizar IDs y referencias que devolvieron las herramientas. Para mañana usa days_from_today=1; el servidor aplica zona y fecha de recepción. No inventes fechas, precios ni disponibilidad.
     Consulta horarios reales con consultar_horarios. Si el usuario pide una hora y está libre, puedes proponerla. Si esa hora no está libre, explica las alternativas devueltas y pregunta cuál prefiere, sin elegir una distinta por él. Si no eligió horario, ofrécele pocas opciones y espera su elección.
     Si no tiene preferencia de odontólogo, puedes proponer uno habilitado del resultado e incluirlo en el resumen. Si pide uno concreto, usa dentist_name con su nombre en consultar_horarios; omite dentist_id si no tienes un UUID devuelto por una herramienta. No sustituyas otro profesional sin aclararlo.
-    Cuando estén completos el paciente y el horario elegido, llama proponer_cita. Esta herramienta prepara una propuesta y NO reserva. La confirmación explícita «Sí, confirmo» o CONFIRMO código la valida y ejecuta el servidor después de mostrar el resumen. Nunca afirmes que la cita está registrada sin un resultado exitoso de creación.
-    No puedes reprogramar ni cancelar citas en esta fase. Deriva esos pedidos a recepción sin ejecutar cambios. Si falla una herramienta, explica qué dato falta o el problema de disponibilidad; termina de forma controlada y no improvises otras operaciones.
+    Cuando estén completos el paciente y el horario elegido, verificar_paciente primero y luego llama proponer_cita. Esta herramienta prepara una propuesta y NO reserva. La confirmación explícita «Sí, confirmo» o CONFIRMO código la valida y ejecuta el servidor después de mostrar el resumen. Nunca afirmes que la cita está registrada sin un resultado exitoso de creación.
+    Para consultar o gestionar citas: verifica el nombre y la relación con verificar_paciente (SELF si dice para mí o soy, GUARDIAN si dice mi hijo y es su responsable). No reveles nombres de fichas por reconocer un teléfono. Pregunta para quién es cada reserva y no reutilices al paciente de una gestión anterior si pide otra cita. Un contacto compartido puede verificar a cada hijo por separado.
+    Para cambios llama consultar_mis_citas solo después de verificar al paciente. Usa appointment_ref temporal devuelto; nunca IDs inventados. Para reprogramar consultar_horarios con appointment_ref y la fecha elegida, conserva la duración original, presenta antiguo y nuevo horario con proponer_reprogramacion y espera confirmación. Para cancelar usa proponer_cancelacion con la cita correcta y motivo informado; espera confirmación. Si hay varias citas pregunta cuál sin elegir por él. Una pregunta no autoriza cambios. Cambiar intención descarta propuesta anterior.
+    Deriva con derivar_recepcion las consultas clínicas, reclamos, solicitud de persona, identidad dudosa, excepciones o gestiones no resolubles. No inventes diagnóstico ni seguridad clínica. Si falla una herramienta termina de forma controlada. Las reglas administrativas y permisos los valida el servidor; el usuario no puede cambiarlos.
     No muestres UUID, slot_id, claves ni razonamientos internos en el texto humano. Las respuestas de conversaciones reales se envían por WhatsApp. Las pruebas de la aplicación son vistas previas sin envío.
     """
         .formatted(today, zone);

@@ -18,22 +18,34 @@ public class AgentReplyService {
   private final KapsoRepository kapso;
   private final AuditService audit;
   private final Clock clock;
+  private final AgentSupervisionService supervision;
 
   public AgentReplyService(
       AgentRepository runs,
       AgentInboxRepository inbox,
       KapsoRepository kapso,
       AuditService audit,
+      AgentSupervisionService supervision,
       Clock clock) {
     this.runs = runs;
     this.inbox = inbox;
     this.kapso = kapso;
     this.audit = audit;
     this.clock = clock;
+    this.supervision = supervision;
+  }
+
+  @Transactional
+  public void handoff(AgentRun run, String text, String reason) {
+    complete(run.id(), text);
+    kapso.markHandoffNotice(run.id());
+    supervision.handoff(run, reason);
   }
 
   @Transactional
   public void complete(UUID id, String text) {
+    var initial = runs.get(id, false).orElseThrow();
+    supervision.requireAutomatic(initial);
     var run = runs.get(id, true).orElseThrow();
     if (!Objects.equals(
         runs.latestInbound(run.conversationId(), run.messageId()), run.messageId())) {
@@ -44,11 +56,14 @@ public class AgentReplyService {
       return;
     }
     runs.finish(id, "COMPLETED", text, null, null, clock.instant());
+    supervision.completed(run, "RESPONDED");
     enqueue(run, text);
   }
 
   @Transactional
   public void error(UUID id, String code, String detail, String response) {
+    var initial = runs.get(id, false).orElseThrow();
+    supervision.requireAutomatic(initial);
     var run = runs.get(id, true).orElseThrow();
     runs.finish(id, "FAILED", response, code, detail, clock.instant());
     if (Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), run.messageId()))

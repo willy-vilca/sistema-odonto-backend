@@ -26,7 +26,10 @@ public class AgentQueueService {
   private final AgentReplyService replies;
   private final AuditService audit;
   private final Clock clock;
+  private final AgentSupervisionService supervision;
   private final KapsoProperties kapso;
+  private final AgentChangeRepository changes;
+  private final AgentSupervisionRepository supervisionRepository;
 
   public AgentQueueService(
       AgentProperties config,
@@ -36,8 +39,11 @@ public class AgentQueueService {
       KapsoRepository messages,
       AgentReplyService replies,
       AuditService audit,
+      AgentSupervisionService supervision,
       Clock clock,
-      KapsoProperties kapso) {
+      KapsoProperties kapso,
+      AgentChangeRepository changes,
+      AgentSupervisionRepository supervisionRepository) {
     this.config = config;
     this.runs = runs;
     this.inbox = inbox;
@@ -46,7 +52,10 @@ public class AgentQueueService {
     this.replies = replies;
     this.audit = audit;
     this.clock = clock;
+    this.supervision = supervision;
     this.kapso = kapso;
+    this.changes = changes;
+    this.supervisionRepository = supervisionRepository;
   }
 
   private boolean allowed() {
@@ -75,7 +84,9 @@ public class AgentQueueService {
   public void inbound(String provider, UUID message, UUID conversation) {
     inbox.register(provider, conversation, message);
     if (config.isEnabled() && allowed())
-      runs.enqueue(message, conversation, config.getModel(), clock.instant());
+      supervision.register(
+          runs.enqueue(message, conversation, config.getModel(), clock.instant()),
+          config.getProvider());
   }
 
   @Transactional
@@ -125,6 +136,7 @@ public class AgentQueueService {
     }
     inbox.register(useKapso ? "KAPSO" : "TWILIO", conversation, message);
     var run = runs.enqueue(message, conversation, config.getModel(), clock.instant());
+    supervision.register(run, config.getProvider());
     return new TestResult(conversation, run.id());
   }
 
@@ -133,13 +145,19 @@ public class AgentQueueService {
     inbox.conversation(conversation, false).orElseThrow(ApiException::notFound);
     if (state != null
         && !state.isBlank()
-        && !Set.of("QUEUED", "PROCESSING", "COMPLETED", "FAILED", "GROUPED").contains(state))
-      throw ApiException.badRequest("Estado de ejecución inválido.");
+        && !Set.of("QUEUED", "PROCESSING", "COMPLETED", "FAILED", "GROUPED", "PAUSED")
+            .contains(state)) throw ApiException.badRequest("Estado de ejecución inválido.");
     return runs.runs(conversation, query, state);
   }
 
   public record Detail(
-      AgentRun run, String incomingText, String source, Proposal proposal, Message reply) {}
+      AgentRun run,
+      String incomingText,
+      String source,
+      Proposal proposal,
+      Message reply,
+      Object change,
+      Object metadata) {}
 
   @Transactional(readOnly = true)
   public Detail detail(UUID id) {
@@ -150,7 +168,9 @@ public class AgentQueueService {
         input.body(),
         input.source(),
         runs.proposalByRun(id).orElse(null),
-        inbox.reply(id).map(Message::of).orElse(null));
+        inbox.reply(id).map(Message::of).orElse(null),
+        changes.byRun(id).orElse(null),
+        supervisionRepository.metadata(id));
   }
 
   @Transactional(readOnly = true)
@@ -172,11 +192,14 @@ public class AgentQueueService {
     if (!allowed() || !config.ready())
       throw ApiException.badRequest("El agente no está configurado.");
     var run = runs.get(id, true).orElseThrow(ApiException::notFound);
+    if (!supervisionRepository.control(run.conversationId(), false).get("mode").equals("AUTO"))
+      throw ApiException.conflict("Devuelve el control al agente antes de reintentar el análisis.");
     if (!run.state().equals("FAILED") || run.attempts() >= 3)
       throw ApiException.conflict(
           "Solo pueden reintentarse fallos, hasta tres intentos por mensaje.");
     if (!Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), run.messageId()))
       throw ApiException.conflict("Ya existe otro mensaje; envía una solicitud nueva.");
+    supervision.register(run, config.getProvider());
     runs.retry(id, clock.instant());
     audit.record("AGENT_RETRY", "AGENT_RUN", id, "Reintentó el análisis sin volver a reservar.");
     return runs.get(id, false).orElseThrow();
@@ -185,6 +208,10 @@ public class AgentQueueService {
   @Transactional
   public Message retryReply(UUID id) {
     var run = runs.get(id, true).orElseThrow(ApiException::notFound);
+    if (!supervisionRepository.control(run.conversationId(), false).get("mode").equals("AUTO"))
+      throw ApiException.conflict(
+          "Devuelve primero el control al agente; el reintento solo enviará la respuesta"
+              + " existente.");
     var reply = inbox.reply(id).orElseThrow(ApiException::notFound);
     var conversation = inbox.conversation(run.conversationId(), true).orElseThrow();
     if (!kapso.ready()
@@ -208,6 +235,7 @@ public class AgentQueueService {
 
   @Transactional
   public Optional<AgentRun> claim() {
+    supervisionRepository.expire(clock.instant());
     return runs.claim(
         clock.instant(), kapso.isEnabled() ? "KAPSO" : "TWILIO", config.getDebounceMilliseconds());
   }
@@ -265,7 +293,11 @@ public class AgentQueueService {
             ? "No pude registrar esa cita: " + detail + " Podemos consultar otro horario."
             : "Ahora no pude completar la consulta. Puedes intentarlo nuevamente o pedir ayuda a"
                 + " recepción. No se creó una cita por este error.";
-    replies.error(id, code, detail, response);
+    if (code.equals("BOOKING_VALIDATION")) replies.error(id, code, detail, response);
+    else {
+      replies.handoff(run, supervision.policy().failureText(), code);
+      runs.finish(id, "FAILED", supervision.policy().failureText(), code, detail, clock.instant());
+    }
     audit.recordAs(
         null, "Agente IA", "AGENT_FAILED", "AGENT_RUN", id, "Registró fallo controlado: " + code);
   }

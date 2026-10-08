@@ -202,3 +202,14 @@ POST /api/v1/whatsapp/agent/runs/{id}/reply/retry requiere WHATSAPP_WRITE y rein
 ## Cierre real de fase 6
 
 07/10/2026: A22 cumplido con una cita WHATSAPP/CONFIRMED para Willy, Limpieza dental con Julia, martes 13/10/2026 09:00–10:00, y respuesta READ. Catorce intercambios reales verificaron también consultas, negación, datos faltantes, fecha relativa, día cerrado, confirmación ambigua, repetición, alternativas y límites. Los fallos detectados se corrigieron, repitieron y conservaron en bitácora. [Cierre](docs/project/cierre-fase-6.md) y [trazas](docs/project/validacion-real-agente-kapso-fase-6.md). Plan 3.0, alcance funcional 1.9; fase 7 pendiente. La regresión completa final aprobó 150 casos, incluidos 19 de integración Kapso/agente. No se compraron servicios ni se cambiaron claves. Las notas anteriores documentan los tramos históricos del desarrollo.
+
+
+## Fase 7 · supervisión y cambios del agente
+
+Implementación completa y validada internamente; fase en validación hasta realizar la demostración real de WhatsApp con el participante, aplazada por petición expresa del usuario. Mantener rama kapso. [Uso, implementación y evidencia](docs/project/gestion-conversaciones-agente-fase-7.md), [guía de demostración preparada](docs/project/probar-cambios-agente-kapso-fase-7.md). Plan vigente 3.1, alcance funcional 1.9; no iniciar fase 8 todavía.
+
+API nueva bajo /api/v1/whatsapp: GET /agent/inbox con búsqueda, mode, state y paginación; GET/PUT /agent/policy; GET /conversations/{id}/supervision con fuente; POST /conversations/{id}/control con mode, reason y generation. Lecturas requieren WHATSAPP_READ, reglas SETTINGS_WRITE y control AGENT_CONTROL_WRITE (ADMIN/RECEPTION). Escrituras con sesión y CSRF. Herramientas internas verifican nombre/relación, consultan únicamente citas propias con referencias temporales y preparan cambios confirmados mediante las reglas centrales de agenda. El control humano pausa acciones/respuestas y se comprueba en cada límite de ejecución y envío.
+
+Migraciones V20/V21 agregan política, control, contexto administrativo, cambios y referencias; backfill de propuestas históricas sin acreditar identidades. La reprogramación conserva la duración original; cambio, historial y tarea de respuesta se confirman juntos. Devolver el control requiere un mensaje nuevo, sin reanudar confirmaciones antiguas. Los resultados inciertos de envío se revisan antes de reintentar únicamente la respuesta.
+
+163 pruebas backend aprobadas, incluidas 30 Kapso/agente. Pruebas destructivas solo en sistema_odontologo_test, sin claves reales ni WhatsApp. Reinicio de dos procesos Java recuperó una tarea en curso una sola vez. Groq real en vista previa verificó un contacto ficticio sin crear citas ni mensajes salientes. Datos principales conservados. No se cambiaron claves, túnel, webhook ni planes de pago.

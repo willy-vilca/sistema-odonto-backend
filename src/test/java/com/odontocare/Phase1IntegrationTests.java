@@ -41,8 +41,9 @@ class Phase1IntegrationTests {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
-        "TRUNCATE"
+        "TRUNCATE agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
             + " agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
+    jdbc.update("UPDATE agent_policy SET enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true WHERE id=1");
     jdbc.update(
         "UPDATE installation_profile SET display_name='Mi"
             + " consultorio',time_zone='America/Lima',currency='PEN',patient_next_number=1,receipt_next_number=1,budget_next_number=1,version=0,logo_revision=0");

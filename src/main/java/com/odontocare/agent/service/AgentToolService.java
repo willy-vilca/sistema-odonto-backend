@@ -25,6 +25,9 @@ public class AgentToolService {
   private final AvailabilityService availability;
   private final AuditService audit;
   private final Clock clock;
+  private final AgentSupervisionService supervision;
+  private final AgentIdentityService identity;
+  private final AgentChangeService changes;
 
   public AgentToolService(
       AgentRepository runs,
@@ -33,6 +36,9 @@ public class AgentToolService {
       InstallationProfileRepository profiles,
       AvailabilityService availability,
       AuditService audit,
+      AgentIdentityService identity,
+      AgentChangeService changes,
+      AgentSupervisionService supervision,
       Clock clock) {
     this.runs = runs;
     this.catalog = catalog;
@@ -41,13 +47,39 @@ public class AgentToolService {
     this.availability = availability;
     this.audit = audit;
     this.clock = clock;
+    this.supervision = supervision;
+    this.identity = identity;
+    this.changes = changes;
   }
 
   @Transactional(timeout = 10)
   public Object execute(AgentRun run, String name, JsonNode args) {
+    supervision.requireAction(run);
     if (!args.isObject())
       throw ApiException.badRequest("Los argumentos de la herramienta deben ser un objeto.");
     return switch (name) {
+      case "verificar_paciente" -> {
+        fields(args, "patient_name", "relationship");
+        yield identity.verify(
+            run, text(args, "patient_name", 160, true), text(args, "relationship", 12, true));
+      }
+      case "consultar_mis_citas" -> {
+        fields(args, "search", "page");
+        yield changes.ownAppointments(run, text(args, "search", 160, false), page(args));
+      }
+      case "proponer_reprogramacion", "proponer_cancelacion" -> {
+        fields(args, "appointment_ref", "slot_id", "reason");
+        yield changes.propose(
+            run,
+            name.equals("proponer_reprogramacion") ? "RESCHEDULE" : "CANCEL",
+            uuid(args, "appointment_ref", true),
+            uuid(args, "slot_id", name.equals("proponer_reprogramacion")),
+            text(args, "reason", 500, true));
+      }
+      case "derivar_recepcion" -> {
+        fields(args, "reason");
+        yield Map.of("handoff_requested", true, "reason", text(args, "reason", 500, true));
+      }
       case "consultar_servicios" -> {
         fields(args, "search", "page");
         yield Map.of(
@@ -64,9 +96,18 @@ public class AgentToolService {
         fields(args, "search", "page");
         String phone =
             conversations.conversation(run.conversationId(), false).orElseThrow().phone();
+        String requested = text(args, "search", 160, true);
+        if (requested.split(" ").length < 2)
+          throw ApiException.badRequest(
+              "Solicita el nombre completo del paciente; no se listan fichas de un teléfono.");
         yield Map.of(
             "items",
-            catalog.patients(phone, text(args, "search", 160, false), page(args)),
+            catalog.patients(phone, requested, page(args)).stream()
+                .filter(
+                    p ->
+                        AgentIdentityService.normalize(p.get("full_name").toString())
+                            .equals(AgentIdentityService.normalize(requested)))
+                .toList(),
             "page",
             page(args),
             "page_size",
@@ -78,6 +119,7 @@ public class AgentToolService {
             "service_id",
             "dentist_id",
             "dentist_name",
+            "appointment_ref",
             "date",
             "days_from_today",
             "preferred_time");
@@ -89,6 +131,7 @@ public class AgentToolService {
       }
       case "descartar_propuesta" -> {
         fields(args);
+        changes.discard(run);
         conversations.conversation(run.conversationId(), true).orElseThrow();
         runs.currentProposal(
                 run.conversationId(),
@@ -145,6 +188,15 @@ public class AgentToolService {
 
   private Object slots(AgentRun run, JsonNode args) {
     UUID service = uuid(args, "service_id", true), dentist = uuid(args, "dentist_id", false);
+    UUID excluded = null;
+    Integer previousDuration = null;
+    if (args.hasNonNull("appointment_ref")) {
+      var target = changes.target(run, uuid(args, "appointment_ref", true));
+      if (!service.equals(target.get("service_id")))
+        throw ApiException.badRequest("Conserva el servicio original al reprogramar.");
+      excluded = (UUID) target.get("id");
+      previousDuration = ((Number) target.get("duration_minutes")).intValue();
+    }
     var serviceData =
         catalog
             .service(service)
@@ -185,12 +237,26 @@ public class AgentToolService {
       var query = new PageQuery();
       query.setSize(3);
       query.setSearch(preferred);
-      var available = availability.slots(dentistId, service, null, date, null, query);
+      var available =
+          availability.slots(
+              dentistId,
+              previousDuration == null ? service : null,
+              previousDuration,
+              date,
+              excluded,
+              query);
       boolean exact = !available.items().isEmpty() && !preferred.isBlank();
       preferredFound |= exact;
       if (available.items().isEmpty() && !preferred.isBlank()) {
         query.setSearch("");
-        available = availability.slots(dentistId, service, null, date, null, query);
+        available =
+            availability.slots(
+                dentistId,
+                previousDuration == null ? service : null,
+                previousDuration,
+                date,
+                excluded,
+                query);
       }
       for (var slot : available.items()) {
         var offered =
@@ -200,7 +266,9 @@ public class AgentToolService {
                 dentistId,
                 service,
                 slot.localStart(),
-                ((Number) serviceData.get("duration_minutes")).intValue(),
+                previousDuration == null
+                    ? ((Number) serviceData.get("duration_minutes")).intValue()
+                    : previousDuration,
                 zone.getId(),
                 clock.instant().plusSeconds(1800),
                 serviceData.get("name").toString(),
@@ -225,6 +293,13 @@ public class AgentToolService {
                 exact || preferred.isBlank()));
       }
     }
+    supervision.request(
+        run,
+        "OPTIONS_OFFERED",
+        "Horarios consultados para " + serviceData.get("name") + " el " + date,
+        null,
+        "",
+        excluded);
     return Map.of(
         "date",
         date.toString(),
@@ -241,6 +316,9 @@ public class AgentToolService {
   }
 
   private Object propose(AgentRun run, JsonNode args) {
+    if (AgentConsent.forbidsProposal(
+        conversations.message(run.messageId(), false).orElseThrow().body()))
+      throw ApiException.badRequest("El paciente aún no solicita una propuesta de reserva.");
     conversations.conversation(run.conversationId(), true).orElseThrow();
     if (!Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), run.messageId()))
       throw ApiException.conflict(
@@ -263,6 +341,7 @@ public class AgentToolService {
       var identified = catalog.patient(phone, patient).orElseThrow(ApiException::forbidden);
       patientName = identified.get("full_name").toString();
     }
+    identity.require(run, patient, patientName);
     if (patientName.length() < 3)
       throw ApiException.badRequest("Solicita el nombre completo del paciente.");
     var service =
@@ -318,6 +397,7 @@ public class AgentToolService {
             + "). Duración: "
             + slot.durationMinutes()
             + " minutos.";
+    changes.discard(run);
     var p =
         runs.propose(
             run.id(),
@@ -327,6 +407,7 @@ public class AgentToolService {
             patientName,
             summary,
             clock.instant());
+    supervision.request(run, "CONFIRMATION_PENDING", summary, patient, patientName, null);
     audit.recordAs(
         null,
         "Agente IA",
