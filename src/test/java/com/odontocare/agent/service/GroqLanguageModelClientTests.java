@@ -76,6 +76,28 @@ class GroqLanguageModelClientTests {
   }
 
   @Test
+  void toolChoiceKeepsProviderValidationEnabled() {
+    response =
+        """
+        {"choices":[{"finish_reason":"tool_calls","message":{"tool_calls":[{"id":"next","type":"function","function":{"name":"consultar_mis_citas","arguments":"{}"}}]}}],"usage":{"prompt_tokens":50,"completion_tokens":20}}
+        """;
+    var next =
+        new AgentToolDefinitions()
+            .all().stream()
+                .filter(
+                    tool ->
+                        ((Map<?, ?>) tool.get("function"))
+                            .get("name")
+                            .equals("consultar_mis_citas"))
+                .toList();
+    var result =
+        client.reply(List.of(Map.of("role", "user", "content", "Quiero reprogramar")), next);
+    assertThat(result.tools()).hasSize(1);
+    assertThat(payload.get().path("tool_choice").asString()).isEqualTo("auto");
+    assertThat(payload.get().has("disable_tool_validation")).isFalse();
+  }
+
+  @Test
   void providerErrorsDoNotExposeSecretsOrRawBodies() {
     status = 401;
     response = "{\"message\":\"gsk_unit_test_secret private upstream detail\"}";

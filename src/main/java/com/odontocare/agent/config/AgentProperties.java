@@ -11,7 +11,7 @@ public class AgentProperties {
   private String provider = "GROQ", model = "openai/gpt-oss-20b", apiKey = "";
   private String reasoningEffort = "low";
   private int maxModelCalls = 6,
-      maxCompletionTokens = 1500,
+      maxCompletionTokens = 768,
       requestTimeoutSeconds = 12,
       runTimeoutSeconds = 75,
       contextMessages = 6;

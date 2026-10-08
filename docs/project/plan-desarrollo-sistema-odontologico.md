@@ -1,6 +1,6 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 8 de octubre de 2026. Versión del plan: 3.5. Alcance de referencia: versión 1.9 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 8 de octubre de 2026. Versión del plan: 3.6. Alcance de referencia: versión 1.9 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente por el usuario; revisión manual general informada favorable de manera aproximada, pendiente de anotación individual. Fase 6 completada y validada con WhatsApp real. Fase 7 en validación real: consulta propia, disponibilidad y preparación/entrega de propuesta aprobadas después de corregir incidencias. Negación y rechazo del código descartado también aprobados; la cita original permanece intacta. Confirmación de cambios y demás casos pendientes. Fases 8 y 9 pendientes. Evidencia y límites en los cierres de [fase 0](cierre-fase-0.md), [fase 1](cierre-fase-1.md), [fase 2](cierre-fase-2.md), [fase 3](cierre-fase-3.md), [fase 4](cierre-fase-4.md), [fase 5](cierre-fase-5.md), [fase 6](cierre-fase-6.md) e [implementación de fase 7](gestion-conversaciones-agente-fase-7.md).
 
@@ -267,6 +267,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 **Negación real aprobada y código descartado preparado.** Secuencia 47, COMPLETED/READ: propuesta 233B4896 SUPERSEDED, cita original versión 0 e historial/finanzas intactos. Revisión previa del siguiente ensayo detectó un posible cruce del rechazo con la reserva anterior; se corrigió en v7.5 antes de ejecutarlo realmente. Un código descartado devuelve una respuesta sin IA; la recuperación de conflictos exige referencia y propuesta pendiente correctas, con control revalidado. 75 casos distintos del agente comprobados entre el bloque de regresión y una repetición aislada de la aserción de preparación corregida; empaquetado correcto. Código descartado, cambio efectivo y demás casos reales siguen pendientes. [Trazas y validación](validacion-real-agente-kapso-fase-7.md).
 
 **Rechazo real del código descartado aprobado.** Secuencia 48, ejecución a1ebed5a-d851-4304-807f-9b6bb7c81842, COMPLETED/READ y cero inferencias: respondió que la propuesta fue descartada, conservó la propuesta de reserva de fase 6 CONFIRMED y la de cambio SUPERSEDED. Cita original, historial, finanzas y control intactos. Se prepara una propuesta nueva para comprobar confirmación ambigua/expresa e idempotencia. Fase 7 sigue abierta.
+
+**Orden obligatorio de lecturas y consumo v7.6.** La propuesta nueva falló primero por dos rechazos de herramientas y después por cuota por minuto; se conserva la secuencia 49. La consulta propia obligatoria tras verificar identidad se ejecuta y audita en el flujo, dejando al modelo interpretación, disponibilidad y propuesta. Formatos opcionales coherentes y presupuesto de salida 768. 79 pruebas del agente aprobadas; Groq real preparó la propuesta en APP_TEST en 3,032 segundos, tres inferencias, un intento y sin errores/cambios/envíos. Conversación AUTO/generación 6 tras devolver solo la derivación automática conocida. La repetición real y las demás comprobaciones siguen pendientes. [Diagnóstico y límites](recuperacion-herramientas-groq-fase-7.md).
 
 **Trabajo incluido.**
 

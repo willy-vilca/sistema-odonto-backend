@@ -233,7 +233,49 @@ public class BookingAgent {
           throw new ModelFailure(
               "TIME_LIMIT", "El agente alcanzó su tiempo máximo. Reintenta o atiende manualmente.");
         supervision.requireAutomatic(run);
-        var reply = model.reply(context, definitions.available(evidence));
+        var availableTools = definitions.available(evidence, incoming.body());
+        if (availableTools.size() == 1
+            && ((Map<?, ?>) availableTools.getFirst().get("function"))
+                .get("name")
+                .equals("consultar_mis_citas")) {
+          var arguments = mapper.valueToTree(Map.of("search", "", "page", 0));
+          var result = tools.execute(run, "consultar_mis_citas", arguments);
+          queue.step(run.id(), "TOOL", "consultar_mis_citas", arguments, result, "OK");
+          evidence.add(
+              Map.of("name", "consultar_mis_citas", "arguments", arguments, "result", result));
+          appointmentReply.record("consultar_mis_citas", result);
+          String callId = "required_" + UUID.randomUUID();
+          context.add(
+              Map.of(
+                  "role",
+                  "assistant",
+                  "tool_calls",
+                  List.of(
+                      Map.of(
+                          "id",
+                          callId,
+                          "type",
+                          "function",
+                          "function",
+                          Map.of(
+                              "name",
+                              "consultar_mis_citas",
+                              "arguments",
+                              mapper.writeValueAsString(arguments))))));
+          context.add(
+              Map.of(
+                  "role",
+                  "tool",
+                  "tool_call_id",
+                  callId,
+                  "name",
+                  "consultar_mis_citas",
+                  "content",
+                  mapper.writeValueAsString(result)));
+          queue.checkpoint(run.id(), new AgentModelCheckpoint(context, evidence, iteration));
+          availableTools = definitions.available(evidence, incoming.body());
+        }
+        var reply = model.reply(context, availableTools);
         supervision.requireAutomatic(run);
         queue.usage(run.id(), reply.inputTokens(), reply.outputTokens());
         queue.step(

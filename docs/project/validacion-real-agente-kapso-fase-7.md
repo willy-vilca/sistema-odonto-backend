@@ -136,6 +136,14 @@ La propuesta de cambio sigue SUPERSEDED y la reserva original de fase 6 sigue CO
 
 Se continúa con una propuesta nueva del martes 20/10 a las 09:00 con Julia, sin confirmarla todavía. Se comprobarán confirmación ambigua, confirmación expresa e idempotencia antes de los demás flujos.
 
+## Prueba 6: preparar una propuesta nueva — fallo de herramientas y cuota; repetición pendiente
+
+El participante pidió de nuevo la reprogramación del 20/10 a las 09:00 con Julia y recibió la derivación a recepción. Secuencia 49, ejecución `a4bba789-ae9c-4815-810b-af7fbcf448c8`, FAILED/RATE_LIMIT, tres intentos, respuesta READ. Primero ocurrieron dos HTTP 400/tool_use_failed y después HTTP 429/TOKENS_PER_MINUTE. No se preparó otro cambio real; cita original, reserva, cambio descartado, historial y finanzas intactos.
+
+Se corrigió el flujo v7.6: lectura propia obligatoria tras identidad verificada, ejecutada por el agente dentro del backend y persistida antes de otra inferencia; formatos opcionales alineados; presupuesto inicial 768. Se conservan la intervención del modelo para interpretar datos, consultar horarios y proponer, y la confirmación expresa para aplicar cambios. 79 casos aprobados. Groq real en APP_TEST `f5322cb5-d3d7-44ff-8ec8-d426b7881fd2` preparó el resumen correcto en 3,032 segundos, tres inferencias y un intento, sin envíos o cambios de cita. [Diagnóstico, intentos intermedios y límites](recuperacion-herramientas-groq-fase-7.md).
+
+Se restableció únicamente la derivación automática identificada a AUTO/generación 6, sin responsable humano y sin ejecutar mensajes anteriores. La solicitud se debe repetir por WhatsApp y revisar antes de confirmar. No se declara aprobada la nueva propuesta real por esta vista previa.
+
 ## Casos restantes
 
 Propuesta nueva, confirmación ambigua, confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.

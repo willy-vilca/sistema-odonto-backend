@@ -742,7 +742,7 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
-  void rescheduleAvailabilityUsesAppointmentIdsAndFinishesInThreeCalls() {
+  void rescheduleAvailabilityUsesMandatoryOwnQueryAndFinishesInTwoModelCalls() {
     UUID original = createOriginal(1, 9);
     var index = new AtomicInteger();
     when(model.reply(anyList(), anyList()))
@@ -753,8 +753,7 @@ class KapsoAgentIntegrationTests {
                 return tool(
                     "verificar_paciente",
                     Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
-              if (step == 1) return tool("consultar_mis_citas", Map.of("search", "limpieza"));
-              if (step == 2) {
+              if (step == 1) {
                 List<Map<String, Object>> context = i.getArgument(0);
                 var current =
                     mapper
@@ -785,7 +784,7 @@ class KapsoAgentIntegrationTests {
     assertThat(done.responseText())
         .contains("09:00", "10:00", "horarios", "Todavía no")
         .doesNotContain("Próximas citas del paciente");
-    verify(model, times(3)).reply(anyList(), anyList());
+    verify(model, times(2)).reply(anyList(), anyList());
     assertThat(appointments()).isEqualTo(1);
     assertThat(
             jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
@@ -857,11 +856,13 @@ class KapsoAgentIntegrationTests {
                 return tool(
                     "verificar_paciente",
                     Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
-              if (step == 1)
-                return tool("consultar_mis_citas", Map.of("search", "Paciente Agente"));
+              if (step == 1) {
+                List<Map<String, Object>> offered = i.getArgument(1);
+                assertThat(offered).hasSizeGreaterThan(1);
+              }
               List<Map<String, Object>> context = i.getArgument(0);
               var result = mapper.readTree(context.getLast().get("content").toString());
-              if (step == 2) {
+              if (step == 1) {
                 reference.set(result.path("items").path(0).path("appointment_ref").asString());
                 return tool(
                     "consultar_horarios",
@@ -875,7 +876,7 @@ class KapsoAgentIntegrationTests {
                         "appointment_ref",
                         reference.get()));
               }
-              assertThat(step).isEqualTo(3);
+              assertThat(step).isEqualTo(2);
               assertThat(result.path("preferred_time").asString()).isEqualTo("09:00");
               assertThat(result.path("preferred_time_available").asBoolean()).isTrue();
               assertThat(result.path("items").path(0).path("local_start").asString())
@@ -908,7 +909,7 @@ class KapsoAgentIntegrationTests {
                 original))
         .isEqualTo(1);
     assertThat(appointments()).isEqualTo(1);
-    verify(model, times(4)).reply(anyList(), anyList());
+    verify(model, times(3)).reply(anyList(), anyList());
   }
 
   @Test
@@ -1776,7 +1777,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.5");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.6");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

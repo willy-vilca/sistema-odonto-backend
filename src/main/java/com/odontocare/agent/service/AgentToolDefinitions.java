@@ -6,6 +6,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class AgentToolDefinitions {
   public List<Map<String, Object>> available(List<Map<String, Object>> evidence) {
+    return available(evidence, "");
+  }
+
+  public List<Map<String, Object>> available(List<Map<String, Object>> evidence, String request) {
     boolean verified =
         evidence.stream()
             .anyMatch(
@@ -14,6 +18,17 @@ public class AgentToolDefinitions {
                         && fact.get("result") instanceof Map<?, ?> result
                         && Boolean.TRUE.equals(result.get("verified")));
     boolean ownAppointments = hasItems(evidence, "consultar_mis_citas");
+    boolean ownConsulted =
+        evidence.stream().anyMatch(fact -> fact.get("name").equals("consultar_mis_citas"));
+    boolean allowsProposal = !AgentConsent.forbidsProposal(request);
+    boolean changing =
+        allowsProposal
+            && AgentIdentityService.normalize(request).matches("(?s).*(reprogram|cancel|anul).*");
+    if (verified && changing && !ownConsulted)
+      return all().stream()
+          .filter(
+              tool -> ((Map<?, ?>) tool.get("function")).get("name").equals("consultar_mis_citas"))
+          .toList();
     boolean slots = hasItems(evidence, "consultar_horarios");
     boolean service = hasItems(evidence, "consultar_servicios") || ownAppointments;
     return all().stream()
@@ -23,10 +38,11 @@ public class AgentToolDefinitions {
               return switch (name) {
                 case "verificar_paciente", "pacientes_contacto" -> !verified;
                 case "consultar_mis_citas" -> verified;
-                case "consultar_horarios" -> service;
-                case "proponer_reprogramacion" -> verified && ownAppointments && slots;
-                case "proponer_cancelacion" -> verified && ownAppointments;
-                case "proponer_cita" -> verified && slots;
+                case "consultar_horarios" -> service && (!changing || ownAppointments);
+                case "proponer_reprogramacion" ->
+                    allowsProposal && verified && ownAppointments && slots;
+                case "proponer_cancelacion" -> allowsProposal && verified && ownAppointments;
+                case "proponer_cita" -> allowsProposal && verified && slots && !changing;
                 default -> true;
               };
             })
@@ -164,7 +180,18 @@ public class AgentToolDefinitions {
   }
 
   private Map<String, Object> tool(
-      String name, String description, Map<String, Object> properties, List<String> required) {
+      String name,
+      String description,
+      Map<String, Map<String, Object>> properties,
+      List<String> required) {
+    var nullableProperties = new LinkedHashMap<String, Object>();
+    properties.forEach(
+        (field, schema) -> {
+          var property = new LinkedHashMap<String, Object>(schema);
+          if (!required.contains(field))
+            property.put("type", List.of(property.get("type"), "null"));
+          nullableProperties.put(field, property);
+        });
     return Map.of(
         "type",
         "function",
@@ -179,7 +206,7 @@ public class AgentToolDefinitions {
                 "type",
                 "object",
                 "properties",
-                properties,
+                nullableProperties,
                 "required",
                 required,
                 "additionalProperties",
