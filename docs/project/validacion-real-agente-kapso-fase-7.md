@@ -60,7 +60,7 @@ La cita original sigue CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un even
 
 La sesión agrupa primero el flujo de cambios y después los límites de acceso; cubre los mismos casos de [la guía preparada](probar-cambios-agente-kapso-fase-7.md), sin exigir su orden literal.
 
-## Prueba 3: preparar cambio y después rechazarlo — repetición real fallida; nueva comprobación pendiente
+## Prueba 3: preparar cambio y después rechazarlo — propuesta real aprobada; negación pendiente
 
 Se solicita enviar:
 
@@ -100,8 +100,20 @@ Groq real preparó la propuesta correcta en APP_TEST `1d657b85-1289-433b-8a9f-70
 
 Backend actualizado para repetir la misma entrada por WhatsApp. Cita original CONFIRMED/versión 0, 13/10/2026 09:00–10:00, un evento de historial; control AUTO/generación 4. La propuesta real continúa pendiente de verificación, antes de probar su rechazo. No se declara fase 7 cerrada.
 
+### Propuesta real correcta recibida — aprobada; todavía sin cambio de cita
+
+El participante repitió la entrada completa y recibió el resumen correcto en aproximadamente diez segundos según su observación: Willy, Limpieza dental, Julia, fecha actual martes 13/10/2026 09:00, nuevo horario martes 20/10/2026 09:00, duración 60 minutos y motivo cambio de horario de trabajo. Código de propuesta real 233B4896; aún sin confirmación.
+
+Ejecución `30b537e0-6e37-4aec-a1f6-a076b24873be`, secuencia 46, KAPSO/COMPLETED, `supervised-v7.4`, dos intentos, 8 899 tokens de entrada y 291 de salida. Entrada `29c5eeae-df00-40cd-b2e8-ba6da862b780`; respuesta `465d655c-7e37-4711-ab72-e72a195629e7`, READ y sin error. Herramientas correctas: verificar_paciente → consultar_mis_citas sin filtro → consultar_horarios con referencia propia y fecha/hora → proponer_reprogramacion → guardar_respuesta. Las consultas y propuesta no se duplicaron.
+
+El primer intento registró HTTP 429/TOKENS_PER_MINUTE con retry-after de ocho segundos. Retomó la misma ejecución y sus herramientas completadas; la recuperación quedó demostrada también en este intercambio real.
+
+Propuesta `233b4896-72b0-4ccf-bc98-0afa9119f5c9`, fuente KAPSO, RESCHEDULE/PENDING, vinculada a la cita original y su versión 0. Creada el 08/10/2026 a las 12:41:16 (America/Lima), vence a las 13:11:16. Desde registrar la ejecución hasta persistir la respuesta transcurrieron 13,865 segundos; esa medición del servidor se conserva separada de los aproximadamente diez segundos informados por el participante.
+
+Cita original todavía CONFIRMED/versión 0, martes 13/10 09:00–10:00, con un evento de historial; sin cambios financieros. Permanecen 9 pacientes, 12 citas, 9 cargos, 11 movimientos y AUTO/generación 4. **La preparación y entrega real de la propuesta quedan aprobadas; no se declara aplicada una reprogramación.** El siguiente caso es rechazar esta propuesta y comprobar que el código no permite aplicar un cambio descartado.
+
 ## Casos restantes
 
-Propuesta de cambio y negación; confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Negación de la propuesta; confirmación expresa de una nueva propuesta e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
