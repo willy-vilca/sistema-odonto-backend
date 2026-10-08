@@ -300,7 +300,6 @@ public class AgentQueueService {
         clock.instant());
     if (code.equals("RATE_LIMIT")
         && inbox.provider(run.conversationId()).equals("KAPSO")
-        && !input.source().equals("APP_TEST")
         && run.attempts() < 3
         && !retryAt
             .plusSeconds(config.getRequestTimeoutSeconds())

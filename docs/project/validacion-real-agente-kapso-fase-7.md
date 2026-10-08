@@ -60,13 +60,23 @@ La cita original sigue CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un even
 
 La sesión agrupa primero el flujo de cambios y después los límites de acceso; cubre los mismos casos de [la guía preparada](probar-cambios-agente-kapso-fase-7.md), sin exigir su orden literal.
 
-## Prueba 3: preparar cambio y después rechazarlo — en ejecución
+## Prueba 3: preparar cambio y después rechazarlo — incidencia corregida; repetición pendiente
 
 Se solicita enviar:
 
 > Elijo el martes 20/10/2026 a las 09:00 con Julia Huaytalla. Reprograma mi cita por el cambio de horario de trabajo.
 
 Debe preparar el resumen con el paciente, fechas anterior y nueva, profesional, tratamiento, duración y motivo, conservando todavía la cita inicial. Se solicita copiar la propuesta sin confirmarla; después se probará su negación. No se declara aprobada mientras falta la respuesta y la verificación.
+
+El participante envió esa elección y recibió nuevamente la lista de opciones, sin el resumen. Ejecución `9ae3e3a9-7026-47e5-ad54-d3f8512310b6`, secuencia 37, KAPSO/COMPLETED, dos intentos y respuesta READ. Aunque la ejecución terminó, **el comportamiento solicitado no pasó la prueba**. El modelo intentó proponer con un slot_id inválido, rechazado por el servidor, y después omitió preferred_time al consultar. El cierre rápido trató esa omisión como falta de elección, ignorando las 09:00 del mensaje.
+
+Hubo además un límite temporal en el primer intento, registrado como fallo_controlado/RATE_LIMIT con retry-after de 14 segundos. La continuación persistida evitó repetir verificar_paciente y consultar_mis_citas; el registro completo tomó unos 22,488 segundos. Esta recuperación no convierte en correcta la respuesta funcional equivocada. La cita original permaneció CONFIRMED/versión 0 y con un solo evento de historial.
+
+Flujo `supervised-v7.2`: hora explícita y unívoca aplicada en el servidor aun si el modelo la omite; disponibilidad con hora preferida aplicada; continuar hacia la propuesta cuando la hora elegida está libre; rechazar propuestas con una hora distinta; incluir el motivo en el resumen. Se conserva confirmación obligatoria e identidad/control. APP_TEST también continúa ante cuotas temporales con el mismo límite de intentos y espera, sin envíos.
+
+Verificación final: 53 casos del agente, fechas y horas aprobados, cero fallos/omitidos y empaquetado correcto. Groq real en APP_TEST generó la propuesta PENDING correcta en `7490594d-3632-4d25-ab08-00aec7ca4ada`, 5,560 segundos, con cuatro llamadas completadas y una espera de unos dos segundos; 8 768 tokens de entrada y 306 de salida. Resumen: Willy, Limpieza dental, Julia, fecha actual 13/10/2026 09:00, destino 20/10/2026 09:00, 60 minutos, motivo Cambio de horario de trabajo. No se envió WhatsApp ni cambió la cita, su historial o finanzas. Se conserva también la vista previa anterior `5898b1a5-f7f7-42b8-bbd0-c7d3c91a45fe`, fallida por cuota sin cambios, que motivó extender la continuación a APP_TEST.
+
+La repetición real de la elección sigue pendiente. El código de la propuesta APP_TEST no sirve para confirmar por WhatsApp; el participante debe recibir un resumen y código del canal real. [Detalle de la corrección](optimizacion-agente-groq-fase-7.md).
 
 ## Casos restantes
 

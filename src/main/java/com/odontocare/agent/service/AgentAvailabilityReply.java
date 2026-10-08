@@ -13,7 +13,8 @@ final class AgentAvailabilityReply {
         || !(arguments instanceof JsonNode args)
         || !(result instanceof Map<?, ?> data)
         || !(data.get("items") instanceof List<?> items)) return;
-    String preferred = args.path("preferred_time").asString("");
+    String preferred =
+        Objects.toString(data.get("preferred_time"), args.path("preferred_time").asString(""));
     boolean occupied =
         !preferred.isBlank() && Boolean.FALSE.equals(data.get("preferred_time_available"));
     var text =

@@ -223,6 +223,8 @@ public class AgentToolService {
     if (date.isBefore(today) || date.isAfter(today.plusDays(60)))
       throw ApiException.badRequest("Consulta una fecha entre hoy y los próximos 60 días.");
     String preferred = text(args, "preferred_time", 5, false);
+    preferred =
+        AgentRequestedTime.resolve(incoming.body()).map(LocalTime::toString).orElse(preferred);
     if (!preferred.isBlank())
       try {
         LocalTime.parse(preferred);
@@ -307,6 +309,8 @@ public class AgentToolService {
         zone.getId(),
         "preferred_time_available",
         preferredFound,
+        "preferred_time",
+        preferred,
         "items",
         results,
         "message",
@@ -363,6 +367,11 @@ public class AgentToolService {
     if (requestedDate.isPresent() && !requestedDate.get().equals(slot.localStart().toLocalDate()))
       throw ApiException.badRequest(
           "Ese horario no coincide con el día solicitado; consulta la fecha correcta.");
+    if (AgentRequestedTime.resolve(incoming.body())
+        .filter(time -> !time.equals(slot.localStart().toLocalTime()))
+        .isPresent())
+      throw ApiException.badRequest(
+          "Ese horario no coincide con la hora elegida; consulta esa hora antes de proponer.");
     availability.requireAvailable(
         slot.dentistId(),
         slot.localStart().atZone(ZoneId.of(slot.timeZone())).toInstant(),

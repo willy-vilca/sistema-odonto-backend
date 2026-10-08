@@ -190,6 +190,20 @@ public class BookingAgent {
                               + date
                               + ". Consulta ese día; no lo sustituyas por otro.")));
       var catalogue = new AgentCatalogEvidence();
+      AgentRequestedTime.resolve(incoming.body())
+          .ifPresent(
+              time ->
+                  context.add(
+                      Map.of(
+                          "role",
+                          "system",
+                          "content",
+                          "Hora explícita en el último mensaje: "
+                              + time
+                              + ". Usa preferred_time al consultar. Si el paciente pidió"
+                              + " reprogramar o reservar y está libre, prepara el resumen con el"
+                              + " slot_id devuelto. Una consulta informativa no autoriza una"
+                              + " propuesta.")));
       var calendarReply = new AgentAvailabilityReply();
       var appointmentReply = new AgentAppointmentReply();
       var evidence = new ArrayList<Map<String, Object>>();
@@ -463,7 +477,10 @@ public class BookingAgent {
   private boolean canFinishAvailability(String body, Map<String, Object> fact) {
     var args = mapper.valueToTree(fact.get("arguments"));
     var result = mapper.valueToTree(fact.get("result"));
-    return args.path("preferred_time").asString("").isBlank()
+    return result
+            .path("preferred_time")
+            .asString(args.path("preferred_time").asString(""))
+            .isBlank()
         || !result.path("preferred_time_available").asBoolean(false)
         || AgentConsent.forbidsProposal(body);
   }
@@ -489,7 +506,7 @@ public class BookingAgent {
     No inventes datos. Precios/duración de catálogo requieren consultar_servicios en esta ejecución; usa sus valores, no mensajes anteriores. Si solo pide información no solicites datos de reserva. Respeta negaciones y usa descartar_propuesta si corresponde.
     Para consultar citas o reservar, verificar_paciente exige nombre completo explícito y relación SELF (soy/para mí) o GUARDIAN (mi hijo/soy responsable). El perfil de WhatsApp no verifica identidad. Pregunta para quién es; no reveles fichas del teléfono ni reutilices un hijo para otra solicitud. pacientes_contacto busca solo el nombre informado. Nunca pidas documentos.
     Usa solo IDs/referencias obtenidos de herramientas. consultar_mis_citas devuelve appointment_ref, service_id y dentist_id: úsalos directamente para cambios, sin buscar de nuevo el catálogo. Si hay varias citas pregunta cuál. Una consulta no autoriza cambios.
-    Para reprogramar: verificar_paciente, consultar_mis_citas, consultar_horarios con appointment_ref y fecha de destino; conserva duración original. Usa proponer_reprogramacion con horario elegido y motivo informado. Para cancelar usa proponer_cancelacion con cita y motivo. Ambas presentan resumen y esperan confirmación; nunca anuncies cambio aplicado.
+    Para reprogramar: verificar_paciente, consultar_mis_citas, consultar_horarios con appointment_ref, fecha de destino y preferred_time si eligió hora; conserva duración original. Solo DESPUÉS usa proponer_reprogramacion con slot_id devuelto y motivo informado. appointment_ref identifica la cita y NO es un slot_id; una hora tampoco es un UUID. Para cancelar usa proponer_cancelacion con cita y motivo. Ambas presentan resumen y esperan confirmación; nunca anuncies cambio aplicado.
     Para nueva reserva busca servicio con palabra corta (limpieza). Consulta horarios después de identificar al paciente. Fechas relativas según hoy/zona; mañana=days_from_today 1. Usa dentist_name si no tienes dentist_id de herramienta. Respeta el profesional solicitado.
     consultar_horarios devuelve horarios reales. Sin hora elegida o si está ocupada, ofrece esas opciones y espera; no elijas otra hora por él. Si eligió una libre y quiere reservar, verificar_paciente y proponer_cita con slot_id y nombre explícitos (patient_id solo del contacto). Esta herramienta prepara y NO reserva.
     El servidor confirma exclusivamente tras entregar resumen y recibir «Sí, confirmo» o CONFIRMO código. No crees ni afirmes éxito sin resultado confirmado. Cambios de intención descartan propuestas anteriores. Si falla una herramienta no inventes resultados; termina de forma controlada o deriva. APP_TEST es vista previa sin envío.

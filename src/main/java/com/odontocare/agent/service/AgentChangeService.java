@@ -181,6 +181,12 @@ public class AgentChangeService {
       if (requestedDate.isPresent() && !requestedDate.get().equals(slot.localStart().toLocalDate()))
         throw ApiException.badRequest(
             "El nuevo horario no coincide con el día solicitado; consulta la fecha correcta.");
+      if (AgentRequestedTime.resolve(input.body())
+          .filter(time -> !time.equals(slot.localStart().toLocalTime()))
+          .isPresent())
+        throw ApiException.badRequest(
+            "El nuevo horario no coincide con la hora elegida; consulta esa hora antes de"
+                + " proponer.");
       if (!slot.conversationId().equals(run.conversationId())
           || !slot.expiresAt().isAfter(clock.instant())
           || !slot.serviceId().equals(appointment.get("service_id"))
@@ -212,6 +218,7 @@ public class AgentChangeService {
     }
     if (reason.isBlank() || reason.length() > 500)
       throw ApiException.badRequest("Indica el motivo del cambio, máximo 500 caracteres.");
+    summary += " Motivo: " + reason.strip() + ".";
     var p =
         changes.propose(
             run.id(),

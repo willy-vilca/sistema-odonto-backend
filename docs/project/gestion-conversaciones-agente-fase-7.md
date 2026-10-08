@@ -62,7 +62,7 @@ Las consultas clínicas, posibles urgencias, solicitudes financieras, reclamos y
 
 ## Bitácora y permisos
 
-La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo (inicial `supervised-v7.0`, continuación optimizada `supervised-v7.1`), tokens y resultado operacional. Los fallos nuevos registran cada intento y la espera solicitada por el proveedor. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves ni razonamientos internos del modelo.
+La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo (inicial `supervised-v7.0`, continuación optimizada `supervised-v7.1`, hora elegida protegida `supervised-v7.2`), tokens y resultado operacional. Los fallos nuevos registran cada intento y la espera solicitada por el proveedor. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves ni razonamientos internos del modelo.
 
 Lectura: `WHATSAPP_READ`. Control humano: `AGENT_CONTROL_WRITE`, otorgado inicialmente a administración y recepción. Reglas: `SETTINGS_WRITE`. Texto manual y reintento de envío: `WHATSAPP_WRITE`. Pruebas/reintento de análisis: `AGENT_TEST_WRITE`. Toda escritura HTTP conserva autenticación, validación y CSRF; la agenda sigue usando sus reglas centrales.
 

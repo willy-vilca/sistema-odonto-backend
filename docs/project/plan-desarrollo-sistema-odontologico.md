@@ -254,6 +254,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Repetición real de disponibilidad aprobada.** El participante confirmó llegada rápida de las opciones del martes 20/10/2026. La ejecución KAPSO `fe017ec1-e329-41b7-ba8f-2d1341728fdb` completó en un intento y tres llamadas; respuesta READ, persistida a los 7,589 segundos desde el registro de la ejecución. Cita original e historial/finanzas intactos. La incidencia de cuota queda resuelta para ese caso; se continúa con propuesta y negación, sin declarar aún reprogramación confirmada ni cierre de fase 7.
 
+**Elección de hora, incidencia y corrección.** El mensaje «Elijo ...09:00... Reprograma...» volvió a recibir opciones porque v7.1 cerraba la consulta si el modelo omitía la hora. La cita se conservó; se rechazó además un slot_id inválido. v7.2 aplica la hora explícita en el servidor, continúa hasta proponer, rechaza slots de otra hora e incluye motivo en el resumen. APP_TEST comparte recuperación limitada de cuotas sin enviar mensajes. 53 casos del agente/horas/fechas aprobados; Groq real preparó el resumen correcto en APP_TEST en 5,560 segundos con agenda/historial/finanzas intactos. La repetición real de la elección sigue pendiente; no se cierra fase 7 por esa vista previa. [Incidencias y trazas](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

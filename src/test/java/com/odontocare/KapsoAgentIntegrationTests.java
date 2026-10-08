@@ -819,6 +819,123 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void explicitHourContinuesToChangeProposalEvenWhenModelOmitsPreferredTime() {
+    UUID original = createOriginal(1, 9);
+    var reference = new java.util.concurrent.atomic.AtomicReference<String>();
+    var index = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            i -> {
+              int step = index.getAndIncrement();
+              if (step == 0)
+                return tool(
+                    "verificar_paciente",
+                    Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
+              if (step == 1) return tool("consultar_mis_citas", Map.of("search", "limpieza"));
+              List<Map<String, Object>> context = i.getArgument(0);
+              var result = mapper.readTree(context.getLast().get("content").toString());
+              if (step == 2) {
+                reference.set(result.path("items").path(0).path("appointment_ref").asString());
+                return tool(
+                    "consultar_horarios",
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "dentist_id",
+                        doctorId,
+                        "days_from_today",
+                        8,
+                        "appointment_ref",
+                        reference.get()));
+              }
+              assertThat(step).isEqualTo(3);
+              assertThat(result.path("preferred_time").asString()).isEqualTo("09:00");
+              assertThat(result.path("preferred_time_available").asBoolean()).isTrue();
+              assertThat(result.path("items").path(0).path("local_start").asString())
+                  .endsWith("09:00");
+              return tool(
+                  "proponer_reprogramacion",
+                  Map.of(
+                      "appointment_ref",
+                      reference.get(),
+                      "slot_id",
+                      result.path("items").path(0).path("slot_id").asString(),
+                      "reason",
+                      "Cambio de horario de trabajo"));
+            });
+    submit(
+        "Soy Paciente Agente. Elijo las 09:00 con la doctora. Reprograma mi cita por el cambio de"
+            + " horario de trabajo.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("09:00", "Confirma", "Cambio de horario de trabajo");
+    assertThat(changes.byRun(done.id())).isPresent();
+    assertThat(changes.byRun(done.id()).orElseThrow().state()).isEqualTo("PENDING");
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM appointment_history WHERE appointment_id=?",
+                Integer.class,
+                original))
+        .isEqualTo(1);
+    assertThat(appointments()).isEqualTo(1);
+    verify(model, times(4)).reply(anyList(), anyList());
+  }
+
+  @Test
+  void cannotProposeAnOldSlotForAnotherExplicitlySelectedHour() {
+    UUID original = createOriginal(1, 9);
+    var earlier = identifiedRequest("Quiero reprogramar mi cita por trabajo.");
+    UUID reference = ownReference(earlier);
+    var options =
+        mapper.valueToTree(
+            tools.execute(
+                earlier,
+                "consultar_horarios",
+                mapper.valueToTree(
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "dentist_id",
+                        doctorId,
+                        "days_from_today",
+                        8,
+                        "appointment_ref",
+                        reference,
+                        "preferred_time",
+                        "09:15"))));
+    UUID previousSlot = UUID.fromString(options.path("items").path(0).path("slot_id").asString());
+    queue.finish(earlier.id(), "Horarios consultados");
+    var selected = identifiedRequest("Elijo las 09:00. Reprograma mi cita por trabajo.");
+    assertThatThrownBy(
+            () -> changes.propose(selected, "RESCHEDULE", reference, previousSlot, "Trabajo"))
+        .isInstanceOf(com.odontocare.shared.web.ApiException.class)
+        .hasMessageContaining("hora elegida");
+    assertThatThrownBy(
+            () ->
+                tools.execute(
+                    selected,
+                    "proponer_cita",
+                    mapper.valueToTree(
+                        Map.of(
+                            "slot_id",
+                            previousSlot,
+                            "patient_id",
+                            patientId,
+                            "patient_name",
+                            "Paciente Agente"))))
+        .isInstanceOf(com.odontocare.shared.web.ApiException.class)
+        .hasMessageContaining("hora elegida");
+    assertThat(count("agent_change_proposal")).isZero();
+    assertThat(count("agent_proposal")).isZero();
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+  }
+
+  @Test
   void transientLimitResumesPersistedToolResultInsteadOfStartingAgain() {
     when(model.reply(anyList(), anyList()))
         .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
@@ -867,6 +984,40 @@ class KapsoAgentIntegrationTests {
     assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
     assertThat(queue.detail(done.id()).reply()).isNotNull();
     assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void appPreviewAlsoResumesTransientLimitWithoutSendingWhatsApp() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
+        .thenThrow(new ModelFailure("RATE_LIMIT", "Espera", 2))
+        .thenReturn(
+            new LanguageModelClient.Reply(
+                "La limpieza cuesta PEN 100.00 y dura 60 minutos.", List.of(), 30, 10));
+    var submitted =
+        queue.test(
+            new TestMessage(
+                phone, "Demo", "Solo quiero consultar el precio de limpieza", UUID.randomUUID()));
+    var waiting = process();
+    assertThat(waiting.id()).isEqualTo(submitted.runId());
+    assertThat(waiting.state()).isEqualTo("QUEUED");
+    jdbc.update(
+        "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", waiting.id());
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("100.00");
+    assertThat(queue.detail(done.id()).reply()).isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM kapso_message WHERE direction='OUTBOUND'", Integer.class))
+        .isZero();
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("AUTO");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='consultar_servicios'",
+                Integer.class,
+                done.id()))
+        .isEqualTo(1);
   }
 
   @Test
@@ -1387,7 +1538,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.1");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.2");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }
