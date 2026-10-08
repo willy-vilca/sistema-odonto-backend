@@ -272,6 +272,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Nueva propuesta real v7.6 aprobada.** Secuencia 52/69ab6ba1-9069-4541-8a40-3f275ef1008c, COMPLETED/READ, un intento, tres inferencias y sin errores. Resumen correcto del 13/10 al 20/10 09:00 con Julia, 60 minutos, motivo y código F4160577. Propuesta PENDING; cita original, historial y finanzas intactos. Respuesta persistida a los 6,410 segundos del registro de ejecución, sin atribuir ese tiempo al teléfono. Se continúa con confirmación ambigua, expresa y repetición; no se declara todavía reprogramación aplicada ni fase 7 cerrada.
 
+**Confirmación ambigua real aprobada.** Secuencia 53/cc89563d-7984-4c94-a6cf-458272eb3285, COMPLETED/READ, sin inferencias: «sí» repitió el resumen y mantuvo F4160577 PENDING, sin ampliar su vigencia. Cita original versión 0, historial/finanzas conservados. Se solicita confirmación expresa para aplicar el cambio y después comprobar idempotencia; fase 7 abierta.
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

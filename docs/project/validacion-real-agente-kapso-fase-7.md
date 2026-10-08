@@ -156,8 +156,16 @@ Propuesta `f4160577-eed4-44e4-8f2c-331664012feb`, KAPSO/RESCHEDULE/PENDING, vinc
 
 La nueva propuesta y su entrega real quedan aprobadas; **el cambio no se ha aplicado**. Se continúa con «sí» ambiguo, sin código ni otras palabras, antes de la confirmación expresa.
 
+## Prueba 7: sí ambiguo — aprobada
+
+El participante envió únicamente «sí» y recibió de nuevo el mismo resumen del 13/10 al 20/10 a las 09:00 con Julia y el código F4160577, solicitando confirmación expresa.
+
+Ejecución `cc89563d-7984-4c94-a6cf-458272eb3285`, secuencia 53, KAPSO/COMPLETED, `supervised-v7.6`, un intento, cero inferencias y tokens. Entrada `d7306a4c-64d3-45d0-b169-b7a5b78bdc3a`; respuesta `9974620b-76ea-487a-9ae2-68a6e223b8b7` READ y sin error. No hubo herramientas de cambio; únicamente se guardó la respuesta. 1,921 segundos desde registrar la ejecución hasta persistirla.
+
+La propuesta conserva PENDING, el mismo código y su vencimiento original de las 18:56:12; no se renovó su vigencia al repetir el resumen. confirmation_message_id sigue vacío. La cita del 13/10 09:00–10:00 continúa CONFIRMED/versión 0 y un historial; pacientes, citas y finanzas conservados (9/12/9/11), AUTO/generación 6. Se continúa con confirmación expresa del cambio real.
+
 ## Casos restantes
 
-Confirmación ambigua, confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
