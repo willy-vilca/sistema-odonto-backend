@@ -1,6 +1,6 @@
 # Guía de demostración real: fase 7
 
-Preparada el 07/10/2026. **Pendiente de ejecución.** Los mensajes siguientes se enviarán cuando el usuario indique que está listo. Esta guía no declara comprobada la entrega real de respuestas ni el cierre de fase 7.
+Preparada el 07/10/2026. **Demostración iniciada con autorización del participante.** La consulta de su cita fue recibida y verificada; las pruebas restantes siguen pendientes. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
 
 ## Preparación
 
