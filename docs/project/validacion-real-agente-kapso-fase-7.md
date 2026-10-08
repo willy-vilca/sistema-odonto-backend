@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado: en ejecución. La fase 7 permanece abierta.** Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia registra los intercambios reales y no sustituye casos todavía pendientes.
+**Estado: validación real pendiente de continuación cuando el participante regrese. La fase 7 permanece abierta.** El usuario solicitó continuar las correcciones sin pedir nuevos mensajes reales durante su ausencia. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia registra los intercambios reales y no sustituye casos todavía pendientes.
 
 ## Estado inicial
 
@@ -60,7 +60,7 @@ La cita original sigue CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un even
 
 La sesión agrupa primero el flujo de cambios y después los límites de acceso; cubre los mismos casos de [la guía preparada](probar-cambios-agente-kapso-fase-7.md), sin exigir su orden literal.
 
-## Prueba 3: preparar cambio y después rechazarlo — incidencia corregida; repetición pendiente
+## Prueba 3: preparar cambio y después rechazarlo — repetición real fallida; nueva comprobación pendiente
 
 Se solicita enviar:
 
@@ -77,6 +77,14 @@ Flujo `supervised-v7.2`: hora explícita y unívoca aplicada en el servidor aun 
 Verificación final: 53 casos del agente, fechas y horas aprobados, cero fallos/omitidos y empaquetado correcto. Groq real en APP_TEST generó la propuesta PENDING correcta en `7490594d-3632-4d25-ab08-00aec7ca4ada`, 5,560 segundos, con cuatro llamadas completadas y una espera de unos dos segundos; 8 768 tokens de entrada y 306 de salida. Resumen: Willy, Limpieza dental, Julia, fecha actual 13/10/2026 09:00, destino 20/10/2026 09:00, 60 minutos, motivo Cambio de horario de trabajo. No se envió WhatsApp ni cambió la cita, su historial o finanzas. Se conserva también la vista previa anterior `5898b1a5-f7f7-42b8-bbd0-c7d3c91a45fe`, fallida por cuota sin cambios, que motivó extender la continuación a APP_TEST.
 
 La repetición real de la elección sigue pendiente. El código de la propuesta APP_TEST no sirve para confirmar por WhatsApp; el participante debe recibir un resumen y código del canal real. [Detalle de la corrección](optimizacion-agente-groq-fase-7.md).
+
+### Segunda repetición real: límite temporal y rechazo del proveedor
+
+El participante repitió la elección y recibió «No pude completar la consulta. La dejo pendiente para recepción. Revisa la agenda antes de repetir una operación». Ejecución `61d42047-8785-4d07-a540-380bb0e29c43`, secuencia 40, KAPSO/FAILED, dos intentos, respuesta `baa6d825-11ac-48aa-a6e0-ee4865ee6c88` READ. Primer fallo RATE_LIMIT con espera de dos segundos; segundo PROVIDER_ERROR genérico. El estado HTTP y la categoría del segundo fallo no se conservaron entonces: no se atribuye sin evidencia a otra cuota ni a una herramienta. Aproximadamente 8,826 segundos hasta persistir la respuesta, 4 829 tokens de entrada y 112 de salida conocidos. Control HANDOFF/generación 3. Cita original CONFIRMED/versión 0, con un evento de historial y sin cambios financieros.
+
+El usuario pidió corregir y guardar el estado, aplazando nuevos intercambios hasta regresar. Se reprodujo internamente HTTP 429/TOKENS_PER_MINUTE, se completó el diagnóstico seguro y la recuperación, y se presentaron herramientas por requisitos. Flujo final `supervised-v7.3`. La vista previa `3edcf13c-f11b-46ff-8f65-2b185dc6722e` preparó la propuesta correcta en 15,747 segundos, incluidos 12 de espera por cuota, sin rechazo de herramientas, envío ni cambio de cita. No se convierte esa prueba en demostración real de la propuesta o reprogramación. [Diagnóstico, cambios y punto para retomar](diagnostico-groq-reserva-fase-7.md).
+
+Solo se devolvió a AUTO la derivación automática conocida de esta prueba, sin responsable humano; generación 4 y requiere instrucción nueva. Se mantienen 9 pacientes, 12 citas, 9 cargos y 11 movimientos. La siguiente comprobación real debe preparar otra propuesta correcta antes de probar su negación; no confirmar códigos APP_TEST ni antiguos.
 
 ## Casos restantes
 

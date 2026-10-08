@@ -2,6 +2,7 @@ package com.odontocare.agent.service;
 
 import com.odontocare.agent.config.AgentProperties;
 import com.odontocare.agent.dto.AgentContracts.*;
+import com.odontocare.agent.model.AgentModelCheckpoint;
 import com.odontocare.agent.model.AgentRun;
 import com.odontocare.agent.repository.*;
 import com.odontocare.audit.service.AuditService;
@@ -287,18 +288,31 @@ public class AgentQueueService {
 
   @Transactional
   public void fail(UUID id, String code, String detail, long retryAfterSeconds) {
+    fail(id, code, detail, retryAfterSeconds, Map.of());
+  }
+
+  @Transactional
+  public void fail(
+      UUID id,
+      String code,
+      String detail,
+      long retryAfterSeconds,
+      Map<String, Object> diagnostics) {
+    var initial = runs.get(id, false).orElseThrow();
+    inbox.conversation(initial.conversationId(), true).orElseThrow();
+    supervisionRepository.control(initial.conversationId(), true);
+    if (!supervisionRepository.matches(id, initial.conversationId())) return;
     var run = runs.get(id, true).orElseThrow();
-    var input = inbox.message(run.messageId(), false).orElseThrow();
     var retryAt = clock.instant().plusSeconds(Math.max(1, retryAfterSeconds));
     runs.step(
         id,
         "MODEL",
         "fallo_controlado",
         Map.of("attempt", run.attempts()),
-        Map.of("code", code, "detail", detail, "retry_after_seconds", retryAfterSeconds),
+        failureResult(code, detail, retryAfterSeconds, diagnostics),
         "REJECTED",
         clock.instant());
-    if (code.equals("RATE_LIMIT")
+    if (Set.of("RATE_LIMIT", "TOOL_GENERATION", "PROVIDER_UNAVAILABLE").contains(code)
         && inbox.provider(run.conversationId()).equals("KAPSO")
         && run.attempts() < 3
         && !retryAt
@@ -306,7 +320,29 @@ public class AgentQueueService {
             .isAfter(run.createdAt().plusSeconds(config.getRunTimeoutSeconds()))
         && Objects.equals(
             runs.latestInbound(run.conversationId(), run.messageId()), run.messageId())) {
-      runs.scheduleRetry(id, retryAt);
+      if (code.equals("TOOL_GENERATION")) {
+        runs.checkpoint(id)
+            .ifPresent(
+                checkpoint -> {
+                  var context = new ArrayList<>(checkpoint.messages());
+                  context.add(
+                      Map.of(
+                          "role",
+                          "system",
+                          "content",
+                          "El proveedor rechazó la última llamada generada; no se ejecutó. Continúa"
+                              + " desde los resultados de herramientas ya recibidos. Usa solo"
+                              + " nombres de las herramientas disponibles y argumentos JSON válidos"
+                              + " según su esquema. No inventes referencias ni repitas consultas"
+                              + " completadas."));
+                  runs.checkpoint(
+                      id,
+                      new AgentModelCheckpoint(
+                          context, checkpoint.evidence(), checkpoint.completedCalls()),
+                      clock.instant());
+                });
+      }
+      runs.scheduleRetry(id, retryAt, code);
       return;
     }
     String response =
@@ -321,5 +357,15 @@ public class AgentQueueService {
     }
     audit.recordAs(
         null, "Agente IA", "AGENT_FAILED", "AGENT_RUN", id, "Registró fallo controlado: " + code);
+  }
+
+  private Map<String, Object> failureResult(
+      String code, String detail, long retryAfterSeconds, Map<String, Object> diagnostics) {
+    var result = new LinkedHashMap<String, Object>();
+    result.putAll(diagnostics);
+    result.put("code", code);
+    result.put("detail", detail);
+    result.put("retry_after_seconds", retryAfterSeconds);
+    return result;
   }
 }

@@ -1,10 +1,12 @@
 # Fase 7: conversaciones, cambios y recuperación del agente
 
-Fecha: 07/10/2026. Plan 3.2; alcance funcional 1.9. Backend y frontend: rama `kapso`.
+Fecha: 07/10/2026. Plan 3.3; alcance funcional 1.9. Backend y frontend: rama `kapso`.
 
-**Estado: implementación y validación interna completas; demostración real por WhatsApp en curso.** Durante la implementación inicial se respetó el aplazamiento de los mensajes reales. Después el participante autorizó la demostración: consulta propia aprobada, incidencia de cuota al consultar reprogramación corregida internamente, repetición externa y demás flujos pendientes. La fase 6 conserva su cierre y la cita demostrada; la fase 7 permanece en validación y no habilita todavía el inicio de fase 8. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md).
+**Estado: implementación y validación interna completas; nuevos mensajes reales aplazados hasta el regreso del participante.** Consulta propia y disponibilidad reales aprobadas. La preparación del cambio real volvió a fallar por cuota/rechazo del proveedor; v7.3 se comprobó internamente con Groq y conserva la cita. La propuesta correcta, los cambios y demás casos todavía necesitan demostración real. El usuario pidió terminar correcciones y documentación sin solicitar mensajes durante su ausencia. La fase 6 conserva su cierre; fase 7 en validación y fase 8 pendiente. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md), [diagnóstico y punto para retomar](diagnostico-groq-reserva-fase-7.md).
 
 ## Uso desde la aplicación
+
+Verificación final de la corrección v7.3: 187 casos backend aprobados, cero fallos/errores/omitidos, empaquetado correcto. Incluye 43 casos Kapso/agente, 11 del cliente Groq y dos de etapas de herramientas. Groq real preparó la propuesta correcta en APP_TEST con conservación de cita, historial, finanzas y mensajes salientes. No se repitieron pruebas de interfaz porque no hubo cambios visuales; se conserva la evidencia previa de los tres tamaños. [Mediciones, límites y casos para retomar](diagnostico-groq-reserva-fase-7.md).
 
 En **WhatsApp**, la bandeja permite buscar contacto, mensaje, paciente y resumen. Los filtros **Control** y **Solicitud** y la paginación se ejecutan en el servidor. Cada conversación muestra su modo, solicitud administrativa, responsable, paciente identificado y enlace al detalle e historial de la cita cuando existe, recuperados a demanda y con permisos.
 
@@ -62,7 +64,7 @@ Las consultas clínicas, posibles urgencias, solicitudes financieras, reclamos y
 
 ## Bitácora y permisos
 
-La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo (inicial `supervised-v7.0`, continuación optimizada `supervised-v7.1`, hora elegida protegida `supervised-v7.2`), tokens y resultado operacional. Los fallos nuevos registran cada intento y la espera solicitada por el proveedor. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves ni razonamientos internos del modelo.
+La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo (inicial `supervised-v7.0`, continuación optimizada `supervised-v7.1`, hora elegida protegida `supervised-v7.2`, diagnóstico y recuperación `supervised-v7.3`), tokens y resultado operacional. Los fallos nuevos registran cada intento, la espera solicitada y el estado HTTP/categorías permitidas cuando provienen del modelo. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves, cuerpos de errores del proveedor ni razonamientos internos del modelo.
 
 Lectura: `WHATSAPP_READ`. Control humano: `AGENT_CONTROL_WRITE`, otorgado inicialmente a administración y recepción. Reglas: `SETTINGS_WRITE`. Texto manual y reintento de envío: `WHATSAPP_WRITE`. Pruebas/reintento de análisis: `AGENT_TEST_WRITE`. Toda escritura HTTP conserva autenticación, validación y CSRF; la agenda sigue usando sus reglas centrales.
 

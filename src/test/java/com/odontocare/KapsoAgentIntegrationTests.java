@@ -987,6 +987,154 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void invalidProviderToolGenerationResumesWithGuidanceAndDoesNotRepeatTools() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
+        .thenThrow(
+            new ModelFailure(
+                "TOOL_GENERATION",
+                "Herramienta rechazada",
+                2,
+                Map.of("http_status", 400, "provider_code", "tool_use_failed")))
+        .thenAnswer(
+            invocation -> {
+              List<Map<String, Object>> context = invocation.getArgument(0);
+              assertThat(context.getLast().get("role")).isEqualTo("system");
+              assertThat(context.getLast().get("content").toString())
+                  .contains("no se ejecutó", "JSON válidos");
+              assertThat(context.stream().filter(message -> "tool".equals(message.get("role"))))
+                  .hasSize(1);
+              return new LanguageModelClient.Reply(
+                  "La limpieza cuesta PEN 100.00 y dura 60 minutos.", List.of(), 30, 10);
+            });
+    submit("Solo quiero información de limpieza dental.");
+    var waiting = process();
+    assertThat(waiting.state()).isEqualTo("QUEUED");
+    assertThat(waiting.errorCode()).isEqualTo("TOOL_GENERATION");
+    jdbc.update(
+        "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", waiting.id());
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.attempts()).isEqualTo(2);
+    var failures =
+        runs
+            .steps(done.id(), new com.odontocare.shared.pagination.PageQuery(), null)
+            .items()
+            .stream()
+            .filter(step -> step.name().equals("fallo_controlado"))
+            .toList();
+    assertThat(failures).hasSize(1);
+    assertThat(mapper.valueToTree(failures.getFirst().result()).path("http_status").asInt())
+        .isEqualTo(400);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='consultar_servicios'",
+                Integer.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void temporaryProviderOutageHasBoundedRetryWhileBadRequestDoesNot() {
+    when(model.reply(anyList(), anyList()))
+        .thenThrow(new ModelFailure("PROVIDER_UNAVAILABLE", "Fallo temporal", 2));
+    submit("Quiero una cita");
+    var waiting = process();
+    assertThat(waiting.state()).isEqualTo("QUEUED");
+    assertThat(waiting.errorCode()).isEqualTo("PROVIDER_UNAVAILABLE");
+    doThrow(
+            new ModelFailure(
+                "PROVIDER_ERROR",
+                "Petición rechazada",
+                2,
+                Map.of("http_status", 400, "provider_code", "OTHER")))
+        .when(model)
+        .reply(anyList(), anyList());
+    jdbc.update(
+        "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", waiting.id());
+    var done = process();
+    assertThat(done.state()).isEqualTo("FAILED");
+    assertThat(done.attempts()).isEqualTo(2);
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void repeatedToolGenerationRejectionsStopAfterThreeAttemptsWithoutAppointmentChanges() {
+    UUID original = createOriginal(1, 9);
+    when(model.reply(anyList(), anyList()))
+        .thenThrow(new ModelFailure("TOOL_GENERATION", "Herramienta rechazada", 1));
+    submit("Soy Paciente Agente. Quiero reprogramar mi cita por trabajo.");
+    var run = process();
+    for (int attempt = 1; attempt < 3; attempt++) {
+      assertThat(run.state()).isEqualTo("QUEUED");
+      jdbc.update(
+          "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", run.id());
+      run = process();
+    }
+    assertThat(run.state()).isEqualTo("FAILED");
+    assertThat(run.attempts()).isEqualTo(3);
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+    assertThat(changes.byRun(run.id())).isEmpty();
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(supervision.context(run.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+  }
+
+  @Test
+  void firstInferenceRejectionRetainsInitialContextForCorrectiveRetry() {
+    when(model.reply(anyList(), anyList()))
+        .thenThrow(new ModelFailure("TOOL_GENERATION", "Herramienta rechazada", 1))
+        .thenAnswer(
+            invocation -> {
+              List<Map<String, Object>> context = invocation.getArgument(0);
+              assertThat(context.getLast().get("role")).isEqualTo("system");
+              assertThat(context.getLast().get("content").toString()).contains("no se ejecutó");
+              assertThat(context.stream().filter(message -> "user".equals(message.get("role"))))
+                  .isNotEmpty();
+              return new LanguageModelClient.Reply(
+                  "¿Para quién deseas la cita?", List.of(), 30, 10);
+            });
+    submit("Quiero una cita");
+    var waiting = process();
+    assertThat(waiting.state()).isEqualTo("QUEUED");
+    jdbc.update(
+        "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", waiting.id());
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.attempts()).isEqualTo(2);
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void providerFailureAfterHumanTakeoverCannotScheduleAnAutomaticRetry() {
+    submit("Quiero una cita");
+    var run = queue.claim().orElseThrow();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            invocation -> {
+              var control = supervision.context(run.conversationId(), "KAPSO");
+              supervision.control(
+                  run.conversationId(),
+                  new com.odontocare.agent.dto.SupervisionContracts.Control(
+                      "HUMAN", "Atención manual durante fallo", control.generation()));
+              throw new ModelFailure("TOOL_GENERATION", "Herramienta rechazada", 1);
+            });
+    agent.process(run);
+    assertThat(queue.detail(run.id()).run().state()).isEqualTo("PAUSED");
+    assertThat(queue.claim()).isEmpty();
+    assertThat(count("agent_step")).isZero();
+    assertThat(supervision.context(run.conversationId(), "KAPSO").mode()).isEqualTo("HUMAN");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM kapso_message WHERE direction='OUTBOUND'", Integer.class))
+        .isZero();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
   void appPreviewAlsoResumesTransientLimitWithoutSendingWhatsApp() {
     when(model.reply(anyList(), anyList()))
         .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
@@ -1538,7 +1686,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.2");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.3");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

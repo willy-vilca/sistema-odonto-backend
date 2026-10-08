@@ -2,7 +2,7 @@
 
 Las fuentes vigentes están en la raíz compartida: AGENTS.md, docs/propuesta-alcance-sistema-odontologico.md, docs/plan-desarrollo-sistema-odontologico.md, los cierres de fase y el prompt maestro del usuario.
 
-Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 07/10/2026; plan 3.2 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
+Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización de la sesión iniciada el 07/10/2026; plan 3.3 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
 
 Se conservan los cierres de fases 0 a 5, las decisiones de agenda, clínica, tratamientos y finanzas, y el procedimiento de respaldo preparado. La restauración integral sigue pendiente de fase 9. La recepción y salida real de plantillas de WhatsApp fueron confirmadas por el usuario; texto propio y demostración completa por WhatsApp siguen pendientes; el prototipo del agente ya se verificó. A22 no se declara cumplida.
 
@@ -24,3 +24,5 @@ Agente autónomo por Kapso: [guía](probar-agente-kapso-fase-6.md), [implementac
 
 
 Fase 7 implementada y validada internamente: [conversaciones, cambios y recuperación](gestion-conversaciones-agente-fase-7.md) y [demostración real preparada](probar-cambios-agente-kapso-fase-7.md). Datos actuales y cierre de fase 6 conservados. La validación real de cambios por WhatsApp se realizará cuando el usuario esté listo; fase 7 en validación y fase 8 pendiente. Las entradas anteriores son apuntes históricos.
+
+Estado vigente: consulta propia y disponibilidad reales aprobadas; la propuesta real sigue pendiente tras fallos de cuota/rechazo. Corrección v7.3: 187 pruebas backend y vista previa con Groq aprobadas, sin cambiar la cita ni enviar WhatsApp. El usuario se ausenta y pidió no solicitar nuevos mensajes hasta regresar. [Diagnóstico y punto para continuar](diagnostico-groq-reserva-fase-7.md); plan 3.3, fase 7 abierta y fase 8 pendiente.

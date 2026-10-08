@@ -221,6 +221,8 @@ public class BookingAgent {
           appointmentReply.record(name, fact.get("result"));
         }
       }
+      if (checkpoint.isEmpty())
+        queue.checkpoint(run.id(), new AgentModelCheckpoint(context, evidence, 0));
       for (int iteration = completedCalls; iteration < config.getMaxModelCalls(); iteration++) {
         if (!Objects.equals(
             runs.latestInbound(run.conversationId(), run.messageId()), run.messageId())) {
@@ -231,7 +233,7 @@ public class BookingAgent {
           throw new ModelFailure(
               "TIME_LIMIT", "El agente alcanzó su tiempo máximo. Reintenta o atiende manualmente.");
         supervision.requireAutomatic(run);
-        var reply = model.reply(context, definitions.all());
+        var reply = model.reply(context, definitions.available(evidence));
         supervision.requireAutomatic(run);
         queue.usage(run.id(), reply.inputTokens(), reply.outputTokens());
         queue.step(
@@ -432,7 +434,12 @@ public class BookingAgent {
                     || messages.provider(run.conversationId()).equals("TWILIO")));
         return;
       }
-      queue.fail(run.id(), failure.code(), failure.getMessage(), failure.retryAfterSeconds());
+      queue.fail(
+          run.id(),
+          failure.code(),
+          failure.getMessage(),
+          failure.retryAfterSeconds(),
+          failure.diagnostics());
     } catch (ApiException failure) {
       if (failure.getStatus() == org.springframework.http.HttpStatus.CONFLICT
           && (AgentConfirmation.code(messages.message(run.messageId(), false).orElseThrow().body())

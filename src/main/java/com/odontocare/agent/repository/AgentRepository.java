@@ -364,12 +364,13 @@ public class AgentRepository {
         run);
   }
 
-  public void scheduleRetry(UUID run, Instant time) {
+  public void scheduleRetry(UUID run, Instant time, String code) {
     jdbc.update(
         "UPDATE agent_run SET"
-            + " state='QUEUED',next_attempt_at=?,error_code='RATE_LIMIT',error_message='El"
-            + " proveedor pidió esperar; reintento automático pendiente.' WHERE id=?",
+            + " state='QUEUED',next_attempt_at=?,error_code=?,error_message='Fallo temporal del"
+            + " proveedor; continuación automática pendiente.' WHERE id=?",
         Timestamp.from(time),
+        code,
         run);
   }
 

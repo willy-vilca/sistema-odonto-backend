@@ -5,6 +5,44 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AgentToolDefinitions {
+  public List<Map<String, Object>> available(List<Map<String, Object>> evidence) {
+    boolean verified =
+        evidence.stream()
+            .anyMatch(
+                fact ->
+                    fact.get("name").equals("verificar_paciente")
+                        && fact.get("result") instanceof Map<?, ?> result
+                        && Boolean.TRUE.equals(result.get("verified")));
+    boolean ownAppointments = hasItems(evidence, "consultar_mis_citas");
+    boolean slots = hasItems(evidence, "consultar_horarios");
+    boolean service = hasItems(evidence, "consultar_servicios") || ownAppointments;
+    return all().stream()
+        .filter(
+            tool -> {
+              String name = ((Map<?, ?>) tool.get("function")).get("name").toString();
+              return switch (name) {
+                case "verificar_paciente", "pacientes_contacto" -> !verified;
+                case "consultar_mis_citas" -> verified;
+                case "consultar_horarios" -> service;
+                case "proponer_reprogramacion" -> verified && ownAppointments && slots;
+                case "proponer_cancelacion" -> verified && ownAppointments;
+                case "proponer_cita" -> verified && slots;
+                default -> true;
+              };
+            })
+        .toList();
+  }
+
+  private boolean hasItems(List<Map<String, Object>> evidence, String tool) {
+    return evidence.stream()
+        .anyMatch(
+            fact ->
+                fact.get("name").equals(tool)
+                    && fact.get("result") instanceof Map<?, ?> result
+                    && result.get("items") instanceof List<?> items
+                    && !items.isEmpty());
+  }
+
   public List<Map<String, Object>> all() {
     return List.of(
         tool(

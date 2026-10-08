@@ -11,6 +11,7 @@ import tools.jackson.databind.ObjectMapper;
 
 @Component
 public class GroqLanguageModelClient implements LanguageModelClient {
+  private static final int MAX_ERROR_BODY_LENGTH = 65_536;
   private final AgentProperties config;
   private final ObjectMapper mapper;
   private final URI endpoint;
@@ -54,22 +55,8 @@ public class GroqLanguageModelClient implements LanguageModelClient {
             .build();
     try {
       var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      if (response.statusCode() == 401 || response.statusCode() == 403)
-        throw new ModelFailure(
-            "AUTHENTICATION",
-            "Groq rechazó la clave o el permiso del modelo. Revisa la cuenta y reinicia el"
-                + " backend.");
-      if (response.statusCode() == 429)
-        throw new ModelFailure(
-            "RATE_LIMIT",
-            "Groq limitó temporalmente las llamadas. Se conserva el análisis completado; revisa los"
-                + " límites si persiste.",
-            retryAfter(response));
       if (response.statusCode() < 200 || response.statusCode() >= 300)
-        throw new ModelFailure(
-            "PROVIDER_ERROR",
-            "Groq rechazó la llamada. Comprueba el modelo y sus permisos; no se creó una cita por"
-                + " esta respuesta.");
+        throw providerFailure(response);
       var json = mapper.readTree(response.body());
       var choice = json.path("choices").path(0);
       if (choice.isMissingNode() || choice.path("finish_reason").asString("").equals("length"))
@@ -112,10 +99,84 @@ public class GroqLanguageModelClient implements LanguageModelClient {
     }
   }
 
+  private ModelFailure providerFailure(HttpResponse<String> response) {
+    var diagnostics = new LinkedHashMap<String, Object>();
+    diagnostics.put("http_status", response.statusCode());
+    String providerCode = "OTHER";
+    if (response.body().length() <= MAX_ERROR_BODY_LENGTH) {
+      try {
+        var error = mapper.readTree(response.body()).path("error");
+        String code = error.path("code").asString("");
+        String type = error.path("type").asString("");
+        if (Set.of(
+                "tool_use_failed",
+                "rate_limit_exceeded",
+                "model_not_found",
+                "context_length_exceeded")
+            .contains(code)) providerCode = code;
+        if (Set.of(
+                "invalid_request_error",
+                "tokens",
+                "requests",
+                "server_error",
+                "authentication_error")
+            .contains(type)) diagnostics.put("provider_type", type);
+        if (response.statusCode() == 429) {
+          // Classify only known quota names. Never retain the provider's free-form message.
+          String detail = error.path("message").asString("").toLowerCase(Locale.ROOT);
+          diagnostics.put("limit_kind", limitKind(detail));
+        }
+      } catch (RuntimeException ignored) {
+        // The HTTP status remains useful even when an upstream error body is malformed.
+      }
+    }
+    diagnostics.put("provider_code", providerCode);
+    int status = response.statusCode();
+    String code = failureCode(status, providerCode);
+    String detail =
+        switch (code) {
+          case "AUTHENTICATION" ->
+              "Groq rechazó la clave o el permiso del modelo. Revisa la cuenta y reinicia el"
+                  + " backend.";
+          case "RATE_LIMIT" ->
+              "Groq limitó temporalmente las llamadas. Se conserva el análisis completado; revisa"
+                  + " los límites si persiste.";
+          case "TOOL_GENERATION" ->
+              "Groq rechazó una llamada a herramientas generada por el modelo. No se ejecutó esa"
+                  + " llamada.";
+          case "PROVIDER_UNAVAILABLE" ->
+              "Groq no pudo atender la llamada por un fallo temporal del proveedor.";
+          default ->
+              "Groq rechazó la petición. Revisa el estado HTTP y la categoría registrados en la"
+                  + " bitácora.";
+        };
+    return new ModelFailure(code, detail, status == 429 ? retryAfter(response) : 2, diagnostics);
+  }
+
+  private String failureCode(int status, String providerCode) {
+    if (status == 401 || status == 403) return "AUTHENTICATION";
+    if (status == 429) return "RATE_LIMIT";
+    if ((status == 400 || status == 422) && providerCode.equals("tool_use_failed"))
+      return "TOOL_GENERATION";
+    if (status >= 500 && status < 600) return "PROVIDER_UNAVAILABLE";
+    return "PROVIDER_ERROR";
+  }
+
+  private String limitKind(String detail) {
+    if (detail.contains("tokens per day") || detail.contains("(tpd)")) return "TOKENS_PER_DAY";
+    if (detail.contains("tokens per minute") || detail.contains("(tpm)"))
+      return "TOKENS_PER_MINUTE";
+    if (detail.contains("requests per day") || detail.contains("(rpd)")) return "REQUESTS_PER_DAY";
+    if (detail.contains("requests per minute") || detail.contains("(rpm)"))
+      return "REQUESTS_PER_MINUTE";
+    return "UNKNOWN";
+  }
+
   private long retryAfter(HttpResponse<?> response) {
     try {
-      return (long)
-          Math.ceil(Double.parseDouble(response.headers().firstValue("retry-after").orElse("30")));
+      double seconds =
+          Double.parseDouble(response.headers().firstValue("retry-after").orElse("30"));
+      return Double.isFinite(seconds) && seconds > 0 ? (long) Math.ceil(seconds) : 30;
     } catch (NumberFormatException ignored) {
       return 30;
     }

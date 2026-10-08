@@ -1,6 +1,6 @@
 # Guía de demostración real: fase 7
 
-Preparada el 07/10/2026. **Demostración iniciada con autorización del participante.** La consulta de su cita fue recibida y verificada; las pruebas restantes siguen pendientes. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
+Preparada el 07/10/2026. **Consulta propia y disponibilidad reales comprobadas; continuar cuando el participante regrese.** El último intento de preparar el cambio falló, se corrigió y se verificó internamente con Groq. El usuario pidió no solicitar nuevos mensajes durante su ausencia. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md) y [el punto exacto para retomar](diagnostico-groq-reserva-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
 
 ## Preparación
 

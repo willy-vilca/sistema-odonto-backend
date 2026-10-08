@@ -119,6 +119,90 @@ class GroqLanguageModelClientTests {
   }
 
   @Test
+  void identifiesToolGenerationRejectionWithoutRetainingFailedGeneration() {
+    status = 400;
+    response =
+        """
+        {"error":{"code":"tool_use_failed","type":"invalid_request_error","message":"gsk_unit_test_secret private detail","failed_generation":"private reasoning and arguments"}}
+        """;
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class,
+            f -> {
+              assertThat(f.code()).isEqualTo("TOOL_GENERATION");
+              assertThat(f.diagnostics())
+                  .containsEntry("http_status", 400)
+                  .containsEntry("provider_code", "tool_use_failed");
+              assertThat(f.diagnostics().toString())
+                  .doesNotContain("gsk_", "private", "reasoning", "arguments");
+            });
+  }
+
+  @Test
+  void classifiesQuotaWithoutPersistingAccountOrBody() {
+    status = 429;
+    response =
+        """
+        {"error":{"code":"rate_limit_exceeded","type":"tokens","message":"Limit reached for account PRIVATE_ACCOUNT on tokens per day (TPD): Used 12345. gsk_unit_test_secret"}}
+        """;
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class,
+            f -> {
+              assertThat(f.code()).isEqualTo("RATE_LIMIT");
+              assertThat(f.diagnostics())
+                  .containsEntry("limit_kind", "TOKENS_PER_DAY")
+                  .containsEntry("http_status", 429);
+              assertThat(f.diagnostics().toString())
+                  .doesNotContain("PRIVATE_ACCOUNT", "12345", "gsk_");
+            });
+  }
+
+  @Test
+  void unknownProviderErrorRetainsOnlyStatusAndApprovedCategories() {
+    status = 400;
+    response =
+        """
+        {"error":{"code":"gsk_unit_test_secret","type":"private patient detail","message":"private"}}
+        """;
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class,
+            f -> {
+              assertThat(f.code()).isEqualTo("PROVIDER_ERROR");
+              assertThat(f.diagnostics())
+                  .containsExactlyInAnyOrderEntriesOf(
+                      Map.of("http_status", 400, "provider_code", "OTHER"));
+            });
+  }
+
+  @Test
+  void malformedUpstreamErrorStillRetainsHttpStatus() {
+    status = 503;
+    response = "private malformed body";
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class,
+            f -> {
+              assertThat(f.code()).isEqualTo("PROVIDER_UNAVAILABLE");
+              assertThat(f.diagnostics()).containsEntry("http_status", 503);
+              assertThat(f.diagnostics().toString()).doesNotContain("private");
+            });
+  }
+
+  @Test
+  void nonFiniteOrNonPositiveRetryHeaderUsesFallback() {
+    status = 429;
+    response = "{}";
+    for (String header : List.of("NaN", "Infinity", "0", "-5")) {
+      retryAfter = header;
+      assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+          .isInstanceOfSatisfying(
+              ModelFailure.class, f -> assertThat(f.retryAfterSeconds()).isEqualTo(30));
+    }
+  }
+
+  @Test
   void truncatedOutputIsNotTreatedAsSuccess() {
     response =
         "{\"choices\":[{\"finish_reason\":\"length\",\"message\":{\"content\":\"Reserva"
