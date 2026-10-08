@@ -258,6 +258,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Nuevo diagnóstico y continuación v7.3.** La repetición de la elección real terminó RATE_LIMIT y después PROVIDER_ERROR genérico; la cita se conservó. Una reproducción identificó HTTP 429 por tokens por minuto; no se infiere la causa del segundo rechazo ni un agotamiento diario. Se incorporaron categorías seguras de errores, herramientas disponibles según requisitos, recuperación acotada del rechazo de herramientas/5xx, contexto desde la primera inferencia y control humano revalidado antes de reintentar. Groq real preparó el cambio correcto en APP_TEST en 15,747 segundos, con una espera de unos 12 segundos y sin modificar citas ni enviar mensajes. El usuario aplazó nuevas pruebas reales hasta regresar. [Diagnóstico y punto para retomar](diagnostico-groq-reserva-fase-7.md). La propuesta y los cambios reales siguen pendientes; no se cierra fase 7.
 
+**Reanudación del 08/10/2026.** El participante regresó y autorizó los mensajes reales. Backend v7.3 y frontend iniciados y comprobados; receptor y ngrok conservados. Conversación AUTO/generación 4, sin tareas antiguas pendientes; cita original e historial/finanzas intactos. Se retoma la preparación de una propuesta nueva sin confirmarla; los resultados se incorporarán a [la evidencia real](validacion-real-agente-kapso-fase-7.md). No se considera aprobada una prueba por haber iniciado los servicios.
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

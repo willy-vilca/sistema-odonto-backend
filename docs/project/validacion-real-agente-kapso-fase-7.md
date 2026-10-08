@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado: validación real pendiente de continuación cuando el participante regrese. La fase 7 permanece abierta.** El usuario solicitó continuar las correcciones sin pedir nuevos mensajes reales durante su ausencia. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia registra los intercambios reales y no sustituye casos todavía pendientes.
+**Estado: validación real reanudada por el participante el 08/10/2026. La fase 7 permanece abierta.** Se respetó el aplazamiento durante su ausencia. El usuario regresó y autorizó continuar los mensajes; backend v7.3 y frontend iniciados y comprobados, con receptor/ngrok ya activos. Control AUTO/generación 4, sin tareas en cola ni respuestas salientes pendientes. Cita original CONFIRMED/versión 0 y un evento de historial; 9 pacientes, 12 citas, 9 cargos y 11 movimientos. Se solicita una propuesta nueva completa antes de probar su rechazo; no confirmar códigos anteriores. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes.
 
 ## Estado inicial
 
