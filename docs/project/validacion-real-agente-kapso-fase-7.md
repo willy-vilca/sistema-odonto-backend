@@ -31,7 +31,7 @@ Respuesta `e3072656-3104-4557-a713-36e71e9ee396`, estado READ, sin error. Entrad
 
 Tras la consulta, la cita conserva CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un evento de historial; el control sigue AUTO/generación 0. El participante confirmó la misma respuesta que consta en el servidor.
 
-## Prueba 2: consultar horarios de reprogramación — incidencia y repetición pendiente
+## Prueba 2: consultar horarios de reprogramación — aprobada tras corrección
 
 Se solicita al participante enviar:
 
@@ -43,7 +43,30 @@ Ejecución `a72d477c-10d0-4072-90af-66b9b1c351b6`, secuencia 34, FAILED/RATE_LIM
 
 Se corrigieron consumo, prioridad de respuesta, continuación persistida y espera según el proveedor. La misma solicitud con Groq real en APP_TEST terminó en 2,331 segundos y tres llamadas; no envió WhatsApp ni modificó citas. Se devolvió exclusivamente esta derivación automática a AUTO/generación 2 para recibir una instrucción nueva. [Diagnóstico, cambios y resultados](optimizacion-agente-groq-fase-7.md). La repetición externa sigue pendiente: todavía no se elige ni confirma un horario.
 
+**Repetición auténtica recibida y confirmada por el participante:**
+
+> Estos son los horarios disponibles:
+> • 2026-10-20 09:00–10:00 · Julia Aracelly Huaytalla Alarcon · Limpieza dental
+> • 2026-10-20 09:15–10:15 · Julia Aracelly Huaytalla Alarcon · Limpieza dental
+> • 2026-10-20 09:30–10:30 · Julia Aracelly Huaytalla Alarcon · Limpieza dental
+>
+> ¿Cuál de estos horarios prefieres? Todavía no se creó ni cambió ninguna cita.
+
+Ejecución `fe017ec1-e329-41b7-ba8f-2d1341728fdb`, secuencia 36, fuente KAPSO, COMPLETED, un intento, flujo `supervised-v7.1`, sin error. Entrada `1bae9ba6-11c3-489e-9af4-6310da432777`; respuesta `1ce51456-6301-4b11-98e3-1f8223944829`, READ. Tres llamadas del modelo: verificar_paciente → consultar_mis_citas → consultar_horarios con la referencia verificada y los identificadores del servicio/profesional. Consumo: 6 922 tokens de entrada y 230 de salida.
+
+Desde el registro de la ejecución (23:28:44,225) hasta persistir la respuesta (23:28:51,814): 7,589 segundos, incluyendo la espera del trabajador. Esta cifra no es el tiempo de lectura en el teléfono. El participante calificó la llegada como «casi instantánea» y confirmó el mismo contenido. La medición de 2,331 segundos anterior corresponde exclusivamente a APP_TEST y se conserva separada.
+
+La cita original sigue CONFIRMED, versión 0, 13/10/2026 09:00–10:00 y un evento de historial; permanecen 9 pacientes, 12 citas, 9 cargos y 11 movimientos. No hubo propuesta ni reprogramación automática al consultar opciones. La incidencia queda resuelta y comprobada también en el canal real; siguen pendientes los cambios y demás casos.
+
 La sesión agrupa primero el flujo de cambios y después los límites de acceso; cubre los mismos casos de [la guía preparada](probar-cambios-agente-kapso-fase-7.md), sin exigir su orden literal.
+
+## Prueba 3: preparar cambio y después rechazarlo — en ejecución
+
+Se solicita enviar:
+
+> Elijo el martes 20/10/2026 a las 09:00 con Julia Huaytalla. Reprograma mi cita por el cambio de horario de trabajo.
+
+Debe preparar el resumen con el paciente, fechas anterior y nueva, profesional, tratamiento, duración y motivo, conservando todavía la cita inicial. Se solicita copiar la propuesta sin confirmarla; después se probará su negación. No se declara aprobada mientras falta la respuesta y la verificación.
 
 ## Casos restantes
 

@@ -252,6 +252,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Incidencia y optimización durante la demostración.** La consulta de reprogramación terminó RATE_LIMIT, con tres intentos y aproximadamente 101 segundos, conservando la cita. El flujo `supervised-v7.1` reduce instrucciones, usa esfuerzo configurable low, aprovecha los identificadores de la cita, termina consultas con resultados verificados y conserva un punto de continuación mediante V22. Usa retry-after y limita las esperas; registra fallos por intento. Regresión completa: 169 casos aprobados. Groq real resolvió la misma consulta en APP_TEST en 2,331 segundos y tres llamadas, sin envíos ni cambios de agenda/finanzas. Se mantiene pendiente la repetición real y no se cierra fase 7. [Cambios y evidencia](optimizacion-agente-groq-fase-7.md).
 
+**Repetición real de disponibilidad aprobada.** El participante confirmó llegada rápida de las opciones del martes 20/10/2026. La ejecución KAPSO `fe017ec1-e329-41b7-ba8f-2d1341728fdb` completó en un intento y tres llamadas; respuesta READ, persistida a los 7,589 segundos desde el registro de la ejecución. Cita original e historial/finanzas intactos. La incidencia de cuota queda resuelta para ese caso; se continúa con propuesta y negación, sin declarar aún reprogramación confirmada ni cierre de fase 7.
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
