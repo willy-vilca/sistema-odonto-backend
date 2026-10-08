@@ -26,6 +26,8 @@ public class AgentChangeService {
   private final AgentSupervisionService supervision;
   private final AgentSupervisionRepository context;
   private final AppointmentService appointments;
+  private final AppointmentQueryService appointmentQueries;
+  private final AgentChangeMessageFormatter messages;
   private final AvailabilityService availability;
   private final InstallationProfileRepository profiles;
   private final AgentReplyService replies;
@@ -41,6 +43,8 @@ public class AgentChangeService {
       AgentSupervisionService supervision,
       AgentSupervisionRepository context,
       AppointmentService appointments,
+      AppointmentQueryService appointmentQueries,
+      AgentChangeMessageFormatter messages,
       AvailabilityService availability,
       InstallationProfileRepository profiles,
       AgentReplyService replies,
@@ -54,6 +58,8 @@ public class AgentChangeService {
     this.supervision = supervision;
     this.context = context;
     this.appointments = appointments;
+    this.appointmentQueries = appointmentQueries;
+    this.messages = messages;
     this.availability = availability;
     this.profiles = profiles;
     this.replies = replies;
@@ -292,14 +298,22 @@ public class AgentChangeService {
         || !runs.naturalConfirmationAllowed(p.runId(), input.id())) throw ApiException.forbidden();
     if (!Objects.equals(runs.latestInbound(run.conversationId(), run.messageId()), input.id()))
       throw ApiException.conflict("Llegó una instrucción posterior; no se aplica este cambio.");
-    if (p.state().equals("CONFIRMED"))
+    if (p.state().equals("CONFIRMED")) {
+      var verified =
+          context
+              .verified(run.conversationId(), p.source(), clock.instant())
+              .orElseThrow(ApiException::forbidden);
+      identity.require(run, p.patientId(), verified.get("patient_name").toString());
+      var current = appointmentQueries.get(p.appointmentId());
+      if (!current.patientId().equals(p.patientId())) throw ApiException.forbidden();
       return Map.of(
           "response",
-          "Ese cambio ya estaba registrado. " + p.summary(),
+          messages.repeated(p.action(), current),
           "appointment_id",
           p.appointmentId(),
           "repeated",
           true);
+    }
     if (p.state().equals("EXPIRED"))
       return Map.of(
           "response",
@@ -366,13 +380,7 @@ public class AgentChangeService {
                   p.appointmentVersion(), slot.dentistId(), slot.localStart(), false, p.reason()));
     }
     changes.confirm(p.id(), input.id());
-    String text =
-        (p.action().equals("CANCEL")
-                ? "La cita quedó cancelada. "
-                : "La cita quedó reprogramada y confirmada. ")
-            + p.summary()
-            + " Referencia: "
-            + result.id();
+    String text = messages.confirmed(p.action(), result);
     Map<String, Object> response =
         Map.of("response", text, "appointment_id", result.id(), "status", result.status());
     runs.step(

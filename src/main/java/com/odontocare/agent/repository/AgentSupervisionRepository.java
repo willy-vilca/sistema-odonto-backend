@@ -126,7 +126,7 @@ public class AgentSupervisionRepository {
   public void attachRun(UUID run, UUID conversation, String provider) {
     jdbc.update(
         "UPDATE agent_run SET control_generation=(SELECT generation FROM agent_supervision WHERE"
-            + " conversation_id=?),flow_version='supervised-v7.6',provider=? WHERE id=?",
+            + " conversation_id=?),flow_version='supervised-v7.7',provider=? WHERE id=?",
         conversation,
         provider,
         run);

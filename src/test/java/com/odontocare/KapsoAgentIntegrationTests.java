@@ -1422,6 +1422,9 @@ class KapsoAgentIntegrationTests {
     submit("Sí, confirmo el cambio de mi cita");
     var done = process();
     assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText())
+        .contains("\nPaciente:", "\nHorario: 11:00–12:00", "\nReferencia: " + original)
+        .doesNotContain("Horario: 09:00", "Fecha actual:", "Nuevo horario:");
     assertThat(
             jdbc.queryForObject(
                 "SELECT status FROM appointment WHERE id=?", String.class, original))
@@ -1453,6 +1456,42 @@ class KapsoAgentIntegrationTests {
                 Integer.class,
                 original))
         .isEqualTo(1);
+    assertThat(appointments()).isEqualTo(1);
+  }
+
+  @Test
+  void repeatedChangeFormatsTheCurrentAppointmentAfterAManualChange() {
+    UUID original = createOriginal(1, 9);
+    var p = rescheduleProposal(original);
+    submit("Sí, confirmo el cambio de mi cita");
+    process();
+    manual.reschedule(
+        original,
+        new com.odontocare.appointments.dto.RescheduleRequest(
+            1L,
+            doctorId,
+            LocalDate.now(ZoneId.of("America/Lima")).plusDays(1).atTime(14, 0),
+            false,
+            "Ajuste manual posterior"));
+    long history =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM appointment_history WHERE appointment_id=?",
+            Long.class,
+            original);
+    submit("CONFIRMO " + p.confirmationCode());
+    var repeated = process();
+    assertThat(repeated.responseText())
+        .contains("ya estaba registrada", "\nHorario: 14:00–15:00", "\nReferencia: " + original)
+        .doesNotContain("11:00", "09:00", "Fecha actual:", "Nuevo horario:");
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isEqualTo(2L);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM appointment_history WHERE appointment_id=?",
+                Long.class,
+                original))
+        .isEqualTo(history);
     assertThat(appointments()).isEqualTo(1);
   }
 
@@ -1777,7 +1816,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.6");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.7");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

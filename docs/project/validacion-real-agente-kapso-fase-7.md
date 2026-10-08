@@ -164,8 +164,24 @@ Ejecución `cc89563d-7984-4c94-a6cf-458272eb3285`, secuencia 53, KAPSO/COMPLETED
 
 La propuesta conserva PENDING, el mismo código y su vencimiento original de las 18:56:12; no se renovó su vigencia al repetir el resumen. confirmation_message_id sigue vacío. La cita del 13/10 09:00–10:00 continúa CONFIRMED/versión 0 y un historial; pacientes, citas y finanzas conservados (9/12/9/11), AUTO/generación 6. Se continúa con confirmación expresa del cambio real.
 
+## Prueba 8: confirmación expresa y reprogramación real — aprobada
+
+El participante envió «Sí, confirmo el cambio de mi cita» y recibió la confirmación de reprogramación con referencia `fc272d39-566d-4b65-a610-0302e86d50b5`.
+
+Ejecución `19e93532-a219-4e26-a00a-02f7137b5dd8`, secuencia 54, KAPSO/COMPLETED, `supervised-v7.6`, un intento, cero inferencias/tokens. Entrada `e556e905-b303-4563-9d60-18231a7157cc`; respuesta `3e6e1587-6ede-4bf5-900a-e00721018164` READ, sin errores. Herramienta reprogramar_cita_confirmada OK; confirmación y tarea de respuesta guardadas de forma consistente. 4,653 segundos desde registrar la ejecución hasta persistir la respuesta.
+
+La misma cita pasó a CONFIRMED/versión 1, martes 20/10/2026 09:00–10:00, conservando paciente, servicio, profesional y 60 minutos. La propuesta F4160577 quedó CONFIRMED y vinculada al mensaje de aceptación. El historial conserva CREATED del 13/10 y añade exactamente un RESCHEDULED del 13/10 al 20/10, actor Agente IA y motivo. Dos eventos totales; siguen 9 pacientes, 12 citas, 9 cargos y 11 movimientos, AUTO/generación 6. La reprogramación efectiva queda demostrada, sin crear otra cita ni alterar finanzas.
+
+### Ajuste de presentación solicitado después de confirmar
+
+El mensaje que realmente recibió el participante reutilizaba el resumen previo: «Fecha actual: 13/10» y «Nuevo horario: 20/10». El usuario pidió eliminar la fecha anterior de la confirmación y hacerla más legible. Se conserva esa respuesta original en la evidencia; no se sobrescribe como si hubiera tenido el formato nuevo.
+
+Se separa el formato de confirmación del resumen de propuesta: datos de la cita resultante en líneas de paciente, servicio, profesional, fecha, horario, duración, estado y referencia, con hora del consultorio y sin código de zona técnico. Al repetir una confirmación se consultan los datos actuales, con identidad/contacto verificados, en lugar de reutilizar fechas antiguas de la propuesta. Propuesta e historial conservan las fechas necesarias para reconstruir el cambio. La siguiente prueba de repetición mostrará el formato actualizado.
+
+Flujo `supervised-v7.7`, 83 pruebas aprobadas (48 Kapso/agente, tres de formato y las regresiones previas), sin fallos/errores/omitidas; empaquetado correcto. Incluye reprogramación posterior manual seguida de repetición: muestra el horario actual, conserva versión/historial y no vuelve a aplicar el cambio. Los mensajes históricos no se editan; el ajuste se aplica a futuras confirmaciones/repeticiones y también mantiene legible la confirmación de cancelación. No requiere inferencia ni cambios de frontend. La prueba real de repetición sigue pendiente.
+
 ## Casos restantes
 
-Confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Idempotencia de la reprogramación confirmada; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
