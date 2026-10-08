@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 public class AgentProperties {
   private boolean enabled, workerEnabled = true;
   private String provider = "GROQ", model = "openai/gpt-oss-20b", apiKey = "";
+  private String reasoningEffort = "low";
   private int maxModelCalls = 6,
       maxCompletionTokens = 1500,
       requestTimeoutSeconds = 12,
@@ -18,6 +19,14 @@ public class AgentProperties {
 
   public int getDebounceMilliseconds() {
     return debounceMilliseconds;
+  }
+
+  public String getReasoningEffort() {
+    return reasoningEffort;
+  }
+
+  public void setReasoningEffort(String value) {
+    reasoningEffort = value.strip().toLowerCase(Locale.ROOT);
   }
 
   public void setDebounceMilliseconds(int value) {
@@ -108,6 +117,8 @@ public class AgentProperties {
     var fields = new ArrayList<String>();
     if (!provider.equals("GROQ")) fields.add("Proveedor GROQ");
     if (model.isBlank() || model.length() > 100) fields.add("Modelo");
+    if (!List.of("low", "medium", "high").contains(reasoningEffort))
+      fields.add("Esfuerzo del modelo (low, medium, high)");
     if (apiKey.isBlank() || apiKey.startsWith("REEMPLAZAR")) fields.add("Clave privada de Groq");
     if (maxModelCalls < 1 || maxModelCalls > 8) fields.add("Llamadas por mensaje (1–8)");
     if (maxCompletionTokens < 256 || maxCompletionTokens > 4096)

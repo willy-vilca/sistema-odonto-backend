@@ -20,8 +20,8 @@ public class AgentToolDefinitions {
             List.of("patient_name", "relationship")),
         tool(
             "consultar_mis_citas",
-            "Consulta próximas citas solamente del paciente verificado. Devuelve appointment_ref"
-                + " temporal; no acepta teléfonos ni otros pacientes.",
+            "Citas propias verificadas; devuelve appointment_ref, service_id y dentist_id para"
+                + " cambios, sin consultar el catálogo de nuevo.",
             Map.of(
                 "search",
                 text("Buscar por servicio o profesional"),

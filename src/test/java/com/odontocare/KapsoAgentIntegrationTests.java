@@ -716,6 +716,160 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void ownAppointmentQueryFinishesBeforeRedundantModelSummary() {
+    UUID original = createOriginal(1, 9);
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(
+            tool(
+                "verificar_paciente",
+                Map.of("patient_name", "Paciente Agente", "relationship", "SELF")))
+        .thenReturn(tool("consultar_mis_citas", Map.of("search", "limpieza")))
+        .thenThrow(new ModelFailure("RATE_LIMIT", "No debe llegar aquí"));
+    submit(
+        "Soy Paciente Agente. Quiero consultar mis próximas citas. Por ahora no quiero cambiar ni"
+            + " reservar nada.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("Paciente Agente", "09:00", "60 minutos");
+    verify(model, times(2)).reply(anyList(), anyList());
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM appointment_history WHERE appointment_id=?",
+                Integer.class,
+                original))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void rescheduleAvailabilityUsesAppointmentIdsAndFinishesInThreeCalls() {
+    UUID original = createOriginal(1, 9);
+    var index = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            i -> {
+              int step = index.getAndIncrement();
+              if (step == 0)
+                return tool(
+                    "verificar_paciente",
+                    Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
+              if (step == 1) return tool("consultar_mis_citas", Map.of("search", "limpieza"));
+              if (step == 2) {
+                List<Map<String, Object>> context = i.getArgument(0);
+                var current =
+                    mapper
+                        .readTree(context.getLast().get("content").toString())
+                        .path("items")
+                        .path(0);
+                assertThat(current.path("service_id").asString()).isEqualTo(serviceId.toString());
+                assertThat(current.path("dentist_id").asString()).isEqualTo(doctorId.toString());
+                return tool(
+                    "consultar_horarios",
+                    Map.of(
+                        "service_id",
+                        current.path("service_id").asString(),
+                        "dentist_id",
+                        current.path("dentist_id").asString(),
+                        "appointment_ref",
+                        current.path("appointment_ref").asString(),
+                        "days_from_today",
+                        8));
+              }
+              throw new ModelFailure("RATE_LIMIT", "No debe llegar aquí");
+            });
+    submit(
+        "Soy Paciente Agente. Quiero reprogramar mi limpieza dental. ¿Qué horarios tiene la"
+            + " doctora? Motivo: trabajo.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText())
+        .contains("09:00", "10:00", "horarios", "Todavía no")
+        .doesNotContain("Próximas citas del paciente");
+    verify(model, times(3)).reply(anyList(), anyList());
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+  }
+
+  @Test
+  void ownAppointmentsAlsoShowsManualVisitsWithoutCatalogueService() {
+    manual.create(
+        new com.odontocare.appointments.dto.AppointmentRequest(
+            patientId,
+            doctorId,
+            null,
+            "Revisión administrativa",
+            30,
+            LocalDate.now(ZoneId.of("America/Lima")).plusDays(1).atTime(11, 0),
+            "",
+            UUID.randomUUID()));
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(
+            tool(
+                "verificar_paciente",
+                Map.of("patient_name", "Paciente Agente", "relationship", "SELF")))
+        .thenReturn(tool("consultar_mis_citas", Map.of("search", "")));
+    submit("Soy Paciente Agente. Quiero consultar mis próximas citas.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("Revisión administrativa", "30 minutos");
+    assertThat(appointments()).isEqualTo(1);
+    verify(model, times(2)).reply(anyList(), anyList());
+  }
+
+  @Test
+  void transientLimitResumesPersistedToolResultInsteadOfStartingAgain() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
+        .thenThrow(new ModelFailure("RATE_LIMIT", "Espera", 2))
+        .thenAnswer(
+            i -> {
+              List<Map<String, Object>> context = i.getArgument(0);
+              assertThat(context.getLast().get("role")).isEqualTo("tool");
+              assertThat(context.getLast().get("name")).isEqualTo("consultar_servicios");
+              assertThat(context.getLast().get("content").toString()).contains("100.00");
+              return new LanguageModelClient.Reply(
+                  "La limpieza cuesta PEN 100.00 y dura 60 minutos.", List.of(), 30, 10);
+            });
+    submit("¿Cuánto cuesta la limpieza? Solo quiero información.");
+    var waiting = process();
+    assertThat(waiting.state()).isEqualTo("QUEUED");
+    assertThat(runs.checkpoint(waiting.id())).isPresent();
+    jdbc.update(
+        "UPDATE agent_run SET next_attempt_at=now()-interval '1 second' WHERE id=?", waiting.id());
+    var done = process();
+    assertThat(done.id()).isEqualTo(waiting.id());
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("100.00", "60 minutos");
+    assertThat(runs.checkpoint(done.id())).isEmpty();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='consultar_servicios'",
+                Integer.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM kapso_message WHERE direction='OUTBOUND'", Integer.class))
+        .isEqualTo(1);
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void longQuotaResetDoesNotLeavePatientWaitingForThreeFullRetries() {
+    when(model.reply(anyList(), anyList()))
+        .thenThrow(new ModelFailure("RATE_LIMIT", "Cuota diaria", 3600));
+    submit("Quiero una cita");
+    var done = process();
+    assertThat(done.state()).isEqualTo("FAILED");
+    assertThat(done.attempts()).isEqualTo(1);
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+    assertThat(queue.detail(done.id()).reply()).isNotNull();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
   void receptionAndAgentCompeteForTheSameSlotWithOneWinner() throws Exception {
     var proposal = offered();
     submit("Sí, confirmo");
@@ -1233,7 +1387,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.0");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.1");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

@@ -78,31 +78,36 @@ public class AgentChangeService {
     var zone = ZoneId.of(profiles.findById((short) 1).orElseThrow().getTimeZone());
     var items = new ArrayList<Map<String, Object>>();
     for (var a : changes.appointments(patient, search, page)) {
-      items.add(
-          Map.of(
-              "appointment_ref",
-              changes.reference(
-                  run.conversationId(),
-                  input.source(),
-                  patient,
-                  (UUID) a.get("id"),
-                  clock.instant()),
-              "patient_name",
-              verified.get("patient_name"),
-              "service_name",
-              a.get("service_name"),
-              "dentist_name",
-              a.get("dentist_name"),
-              "local_start",
-              ((Timestamp) a.get("starts_at"))
-                  .toInstant()
-                  .atZone(zone)
-                  .toLocalDateTime()
-                  .toString(),
-              "duration_minutes",
-              a.get("duration_minutes"),
-              "status",
-              a.get("status")));
+      var item =
+          new LinkedHashMap<String, Object>(
+              Map.of(
+                  "appointment_ref",
+                  changes.reference(
+                      run.conversationId(),
+                      input.source(),
+                      patient,
+                      (UUID) a.get("id"),
+                      clock.instant()),
+                  "patient_name",
+                  verified.get("patient_name"),
+                  "service_name",
+                  a.get("service_name"),
+                  "dentist_name",
+                  a.get("dentist_name"),
+                  "dentist_id",
+                  a.get("dentist_id"),
+                  "local_start",
+                  ((Timestamp) a.get("starts_at"))
+                      .toInstant()
+                      .atZone(zone)
+                      .toLocalDateTime()
+                      .toString(),
+                  "duration_minutes",
+                  a.get("duration_minutes"),
+                  "status",
+                  a.get("status")));
+      if (a.get("service_id") != null) item.put("service_id", a.get("service_id"));
+      items.add(item);
     }
     return Map.of("items", items, "page", page, "page_size", 5, "time_zone", zone.getId());
   }

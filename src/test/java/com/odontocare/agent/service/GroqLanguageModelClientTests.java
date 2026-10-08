@@ -18,6 +18,7 @@ class GroqLanguageModelClientTests {
   private final AtomicReference<JsonNode> payload = new AtomicReference<>();
   private int status = 200;
   private String response;
+  private String retryAfter;
 
   @BeforeEach
   void setup() throws Exception {
@@ -34,6 +35,7 @@ class GroqLanguageModelClientTests {
               mapper.readTree(
                   new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8)));
           byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+          if (retryAfter != null) exchange.getResponseHeaders().set("retry-after", retryAfter);
           exchange.sendResponseHeaders(status, bytes.length);
           exchange.getResponseBody().write(bytes);
           exchange.close();
@@ -67,6 +69,7 @@ class GroqLanguageModelClientTests {
     assertThat(result.content()).doesNotContain("retained");
     assertThat(payload.get().path("model").asString()).isEqualTo("openai/gpt-oss-20b");
     assertThat(payload.get().path("include_reasoning").asBoolean()).isFalse();
+    assertThat(payload.get().path("reasoning_effort").asString()).isEqualTo("low");
     assertThat(payload.get().path("parallel_tool_calls").asBoolean()).isFalse();
     assertThat(payload.get().has("api_key")).isFalse();
     assertThat(payload.get().has("response_format")).isFalse();
@@ -89,6 +92,30 @@ class GroqLanguageModelClientTests {
     assertThatThrownBy(() -> client.reply(List.of(), List.of()))
         .isInstanceOfSatisfying(
             ModelFailure.class, f -> assertThat(f.code()).isEqualTo("RATE_LIMIT"));
+  }
+
+  @Test
+  void usesProviderRetryDelayWithoutExposingItsBody() {
+    status = 429;
+    response = "{\"message\":\"gsk_unit_test_secret upstream detail\"}";
+    retryAfter = "7.5";
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class,
+            f -> {
+              assertThat(f.retryAfterSeconds()).isEqualTo(8);
+              assertThat(f.getMessage()).doesNotContain("gsk_", "upstream");
+            });
+  }
+
+  @Test
+  void malformedRetryHeaderHasBoundedFallback() {
+    status = 429;
+    response = "{}";
+    retryAfter = "invalid";
+    assertThatThrownBy(() -> client.reply(List.of(), List.of()))
+        .isInstanceOfSatisfying(
+            ModelFailure.class, f -> assertThat(f.retryAfterSeconds()).isEqualTo(30));
   }
 
   @Test

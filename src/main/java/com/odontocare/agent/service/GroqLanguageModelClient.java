@@ -40,7 +40,7 @@ public class GroqLanguageModelClient implements LanguageModelClient {
     body.put("tools", tools);
     body.put("tool_choice", "auto");
     body.put("parallel_tool_calls", false);
-    body.put("reasoning_effort", "medium");
+    body.put("reasoning_effort", config.getReasoningEffort());
     body.put("temperature", 0);
     body.put("include_reasoning", false);
     body.put("max_completion_tokens", config.getMaxCompletionTokens());
@@ -62,8 +62,9 @@ public class GroqLanguageModelClient implements LanguageModelClient {
       if (response.statusCode() == 429)
         throw new ModelFailure(
             "RATE_LIMIT",
-            "Se alcanzó la cuota de Groq. Espera al menos un minuto y revisa los límites antes de"
-                + " reintentar.");
+            "Groq limitó temporalmente las llamadas. Se conserva el análisis completado; revisa los"
+                + " límites si persiste.",
+            retryAfter(response));
       if (response.statusCode() < 200 || response.statusCode() >= 300)
         throw new ModelFailure(
             "PROVIDER_ERROR",
@@ -108,6 +109,15 @@ public class GroqLanguageModelClient implements LanguageModelClient {
       throw new ModelFailure(
           "CONNECTION",
           "No se pudo obtener una respuesta válida de Groq. Revisa conexión y configuración.");
+    }
+  }
+
+  private long retryAfter(HttpResponse<?> response) {
+    try {
+      return (long)
+          Math.ceil(Double.parseDouble(response.headers().firstValue("retry-after").orElse("30")));
+    } catch (NumberFormatException ignored) {
+      return 30;
     }
   }
 }

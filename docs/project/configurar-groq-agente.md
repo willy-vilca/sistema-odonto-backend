@@ -2,6 +2,8 @@
 
 06/10/2026. El agente utiliza openai/gpt-oss-20b por API desde el backend normal y trabaja con los pacientes, servicios y agenda actuales, que el usuario confirmó ficticios. No necesitas otra instalación para estas pruebas manuales.
 
+Actualización del 07/10/2026: esta guía conserva el prototipo inicial. Kapso ya envía respuestas autónomas en conversaciones reales; APP_TEST sigue sin enviar. El flujo optimizado de fase 7 usa esfuerzo `low` por defecto y retoma análisis ante límites temporales. Ver [conexión actual](conectar-kapso-prueba.md) y [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md). No es necesario cambiar la clave privada para aplicar esta mejora.
+
 **Estado verificado:** el usuario ya creó y guardó la clave privada. Se comprobó conexión e inferencia real, una reserva confirmada y su repetición sin duplicación, consulta de precio, datos incompletos y negación. [Resultados](prototipo-agente-groq-fase-6.md). No necesitas generar otra clave; reinicia el backend que utilizas normalmente para cargarla.
 
 ## Cuenta y modelo
@@ -20,6 +22,7 @@ Abre **backend/config/ai.local.properties**, preparado con un marcador y excluid
 odontocare.ai.enabled=true
 odontocare.ai.provider=GROQ
 odontocare.ai.model=openai/gpt-oss-20b
+odontocare.ai.reasoning-effort=low
 odontocare.ai.api-key=REEMPLAZAR_POR_TU_CLAVE_REAL
 odontocare.ai.worker-enabled=true
 odontocare.ai.max-model-calls=6

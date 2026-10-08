@@ -252,6 +252,11 @@ public class AgentQueueService {
   }
 
   @Transactional
+  public void checkpoint(UUID id, com.odontocare.agent.model.AgentModelCheckpoint checkpoint) {
+    runs.checkpoint(id, checkpoint, clock.instant());
+  }
+
+  @Transactional
   public void finish(UUID id, String text) {
     replies.complete(id, text);
     audit.recordAs(
@@ -277,15 +282,32 @@ public class AgentQueueService {
 
   @Transactional
   public void fail(UUID id, String code, String detail) {
+    fail(id, code, detail, 30);
+  }
+
+  @Transactional
+  public void fail(UUID id, String code, String detail, long retryAfterSeconds) {
     var run = runs.get(id, true).orElseThrow();
     var input = inbox.message(run.messageId(), false).orElseThrow();
+    var retryAt = clock.instant().plusSeconds(Math.max(1, retryAfterSeconds));
+    runs.step(
+        id,
+        "MODEL",
+        "fallo_controlado",
+        Map.of("attempt", run.attempts()),
+        Map.of("code", code, "detail", detail, "retry_after_seconds", retryAfterSeconds),
+        "REJECTED",
+        clock.instant());
     if (code.equals("RATE_LIMIT")
         && inbox.provider(run.conversationId()).equals("KAPSO")
         && !input.source().equals("APP_TEST")
         && run.attempts() < 3
+        && !retryAt
+            .plusSeconds(config.getRequestTimeoutSeconds())
+            .isAfter(run.createdAt().plusSeconds(config.getRunTimeoutSeconds()))
         && Objects.equals(
             runs.latestInbound(run.conversationId(), run.messageId()), run.messageId())) {
-      runs.scheduleRetry(id, clock.instant().plusSeconds(run.attempts() * 30L));
+      runs.scheduleRetry(id, retryAt);
       return;
     }
     String response =

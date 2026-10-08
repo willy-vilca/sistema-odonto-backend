@@ -38,7 +38,14 @@ final class AgentAvailabilityReply {
           .append(slot.get("service_name"))
           .append("\n");
     }
-    response = text.append("\nEsta consulta no creó ni cambió ninguna cita.").toString();
+    response =
+        text.append(
+                items.isEmpty()
+                    ? "\n¿Quieres consultar otra fecha? No se creó ni cambió ninguna cita."
+                    : "\n"
+                        + "¿Cuál de estos horarios prefieres? Todavía no se creó ni cambió"
+                        + " ninguna cita.")
+            .toString();
   }
 
   Optional<String> response() {

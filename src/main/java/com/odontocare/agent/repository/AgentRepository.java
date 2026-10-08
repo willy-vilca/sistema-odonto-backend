@@ -1,6 +1,7 @@
 package com.odontocare.agent.repository;
 
 import com.odontocare.agent.dto.AgentContracts.*;
+import com.odontocare.agent.model.AgentModelCheckpoint;
 import com.odontocare.agent.model.AgentRun;
 import com.odontocare.shared.pagination.*;
 import java.sql.*;
@@ -138,7 +139,8 @@ public class AgentRepository {
 
   public void finish(UUID id, String state, String text, String code, String detail, Instant now) {
     jdbc.update(
-        "UPDATE agent_run SET state=?,response_text=?,error_code=?,error_message=?,updated_at=?"
+        "UPDATE agent_run SET"
+            + " state=?,response_text=?,error_code=?,error_message=?,updated_at=?,model_checkpoint=NULL"
             + " WHERE id=?",
         state,
         text,
@@ -151,7 +153,7 @@ public class AgentRepository {
   public void retry(UUID id, Instant now) {
     jdbc.update(
         "UPDATE agent_run SET"
-            + " state='QUEUED',error_code=NULL,error_message=NULL,updated_at=?,next_attempt_at=?"
+            + " state='QUEUED',error_code=NULL,error_message=NULL,model_checkpoint=NULL,updated_at=?,next_attempt_at=?"
             + " WHERE id=?",
         Timestamp.from(now),
         Timestamp.from(now),
@@ -163,6 +165,25 @@ public class AgentRepository {
         "UPDATE agent_run SET input_tokens=input_tokens+?,output_tokens=output_tokens+? WHERE id=?",
         input,
         output,
+        id);
+  }
+
+  public Optional<AgentModelCheckpoint> checkpoint(UUID id) {
+    return jdbc
+        .query(
+            "SELECT model_checkpoint FROM agent_run WHERE id=? AND model_checkpoint IS NOT NULL",
+            (r, i) -> mapper.readValue(r.getString(1), AgentModelCheckpoint.class),
+            id)
+        .stream()
+        .findFirst();
+  }
+
+  public void checkpoint(UUID id, AgentModelCheckpoint checkpoint, Instant now) {
+    jdbc.update(
+        "UPDATE agent_run SET model_checkpoint=?::jsonb,updated_at=? WHERE id=? AND"
+            + " state='PROCESSING'",
+        mapper.writeValueAsString(checkpoint),
+        Timestamp.from(now),
         id);
   }
 

@@ -1,8 +1,8 @@
 # Fase 7: conversaciones, cambios y recuperación del agente
 
-Fecha: 07/10/2026. Plan 3.1; alcance funcional 1.9. Backend y frontend: rama `kapso`.
+Fecha: 07/10/2026. Plan 3.2; alcance funcional 1.9. Backend y frontend: rama `kapso`.
 
-**Estado: implementación y validación interna completas; demostración real por WhatsApp pendiente.** El usuario pidió realizar los intercambios reales en el siguiente paso. No se enviaron mensajes de prueba a WhatsApp durante esta implementación. La fase 6 conserva su cierre y la cita demostrada; la fase 7 permanece en validación y no habilita todavía el inicio de fase 8.
+**Estado: implementación y validación interna completas; demostración real por WhatsApp en curso.** Durante la implementación inicial se respetó el aplazamiento de los mensajes reales. Después el participante autorizó la demostración: consulta propia aprobada, incidencia de cuota al consultar reprogramación corregida internamente, repetición externa y demás flujos pendientes. La fase 6 conserva su cierre y la cita demostrada; la fase 7 permanece en validación y no habilita todavía el inicio de fase 8. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md).
 
 ## Uso desde la aplicación
 
@@ -62,7 +62,7 @@ Las consultas clínicas, posibles urgencias, solicitudes financieras, reclamos y
 
 ## Bitácora y permisos
 
-La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo `supervised-v7.0`, tokens y resultado operacional. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves ni razonamientos internos del modelo.
+La bitácora muestra entrada, propuesta de creación/cambio, estado y respuesta, pasos de herramientas y resultados, errores, modelo/proveedor, versión del flujo (inicial `supervised-v7.0`, continuación optimizada `supervised-v7.1`), tokens y resultado operacional. Los fallos nuevos registran cada intento y la espera solicitada por el proveedor. Las confirmaciones vinculan la misma cita y el historial conserva el actor **Agente IA**. No se guardan claves ni razonamientos internos del modelo.
 
 Lectura: `WHATSAPP_READ`. Control humano: `AGENT_CONTROL_WRITE`, otorgado inicialmente a administración y recepción. Reglas: `SETTINGS_WRITE`. Texto manual y reintento de envío: `WHATSAPP_WRITE`. Pruebas/reintento de análisis: `AGENT_TEST_WRITE`. Toda escritura HTTP conserva autenticación, validación y CSRF; la agenda sigue usando sus reglas centrales.
 
