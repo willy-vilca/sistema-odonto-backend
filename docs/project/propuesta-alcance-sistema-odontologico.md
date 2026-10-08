@@ -351,10 +351,12 @@ La entrega se comprobará contra esta tabla y contra las reglas de cada módulo.
 | Terminología y avisos | «Tratamiento» en presupuestos, «plan de tratamiento» en atenciones; precio del servicio autocompletado y editable; notificaciones flotantes para las acciones | Ajustes solicitados por el usuario el 02/10/2026 |
 | Resúmenes y consulta completa | Hasta tres servicios por odontólogo y tres citas por día en el mes; diálogos con consulta remota y detalle de cita reutilizado | Ajustes solicitados por el usuario el 05/10/2026 |
 | Agente y evidencia | Implementación propia sencilla, bitácora y demostración verificable; sin necesidad de n8n | Criterio del usuario y decisión técnica adoptada |
-| WhatsApp de prueba | Twilio inicial preservado; Kapso Sandbox autorizado para la conexión manual experimental | Tramo mínimo confirmado el 07/10/2026; agente en Kapso pendiente |
+| WhatsApp de prueba | Kapso Sandbox para desarrollo/pruebas con agente Groq; Twilio inicial preservado | Flujo real de reserva y respuestas verificado el 07/10/2026; A22 cumplido |
 | Formatos y tamaño inicial | JPG/JPEG, PNG, WebP y PDF; límite inicial de 20 MiB ajustable | Valores técnicos iniciales adoptados |
 | Módulos complementarios | Odontograma básico, presupuestos, planes, consentimientos documentales, usuarios, reportes, auditoría y recordatorios | Propuesta aceptada por el usuario |
 
 No quedan decisiones funcionales pendientes que impidan elaborar el plan de desarrollo. El proveedor y modelo de IA, versiones de dependencias, cuentas y credenciales de prueba, configuración inicial de demostración y entorno de ejecución se resolverán como tareas técnicas del plan. No requieren inventar requisitos de un cliente futuro ni ampliar este alcance.
 
 La implementación y sus comprobaciones se organizan en [el plan de desarrollo](plan-desarrollo-sistema-odontologico.md). Cualquier cambio de alcance autorizado deberá actualizar este documento, el plan y los criterios de aceptación antes de considerarse parte de la entrega.
+
+Validación registrada el 07/10/2026: fase 6 y A22 cumplidos mediante el intercambio real del participante con Kapso/Groq, herramientas de agenda, propuesta enviada, confirmación expresa, cita WHATSAPP/CONFIRMED y respuesta READ. Se probaron también consultas, datos faltantes, negación, lunes cerrado, próximo martes, repetición, alternativas y límites. El alcance funcional permanece en versión 1.9. [Evidencia](validacion-real-agente-kapso-fase-6.md) y [cierre](cierre-fase-6.md); las ampliaciones de fase 7 siguen pendientes.

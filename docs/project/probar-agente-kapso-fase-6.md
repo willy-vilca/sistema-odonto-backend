@@ -15,7 +15,7 @@ La tarjeta Agente IA muestra configuración lista y respuestas por WhatsApp. Ese
 Desde el teléfono autorizado, escribir:
 
 ~~~text
-Hola, quisiera reservar una limpieza dental para mañana a las 9:00 am.
+Hola, quisiera reservar una limpieza dental con Julia Huaytalla para el próximo martes a las 9:00 am.
 ~~~
 
 Esperar la pregunta del agente y proporcionar la identidad:
@@ -61,4 +61,4 @@ La cita, confirmación y tarea de respuesta se guardan en una transacción. Rein
 
 El agente no usa expedientes ni finanzas y no ejecuta cambios o cancelaciones de citas en esta fase; esos pedidos se derivan a recepción. Para mantener solo la conexión manual, cambiar agent-enabled a false y reiniciar. Las ramas kapso se conservan para esta integración.
 
-El cierre de fase 6 exige ejecutar la demostración real y registrar sus resultados, además de las comprobaciones internas. Una vista previa o una cita creada por usuarios no sustituye ese recorrido.
+El cierre de fase 6 exige ejecutar la demostración real y registrar sus resultados, además de las comprobaciones internas. Una vista previa o una cita creada por usuarios no sustituye ese recorrido. **Demostración completada el 07/10/2026:** próximo lunes 12/10 cerrado; próximo martes 13/10 reservado tras confirmación expresa, 09:00–10:00 con Julia. Se verificaron también consultas, datos faltantes, negación, «sí» ambiguo, repetición, hora ocupada y límites. [Resultados individuales](validacion-real-agente-kapso-fase-6.md) y [cierre](cierre-fase-6.md). Para repetir más adelante, usar días futuros de la agenda vigente; esas fechas describen la prueba histórica.

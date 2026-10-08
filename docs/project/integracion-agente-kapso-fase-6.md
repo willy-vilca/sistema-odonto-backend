@@ -30,7 +30,7 @@ La aplicación muestra modelo, modo de respuesta, propuesta, herramientas, cita 
 
 ## Demostración externa y estado
 
-El backend habitual y el agente están activos, con el receptor y túnel del usuario. Se pidió al participante iniciar una reserva real, aportar identidad, elegir horario y confirmar después de leer el resumen. **A22 y el cierre de fase 6 permanecen pendientes hasta registrar ese intercambio y su respuesta entregada.** No se declara cumplido con la vista previa, las pruebas controladas o el intercambio manual de la conexión anterior.
+El backend habitual y el agente están activos, con el receptor y túnel del usuario. **A22 y fase 6 completados el 07/10/2026** después de la conversación real del participante, con propuesta recibida, confirmación expresa, cita WHATSAPP/CONFIRMED del martes 13/10/2026 09:00–10:00 con Julia para limpieza y respuesta READ. Los catorce intercambios reales incluyen consultas, datos faltantes, negación, fecha relativa, día cerrado, disponibilidad, confirmación ambigua, repetición, hora ocupada y límites. Se corrigieron y repitieron los fallos de catálogo, cálculo del lunes y preservación de alternativas. [Evidencia individual](validacion-real-agente-kapso-fase-6.md) y [cierre de fase](cierre-fase-6.md).
 
 [Guía de conversación y comprobaciones](probar-agente-kapso-fase-6.md). La reprogramación, cancelación por IA y toma de control humano completa se conservan para fase 7; no se agregan dentro de este desarrollo.
 

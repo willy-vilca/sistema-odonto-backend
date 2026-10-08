@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 a 5: configuración, acceso, pacientes, agenda, clínica, archivos, presupuestos, planes, cargos, cobros, cuotas, egresos y caja con historial. Fase 6 en desarrollo: conexión inicial de WhatsApp. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 6: configuración, acceso, pacientes, agenda, clínica, archivos, tratamientos, finanzas y reserva automática por WhatsApp con Kapso/Groq, confirmación expresa y bitácora. Fase 6 validada con mensajes reales el 07/10/2026. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 
@@ -198,3 +198,7 @@ Activar odontocare.kapso.agent-enabled=true junto con los trabajadores del model
 POST /api/v1/whatsapp/agent/runs/{id}/reply/retry requiere WHATSAPP_WRITE y reintenta únicamente rechazos confirmados sin referencia, dentro de la ventana y límite. Los resultados inciertos se verifican en Kapso. La bitácora incluye la respuesta y su estado; no se repite la reserva si falla el envío. Modo APP_TEST es vista previa sin WhatsApp.
 
 [Guía de prueba](docs/project/probar-agente-kapso-fase-6.md) y [implementación y validación](docs/project/integracion-agente-kapso-fase-6.md). 138 casos backend y seis de interfaz aprobados; la prueba real completa A22 sigue pendiente del participante y fase 6 está en validación. Instantáneas: alcance 1.9, plan 2.9. Tests KapsoAgentIntegrationTests y AgentConfirmationTests cubren atomicidad, concurrencia, límites y lenguaje inequívoco. kapso-agent-e2e.properties configura solo claves ficticias y trabajadores detenidos.
+
+## Cierre real de fase 6
+
+07/10/2026: A22 cumplido con una cita WHATSAPP/CONFIRMED para Willy, Limpieza dental con Julia, martes 13/10/2026 09:00–10:00, y respuesta READ. Catorce intercambios reales verificaron también consultas, negación, datos faltantes, fecha relativa, día cerrado, confirmación ambigua, repetición, alternativas y límites. Los fallos detectados se corrigieron, repitieron y conservaron en bitácora. [Cierre](docs/project/cierre-fase-6.md) y [trazas](docs/project/validacion-real-agente-kapso-fase-6.md). Plan 3.0, alcance funcional 1.9; fase 7 pendiente. La regresión completa final aprobó 150 casos, incluidos 19 de integración Kapso/agente. No se compraron servicios ni se cambiaron claves. Las notas anteriores documentan los tramos históricos del desarrollo.
