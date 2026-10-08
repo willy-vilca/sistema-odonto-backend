@@ -270,6 +270,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Orden obligatorio de lecturas y consumo v7.6.** La propuesta nueva falló primero por dos rechazos de herramientas y después por cuota por minuto; se conserva la secuencia 49. La consulta propia obligatoria tras verificar identidad se ejecuta y audita en el flujo, dejando al modelo interpretación, disponibilidad y propuesta. Formatos opcionales coherentes y presupuesto de salida 768. 79 pruebas del agente aprobadas; Groq real preparó la propuesta en APP_TEST en 3,032 segundos, tres inferencias, un intento y sin errores/cambios/envíos. Conversación AUTO/generación 6 tras devolver solo la derivación automática conocida. La repetición real y las demás comprobaciones siguen pendientes. [Diagnóstico y límites](recuperacion-herramientas-groq-fase-7.md).
 
+**Nueva propuesta real v7.6 aprobada.** Secuencia 52/69ab6ba1-9069-4541-8a40-3f275ef1008c, COMPLETED/READ, un intento, tres inferencias y sin errores. Resumen correcto del 13/10 al 20/10 09:00 con Julia, 60 minutos, motivo y código F4160577. Propuesta PENDING; cita original, historial y finanzas intactos. Respuesta persistida a los 6,410 segundos del registro de ejecución, sin atribuir ese tiempo al teléfono. Se continúa con confirmación ambigua, expresa y repetición; no se declara todavía reprogramación aplicada ni fase 7 cerrada.
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

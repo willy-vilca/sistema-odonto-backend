@@ -136,7 +136,7 @@ La propuesta de cambio sigue SUPERSEDED y la reserva original de fase 6 sigue CO
 
 Se continúa con una propuesta nueva del martes 20/10 a las 09:00 con Julia, sin confirmarla todavía. Se comprobarán confirmación ambigua, confirmación expresa e idempotencia antes de los demás flujos.
 
-## Prueba 6: preparar una propuesta nueva — fallo de herramientas y cuota; repetición pendiente
+## Prueba 6: preparar una propuesta nueva — aprobada tras corrección
 
 El participante pidió de nuevo la reprogramación del 20/10 a las 09:00 con Julia y recibió la derivación a recepción. Secuencia 49, ejecución `a4bba789-ae9c-4815-810b-af7fbcf448c8`, FAILED/RATE_LIMIT, tres intentos, respuesta READ. Primero ocurrieron dos HTTP 400/tool_use_failed y después HTTP 429/TOKENS_PER_MINUTE. No se preparó otro cambio real; cita original, reserva, cambio descartado, historial y finanzas intactos.
 
@@ -144,8 +144,20 @@ Se corrigió el flujo v7.6: lectura propia obligatoria tras identidad verificada
 
 Se restableció únicamente la derivación automática identificada a AUTO/generación 6, sin responsable humano y sin ejecutar mensajes anteriores. La solicitud se debe repetir por WhatsApp y revisar antes de confirmar. No se declara aprobada la nueva propuesta real por esta vista previa.
 
+### Repetición real v7.6 aprobada
+
+El participante envió la solicitud completa y recibió el resumen correcto: Willy, Limpieza dental, Julia, del martes 13/10/2026 09:00 al martes 20/10/2026 09:00, 60 minutos y motivo cambio de horario de trabajo. Código nuevo F4160577, todavía sin confirmación.
+
+Ejecución `69ab6ba1-9069-4541-8a40-3f275ef1008c`, secuencia 52, KAPSO/COMPLETED, `supervised-v7.6`, un intento, tres inferencias y sin errores/reintentos. 6 711 tokens de entrada y 283 de salida. Entrada `77f41dc8-6d87-4eab-a750-f7b1b0bf2d74`; respuesta `f68c3ec3-c2a7-4884-8c60-22570ac33c19`, READ y sin error. Desde registrar la ejecución hasta persistir la respuesta: 6,410 segundos; no equivale al tiempo de lectura en el teléfono.
+
+La bitácora demuestra verificar_paciente mediante modelo → consultar_mis_citas como lectura obligatoria del flujo → consultar_horarios mediante modelo → proponer_reprogramacion mediante modelo → respuesta. Cada herramienta se ejecutó una sola vez. El cálculo respetó la referencia de la cita propia y la duración conservada.
+
+Propuesta `f4160577-eed4-44e4-8f2c-331664012feb`, KAPSO/RESCHEDULE/PENDING, vinculada a la cita `fc272d39-566d-4b65-a610-0302e86d50b5`, versión 0; creada el 08/10 a las 18:26:12 Lima y vence a las 18:56:12. Cita original aún CONFIRMED/versión 0, 13/10 09:00–10:00, un evento de historial. Permanecen 9 pacientes, 12 citas, 9 cargos, 11 movimientos y AUTO/generación 6.
+
+La nueva propuesta y su entrega real quedan aprobadas; **el cambio no se ha aplicado**. Se continúa con «sí» ambiguo, sin código ni otras palabras, antes de la confirmación expresa.
+
 ## Casos restantes
 
-Propuesta nueva, confirmación ambigua, confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Confirmación ambigua, confirmación expresa e idempotencia; conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
