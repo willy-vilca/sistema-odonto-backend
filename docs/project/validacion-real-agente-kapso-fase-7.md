@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.9; control AUTO/generación 10. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía Prueba Familia ya tiene una ficha provisional y una cita WHATSAPP/CONFIRMED el 20/10 09:00–10:00, con contacto responsable; 10 pacientes, 14 citas, 9 cargos y 11 movimientos. Se continúa con el segundo hijo, supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
+**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.9; control AUTO/generación 10. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
 
 ## Estado inicial
 
@@ -318,8 +318,20 @@ Ejecución `8a293983-2b1d-4560-b473-4eba8d6a6a33`, secuencia 74, KAPSO/COMPLETED
 
 Propuesta `78612830-959e-418b-bfe5-ff67146ffc0d`, KAPSO/PENDING, Mateo, patient_id/appointment_id vacíos. Creada 19:57:11, vence 20:27:11 Lima. Intervalo 20/10 10:00–11:00, 60 minutos, profesional y servicio correctos. Lucía conserva 09:00–10:00 CONFIRMED/versión 0/un historial; no existe todavía ficha de Mateo. Cifras 10/14/9/11, AUTO/generación 10. Se solicita «CONFIRMO 78612830» para aplicar la segunda reserva y comprobar ambas fichas/contactos/citas; todavía no se considera aplicado el bloque completo de dos hijos.
 
+## Prueba 19: confirmar Mateo y completar dos reservas de un responsable — aprobada
+
+El participante envió «CONFIRMO 78612830» y recibió la confirmación de Mateo Prueba Familia/Limpieza/Julia/martes 20/10/2026 10:00/60 minutos, referencia `7b103374-8707-4b3c-bc01-dd5130361227`.
+
+Ejecución `9a9a76d1-1032-44cb-be05-098caebc889a`, secuencia 75, KAPSO/COMPLETED, supervised-v7.9, un intento, cero inferencias/tokens. Entrada `557c6139-c3fa-42bd-89ae-8d4cfd41d6d8`; respuesta `2e6e607f-b541-41c2-a17e-45db060fe7d8`, READ. Crear_cita_confirmada OK y guardar_respuesta QUEUED. Respuesta persistida a los 4,494 segundos del registro de ejecución. Propuesta 78612830 CONFIRMED y vinculada al mensaje de aceptación y la nueva cita.
+
+Mateo: una única ficha `cde35927-e18c-4564-96ed-ccf8601243bb`, provisional=true; cita `7b103374-8707-4b3c-bc01-dd5130361227`, WHATSAPP/CONFIRMED, versión 0, 20/10 10:00–11:00, 60 minutos y un historial CREATED. Lucía conserva su ficha `bf95319a-999e-486c-9823-8b2d0d126d22` y cita `5d766bea-1d54-4c6f-bf92-c31651e41d0e`, 09:00–10:00, CONFIRMED/versión 0 y un historial. Sus propuestas anteriores permanecen CONFIRMED.
+
+Ambas fichas tienen el mismo teléfono del participante como contacto, nombre administrativo Willy, relación Tutor WhatsApp, guardian=true y payer=true. Son dos UUID de paciente y dos citas diferentes, sin solapamiento; no se convirtió al padre en paciente de las atenciones. Se comprobó una sola ficha por cada nombre. Pacientes/citas/cargos/movimientos 11/15/9/11: la aceptación de Mateo añadió solo una ficha y una cita. No se generaron cargos ni movimientos financieros por reservar. AUTO/generación 10.
+
+El bloque de dos pacientes de un contacto responsable queda aprobado con mensajes reales, incluidos datos faltantes, cambio explícito de hijo, disponibilidad y confirmación. No se repite idempotencia de creación ya comprobada en fase 6. Se pide ahora al participante asumir la conversación desde la aplicación, motivo «Prueba de atención manual fase 7», y confirmar que vea Atención humana antes de enviar el siguiente mensaje real. Supervisión aún no aprobada externamente.
+
 ## Casos restantes
 
-Dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
