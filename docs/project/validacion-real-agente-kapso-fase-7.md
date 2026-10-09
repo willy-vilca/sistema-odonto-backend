@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.10; control HANDOFF/generación 20 por fuera de horario, sin usuario asignado; configuración temporal pendiente de restaurar. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
+**Estado final al 08/10/2026: fase 7 completada y validada.** Todos los bloques reales y la restauración están aprobados; 209 pruebas backend finales pasaron sin fallos/errores/omitidas. Flujo supervised-v7.10, AUTO/generación 21, política original restaurada (versión 3). Willy y la ocupación temporal permanecen cancelados con historial; Lucía y Mateo tienen fichas/citas distintas, CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, mismo contacto responsable. Se conservan 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Los apartados siguientes conservan estados e incidencias observados en cada momento; las comprobaciones internas siguen diferenciadas de WhatsApp real. [Cierre y cobertura](cierre-fase-7.md). Fase 8 pendiente de instrucción del usuario.
 
 ## Estado inicial
 
@@ -394,7 +394,7 @@ El participante cerró desde la interfaz, motivo «Prueba de cierre fase 7», y 
 
 Entrada `ea1e3cf8-dbeb-47a8-99b6-6e7a331af7b2`, KAPSO/INBOUND/RECEIVED, 23:06:41 Lima. Ejecución `0dc321e9-38b3-4565-9f35-90c198997039`, secuencia 83, PAUSED/control_generation 18, cero pasos/tokens y ninguna respuesta asociada. No se reabrió automáticamente la conversación ni se creó reserva. Siguen 50 salidas y cifras 11/15/9/11, política original versión 0/jornadas vacías intacta. Las entradas se conservan para atención humana; volver a automatizar requiere devolución desde la interfaz.
 
-## Prueba 28: horario y texto editables — configuración y entrega aprobadas; restauración pendiente
+## Prueba 28: horario y texto editables — aprobada con restauración posterior
 
 Configuración original registrada: enabled=true, schedule=[], changeLeadMinutes=0, allowReschedule/allowCancel=true. closedText «El asistente está fuera de su horario. Tu mensaje queda pendiente para recepción». Los otros tres textos se conservan. Política original versión 0, huella fbdde5cddd35bdd74da4d08edb53059a.
 
@@ -416,8 +416,14 @@ HANDOFF/generación 20, OUTSIDE_HOURS. La entrada vieja de la conversación cerr
 
 Se solicita restaurar desde la interfaz jornadas vacías y el texto original, guardar y devolver al agente con motivo «Fin de pruebas de horario fase 7». No hace falta otro mensaje real. Se verificará igualdad de campos funcionales, AUTO y ausencia de ejecución de entradas antiguas antes del cierre de fase 7. La restauración aún no se considera aprobada.
 
-## Casos restantes
+## Prueba 29: restauración y agente activo — aprobada
 
-Restaurar configuración y control tras el ensayo, y cerrar documentalmente. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación permanecen identificadas como internas; no se presentan como intercambios reales. Toma/pausa/respuesta manual/devolución y reanudación reales, contacto compartido, límites de datos/reglas, derivación clínica, reclamo, cierre y horario/texto ya comprobados.
+El participante quitó la jornada temporal, restauró el texto original, guardó y devolvió al agente, confirmando Agente activo. Política versión 3: todos los campos funcionales son exactamente iguales al original, incluidos enabled=true, schedule=[], anticipación 0, permisos de cambio/cancelación y los cuatro textos. Se compararon valores completos, no solo la cantidad de jornadas. Auditoría `349acf81-dcb3-486b-991d-720def6fc02c`, AGENT_POLICY_UPDATED, actor Willy, 23:16:26 Lima.
 
-No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
+AUTO/generación 21, sin usuario asignado, motivo «Fin de pruebas de horario fase 7»; auditoría `58b4e130-87cd-4a98-8be6-51892ef6b156`, mismo actor, 23:16:54. Secuencias 76 y 83 GROUPED, cero pasos/tokens y sin respuesta, ninguna tarea activa. Citas de los hijos CONFIRMED/versión 0/un historial, Willy y temporal cancelados con su historia; cifras 11/15/9/11. Backend salud UP, frontend HTTP 200 y receptor/ngrok intactos.
+
+## Comprobación final y cierre
+
+Todos los bloques reales y la restauración están aprobados. La regresión completa final del backend pasó 209 pruebas, cero fallos/errores/omitidas; se actualizó el plan a completada y guardó el [cierre](cierre-fase-7.md). Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación permanecen identificadas como internas; no se presentan como intercambios reales.
+
+No se inicia fase 8 en este tramo. Configuración original y AUTO restaurados, entradas antiguas no reejecutadas; fase 7 cerrada documentalmente con su evidencia.

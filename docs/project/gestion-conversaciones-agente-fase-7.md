@@ -1,8 +1,8 @@
 # Fase 7: conversaciones, cambios y recuperación del agente
 
-Actualización: 08/10/2026. Plan 3.7; alcance funcional 1.9. Backend y frontend: rama `kapso`.
+Actualización: 08/10/2026. Plan 3.11; alcance funcional 1.9. Backend y frontend: rama `kapso`.
 
-**Estado: implementación y validación interna completas; demostración real reanudada el 08/10.** Consulta propia y disponibilidad reales aprobadas. Se respetó la ausencia del participante, que ahora autorizó continuar. Tras las incidencias de cuota/rechazo se detectó un filtro incorrecto del nombre del paciente, corregido en v7.4 con Groq y cita conservada. La propuesta correcta, los cambios y demás casos todavía necesitan demostración real. Fase 6 conserva su cierre; fase 7 en validación y fase 8 pendiente. [Intercambios reales](validacion-real-agente-kapso-fase-7.md), [corrección de cuota y latencia](optimizacion-agente-groq-fase-7.md), [diagnóstico acumulado](diagnostico-groq-reserva-fase-7.md).
+**Estado final: fase 7 completada y validada el 08/10/2026.** Demostración real, restauración y regresión actual de 209 casos aprobadas. Flujo supervised-v7.10, AUTO/generación 21 y política original restaurada. [Cierre vigente](cierre-fase-7.md), [evidencia real](validacion-real-agente-kapso-fase-7.md). Los seguimientos y apuntes siguientes conservan los estados históricos de implementación; no sustituyen este cierre. Fase 8 pendiente.
 
 ## Uso desde la aplicación
 

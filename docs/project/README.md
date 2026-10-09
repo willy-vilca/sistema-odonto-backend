@@ -2,7 +2,7 @@
 
 Las fuentes vigentes están en la raíz compartida: AGENTS.md, docs/propuesta-alcance-sistema-odontologico.md, docs/plan-desarrollo-sistema-odontologico.md, los cierres de fase y el prompt maestro del usuario.
 
-Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 08/10/2026; plan 3.10 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
+Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 08/10/2026; plan 3.11 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
 
 Se conservan los cierres de fases 0 a 5, las decisiones de agenda, clínica, tratamientos y finanzas, y el procedimiento de respaldo preparado. La restauración integral sigue pendiente de fase 9. La recepción y salida real de plantillas de WhatsApp fueron confirmadas por el usuario; texto propio y demostración completa por WhatsApp siguen pendientes; el prototipo del agente ya se verificó. A22 no se declara cumplida.
 
@@ -30,3 +30,6 @@ Estado vigente: consulta propia y disponibilidad reales aprobadas; la propuesta 
 Actualización del 08/10: el participante regresó y se reanudó la demostración. v7.4 corrige el filtro de nombre del paciente, con 72 regresiones del agente aprobadas. Propuesta auténtica del 13/10 al 20/10 09:00 recibida READ y PENDING, cita original intacta; recuperación de cuota demostrada sin duplicar consultas. Continuar con negación y después confirmación de una propuesta nueva. [Evidencia](validacion-real-agente-kapso-fase-7.md); fase 7 abierta.
 
 Último ajuste v7.6: negación y código descartado ya comprobados realmente; la nueva propuesta se repite tras fallo de herramientas/cuota. Lectura propia obligatoria ejecutada por el flujo con permisos, contexto persistido y 79 pruebas aprobadas; Groq real preparó el resumen en tres inferencias y 3,032 segundos sin cambios ni WhatsApp. [Diagnóstico y continuación](recuperacion-herramientas-groq-fase-7.md). Fase 7 abierta.
+
+
+Estado final del 08/10/2026: fase 7 completada y validada; [cierre](cierre-fase-7.md) y [evidencia](validacion-real-agente-kapso-fase-7.md). Configuración original restaurada, AUTO/generación21, 209 pruebas backend finales aprobadas. Fase 8 pendiente de instrucción. Los estados anteriores son históricos.

@@ -1,6 +1,6 @@
 # OdontoCare — backend
 
-Fases 0 a 6: configuración, acceso, pacientes, agenda, clínica, archivos, tratamientos, finanzas y reserva automática por WhatsApp con Kapso/Groq, confirmación expresa y bitácora. Fase 6 validada con mensajes reales el 07/10/2026. Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
+Fases 0 a 7: configuración, pacientes, agenda, clínica, archivos, tratamientos, finanzas y agente por WhatsApp con Kapso/Groq. Reserva, cambios/cancelación, atención humana y recuperación con bitácora; fase 7 validada con WhatsApp real el 08/10/2026 y 209 pruebas backend finales. [Cierre de fase 7](docs/project/cierre-fase-7.md). Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
 

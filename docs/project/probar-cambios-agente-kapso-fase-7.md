@@ -1,6 +1,6 @@
 # Guía de demostración real: fase 7
 
-Preparada el 07/10/2026, actualizada el 08/10/2026. **Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición y conflicto con agenda manual comprobados realmente.** La cita de Willy está ahora el martes 20/10/2026 09:00–10:00; la ocupación temporal de las 11:00 ya se canceló conservando su historial. Se continúa con cancelación, contacto compartido y supervisión; no repetir los bloques ya aprobados salvo corrección de una incidencia. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
+Guion preparado el 07/10/2026 y ejecutado con el participante hasta su cierre el 08/10/2026. **Fase 7 completada y validada.** Este documento conserva el guion reproducible; los estados/fechas del recorrido se contrastan con [la evidencia](validacion-real-agente-kapso-fase-7.md) y [el cierre](cierre-fase-7.md). Para repetir cambios, consultar una cita activa nueva y usar propuestas nuevas; los códigos históricos no se reutilizan. Lucía y Mateo quedaron confirmados el 20/10 de 09:00–10:00 y 10:00–11:00; la cita original de Willy fue cancelada durante la demostración.
 
 ## Preparación
 
