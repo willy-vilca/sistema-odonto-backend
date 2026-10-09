@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.10; control HANDOFF/generación 17 por reclamo, sin usuario asignado. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
+**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.10; control CLOSED/generación 18 por cierre del usuario, sin usuario asignado. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
 
 ## Estado inicial
 
@@ -388,8 +388,22 @@ Ejecución `ea8fd557-b28e-4b99-90c2-71879671b93e`, secuencia 82, COMPLETED/READ,
 
 HANDOFF/generación 17, PATIENT_REQUEST, sin usuario asignado. Política intacta, versión 0, jornadas vacías, habilitada y cambios/cancelaciones permitidos; huella fbdde5cddd35bdd74da4d08edb53059a. Cifras 11/15/9/11 y 50 mensajes salientes totales. Se solicita cerrar desde la interfaz, motivo «Prueba de cierre fase 7», y enviar una entrada para comprobar persistencia sin automatización; cierre aún pendiente. No devolver el control por cuenta propia.
 
+## Prueba 27: cerrar y conservar una entrada sin automatización — aprobada
+
+El participante cerró desde la interfaz, motivo «Prueba de cierre fase 7», y envió «Quiero una cita». Confirmó no recibir respuesta. CLOSED/generación 18, sin usuario asignado, a las 23:06:21 Lima. Auditoría `044ec952-9c46-48c8-aa21-01e7c70bbea9`, AGENT_CONTROL_CLOSED, actor Willy Vilca Huaytalla.
+
+Entrada `ea1e3cf8-dbeb-47a8-99b6-6e7a331af7b2`, KAPSO/INBOUND/RECEIVED, 23:06:41 Lima. Ejecución `0dc321e9-38b3-4565-9f35-90c198997039`, secuencia 83, PAUSED/control_generation 18, cero pasos/tokens y ninguna respuesta asociada. No se reabrió automáticamente la conversación ni se creó reserva. Siguen 50 salidas y cifras 11/15/9/11, política original versión 0/jornadas vacías intacta. Las entradas se conservan para atención humana; volver a automatizar requiere devolución desde la interfaz.
+
+## Prueba 28: horario y texto editables — preparación solicitada
+
+Configuración original registrada: enabled=true, schedule=[], changeLeadMinutes=0, allowReschedule/allowCancel=true. closedText «El asistente está fuera de su horario. Tu mensaje queda pendiente para recepción». Los otros tres textos se conservan. Política original versión 0, huella fbdde5cddd35bdd74da4d08edb53059a.
+
+Se solicita desde WhatsApp → Reglas del agente añadir únicamente Lunes 09:00–10:00 y cambiar Fuera de horario a «Gracias por escribirnos. El asistente está fuera de horario. Recepción revisará tu solicitud en su siguiente jornada.», manteniendo atención automática habilitada y demás valores. Esta jornada excluye el momento actual también si la sesión pasa a la madrugada del viernes. Guardar y avisar sin devolver aún la conversación cerrada. Configuración real, entrega del mensaje y restauración todavía pendientes.
+
+Después de comprobar, restaurar schedule=[] y el texto original desde la interfaz, conservar demás valores y verificar igualdad funcional; versión y auditoría cambiarán legítimamente. No alterar horarios de los profesionales ni sus reservas.
+
 ## Casos restantes
 
-Cierre de conversación y horario/texto configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión. Toma/pausa/respuesta manual/devolución y reanudación reales, contacto compartido, límites de datos/reglas, derivación clínica y reclamo ya comprobados.
+Horario/texto configurable y restauración posterior. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión. Toma/pausa/respuesta manual/devolución y reanudación reales, contacto compartido, límites de datos/reglas, derivación clínica, reclamo y cierre ya comprobados.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.

@@ -308,6 +308,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Reclamo real derivado y pausado.** Secuencia 82/ea8fd557-b28e-4b99-90c2-71879671b93e COMPLETED/READ, cero inferencias/tokens: mensaje configurado y HANDOFF/generación 17, sin lectura/cambios de datos. Política original conservada. Cierre y horario/texto configurables reales pendientes; fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Cierre real aprobado; configuración final en prueba.** El usuario cerró desde la interfaz (CLOSED/generación 18, auditado). Entrada posterior secuencia 83 PAUSED, cero inferencias/pasos y sin respuesta/reserva; historial conservado. Se solicita horario del agente Lunes 09:00–10:00 y texto temporal de fuera de horario desde la interfaz, después restaurar jornadas vacías y texto original. Configuración, entrega y restauración pendientes; fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
