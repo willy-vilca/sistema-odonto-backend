@@ -102,3 +102,7 @@ La vista previa real usa `APP_TEST`, teléfono/contacto ficticios creados para e
 Antes de migrar se guardó respaldo PostgreSQL local: `backend/.runtime/backups/sistema_odontologo-phase7-20261007-201251.dump`; inventario legible verificado. SHA256: `ADCBE921CD16111C1750615E476862DC822AD5D0766C1FA670F2747499BA7B44`. No se restauró la instalación; la restauración integral permanece en fase 9.
 
 Pendiente: [demostración real de fase 7](probar-cambios-agente-kapso-fase-7.md), confirmar con el participante respuestas, cambios y supervisión. A25/A26 permanecen en validación para su uso por WhatsApp; A23/A24/A27 cuentan con cobertura interna ampliada. La reserva real de fase 6/A22 sigue cumplida. No se alteraron credenciales, túnel ni webhook y no se compraron servicios.
+
+## Continuidad familiar e identificadores internos, v7.8
+
+El ensayo real de elección para Lucía derivó por identidad, sin error de cuota. Se conservó la selección explícita del hijo mediante verificación central y contexto persistido, con aislamiento de fuente, vigencia y permisos. Se bloquean respuestas que pidan IDs internos al paciente. 86 regresiones aprobadas y vista previa real Groq correcta, sin negocio ni envíos; la repetición real entregó propuesta de Lucía PENDING y recuperó una cuota por minuto. Reserva aplicada de ambos hijos y supervisión siguen pendientes. [Diagnóstico y límites](identidad-responsables-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).

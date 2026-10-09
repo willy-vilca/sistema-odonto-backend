@@ -1785,6 +1785,139 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void continuesExplicitGuardianChoiceWithTheVerifiedChildInsteadOfSelectingTheParentAgain() {
+    String child = "Lucía Prueba Familia";
+    submit(
+        "Quiero una limpieza para mi hija "
+            + child
+            + ". Soy su padre, Paciente Agente, y responsable. Primero quiero horarios.");
+    var initial = queue.claim().orElseThrow();
+    tools.execute(
+        initial,
+        "verificar_paciente",
+        mapper.valueToTree(Map.of("patient_name", child, "relationship", "GUARDIAN")));
+    queue.finish(initial.id(), "Elige un horario.");
+    AtomicInteger calls = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            invocation -> {
+              List<Map<String, Object>> context = invocation.getArgument(0);
+              List<Map<String, Object>> definitions = invocation.getArgument(1);
+              assertThat(context.toString()).contains(child, "GUARDIAN", "verificado");
+              assertThat(definitions)
+                  .noneMatch(
+                      tool ->
+                          ((Map<?, ?>) tool.get("function"))
+                              .get("name")
+                              .equals("verificar_paciente"));
+              return switch (calls.getAndIncrement()) {
+                case 0 ->
+                    new LanguageModelClient.Reply(
+                        "Indícame el slot_id del horario.", List.of(), 30, 10);
+                case 1 -> tool("consultar_servicios", Map.of("search", "limpieza"));
+                case 2 ->
+                    tool(
+                        "consultar_horarios",
+                        Map.of(
+                            "service_id",
+                            serviceId,
+                            "dentist_id",
+                            doctorId,
+                            "days_from_today",
+                            1,
+                            "preferred_time",
+                            "09:00"));
+                default ->
+                    tool(
+                        "proponer_cita",
+                        Map.of(
+                            "slot_id",
+                            jdbc.queryForObject(
+                                "SELECT id FROM agent_slot ORDER BY local_start,id LIMIT 1",
+                                UUID.class),
+                            "patient_name",
+                            child));
+              };
+            });
+    submit(
+        "Elijo mañana a las 09:00 para la limpieza de mi hija "
+            + child
+            + ". Soy su padre y responsable.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains(child, "09:00", "CONFIRMO");
+    assertThat(done.responseText()).doesNotContain("slot_id", "patient_id");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND"
+                    + " name='validar_respuesta_administrativa' AND state='REJECTED'",
+                Long.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(queue.proposal(done.conversationId()).patientName()).isEqualTo(child);
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("AUTO");
+    assertThat(appointments()).isZero();
+    assertThat(count("patient")).isEqualTo(1);
+    assertThat(count("charge_entry")).isZero();
+  }
+
+  @Test
+  void guardianContinuationRequiresTheSameFullChildNameAndCurrentChannelVerification() {
+    String child = "Lucía Prueba Familia";
+    submit("Mi hija " + child + ". Soy su padre y responsable.");
+    var initial = queue.claim().orElseThrow();
+    identity.verify(initial, child, "GUARDIAN");
+    queue.finish(initial.id(), "Horarios disponibles.");
+    for (String body :
+        List.of(
+            "Elijo las 09:00 para mi hija Mateo Prueba Familia. Soy responsable.",
+            "Ahora quiero una cita para mi otro hijo.",
+            "Elijo las 09:00 para mi hija Lucía Prueba Familia Pérez. Soy responsable.",
+            "Para mi hija Lucía Prueba Familia y mi hijo Mateo Prueba Familia.")) {
+      submit(body);
+      var current = queue.claim().orElseThrow();
+      assertThat(identity.continuationArguments(current)).isEmpty();
+      queue.finish(current.id(), "Confirma el paciente.");
+    }
+    var preview =
+        queue.test(
+            new TestMessage(
+                phone,
+                "Contacto",
+                "Mi hija " + child + ". Soy su padre y responsable.",
+                UUID.randomUUID()));
+    var appRun = queue.claim().orElseThrow();
+    assertThat(appRun.id()).isEqualTo(preview.runId());
+    assertThat(identity.continuationArguments(appRun)).isEmpty();
+    queue.finish(appRun.id(), "Confirma el paciente.");
+    jdbc.update(
+        "UPDATE agent_request_context SET verified_at=now()-INTERVAL '2 days' WHERE"
+            + " conversation_id=? AND source='KAPSO'",
+        initial.conversationId());
+    submit("Mi hija " + child + ". Soy su padre y responsable.");
+    var expired = queue.claim().orElseThrow();
+    assertThat(identity.continuationArguments(expired)).isEmpty();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void guardianContinuationRevalidatesTheResponsibleContactBeforeAnyModelCall() {
+    jdbc.update("UPDATE patient_contact SET guardian=true WHERE patient_id=?", patientId);
+    submit("Mi hijo Paciente Agente. Soy su padre y responsable.");
+    var initial = queue.claim().orElseThrow();
+    identity.verify(initial, "Paciente Agente", "GUARDIAN");
+    queue.finish(initial.id(), "Horarios disponibles.");
+    jdbc.update("UPDATE patient_contact SET guardian=false WHERE patient_id=?", patientId);
+    submit("Elijo mañana a las 09:00 para mi hijo Paciente Agente. Soy responsable.");
+    var rejected = process();
+    assertThat(rejected.state()).isEqualTo("FAILED");
+    assertThat(rejected.errorCode()).isEqualTo("BOOKING_VALIDATION");
+    assertThat(appointments()).isZero();
+    assertThat(count("agent_proposal")).isZero();
+    verifyNoInteractions(model);
+  }
+
+  @Test
   void automaticHandoffAndConfiguredHoursAreVisibleAndDoNotAffectAppContext() {
     when(model.reply(anyList(), anyList()))
         .thenReturn(tool("derivar_recepcion", Map.of("reason", "Consulta clínica")));
@@ -1816,7 +1949,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.7");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.8");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

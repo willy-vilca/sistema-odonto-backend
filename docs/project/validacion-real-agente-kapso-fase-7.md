@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.7; control AUTO/generación 6. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial; 9 pacientes, 13 citas, 9 cargos y 11 movimientos. Se continúa con contacto compartido, supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
+**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.8; control AUTO/generación 8. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía Prueba Familia ya tiene una ficha provisional y una cita WHATSAPP/CONFIRMED el 20/10 09:00–10:00, con contacto responsable; 10 pacientes, 14 citas, 9 cargos y 11 movimientos. Se continúa con el segundo hijo, supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
 
 ## Estado inicial
 
@@ -249,6 +249,36 @@ Ejecución `84a22bbc-9311-4083-81d7-e6b3d5cb1f36`, secuencia 61, KAPSO/COMPLETED
 Verificar_paciente identificó Lucía Prueba Familia, GUARDIAN, provisional=true y patient_id vacío; no reutilizó la ficha de Willy. Un HTTP 400/tool_use_failed intermedio se registró como TOOL_GENERATION y se recuperó en el segundo intento, conservando la verificación ya realizada. Consultar_servicios devolvió Limpieza dental, S/ 200 y 60 minutos; consultar_horarios calculó las tres opciones con Julia. No se ejecutó creación de ficha/cita ni se ocultó el rechazo intermedio.
 
 Contexto KAPSO: patient_name Lucía Prueba Familia, relationship GUARDIAN y patient_id/appointment_id vacíos. No existen todavía fichas Prueba Familia; siguen 9 pacientes, 13 citas, 9 cargos y 11 movimientos, AUTO/generación 6. La cita anterior de Willy sigue CANCELLED/versión 2/tres historiales. Se solicita elegir 20/10 a las 09:00 para Lucía, sin confirmar todavía; debe preparar el resumen de la hija y volver a comprobar disponibilidad al confirmar. El bloque completo de dos hijos aún está pendiente.
+
+## Prueba 14: elegir horario para Lucía — aprobada tras corrección
+
+El participante eligió 20/10/2026 09:00 para la limpieza de su hija Lucía Prueba Familia con Julia, confirmando ser padre y responsable. Recibió «Voy a derivar tu consulta a recepción para que una persona pueda ayudarte. El asistente queda pausado».
+
+Secuencia 62, ejecución `ab448654-6ff4-4d25-bfc2-3b8720effbb2`, KAPSO/COMPLETED y respuesta READ, un intento y dos inferencias aceptadas. Verificar_paciente fue REJECTED por permiso; después derivar_recepcion OK. No hubo error de cuota. Los argumentos rechazados están redactados y no permiten afirmar el nombre concreto seleccionado por el modelo. La prueba funcional falló; no se preparó propuesta, ficha ni cita real de Lucía. El contexto conservaba Lucía/GUARDIAN y el control pasó a HANDOFF/generación 7. Agenda, historial y finanzas intactos.
+
+Corrección supervised-v7.8: continuidad explícita del mismo hijo en el mismo canal, revalidada mediante la herramienta central; selección nueva o ambigua no hereda el hijo anterior. Identidad y resultado persistidos antes de inferencia. Instrucciones separan nombre del hijo y responsable; respuestas que solicitan IDs internos se bloquean y se recuperan con herramientas. 86 regresiones aprobadas y empaquetado correcto. Una reproducción APP_TEST detectó primero la pregunta improcedente por slot_id; la vista previa final Groq real `a0c5e549-f79a-46c3-bb2c-6e226b4d6ad6` preparó el resumen correcto en 2,589 segundos, tres inferencias y sin errores/cambios/envíos. No se presenta esa preparación administrativa de prueba como conversación íntegra de WhatsApp.
+
+Backend actualizado, AUTO/generación 8 tras devolver solo la derivación automática conocida con comprobaciones y auditoría. No tareas antiguas pendientes; requiere mensaje nuevo. Se solicita repetir la elección para Lucía, sin confirmar todavía. La repetición y la reserva real continúan pendientes. [Diagnóstico, regresiones y límites](identidad-responsables-agente-fase-7.md).
+
+### Repetición real y propuesta correcta
+
+El participante repitió la elección y recibió el resumen correcto de Lucía Prueba Familia/Limpieza dental/Julia/martes 20/10/2026 09:00/60 minutos, con código 414B310E y solicitud de confirmación. No pidió identificadores internos ni seleccionó al responsable como paciente.
+
+Ejecución `a9be0c9e-78d0-4480-85a5-92e991da92ce`, secuencia 67, KAPSO/COMPLETED, supervised-v7.8, dos intentos y cuatro inferencias aceptadas; 9 043 tokens de entrada y 246 de salida. Entrada `8caa6346-4e74-4a98-b2de-3b681828d249`; respuesta `cbfffb8e-4f8b-4865-bdfe-2310579fda8a`, READ. Esta repetición sí tuvo un HTTP 429/TOKENS_PER_MINUTE con espera de cinco segundos antes de proponer; recuperó la ejecución conservando identidad, servicio y horario, sin volver a ejecutar las herramientas completadas. No confundir esa incidencia recuperada con la causa del fallo previo de la secuencia 62. Respuesta persistida a los 13,135 segundos desde el registro de ejecución.
+
+Verificó Lucía/GUARDIAN como provisional; consultó servicio vigente, horario exacto 09:00 y preparó propuesta `414b310e-851a-42ab-87df-f96a36617880`, KAPSO/PENDING, sin patient_id ni appointment_id. Creada 19:25:11, vence 19:55:11 Lima. Cita todavía no creada; pacientes/citas/cargos/movimientos 9/13/9/11, AUTO/generación 8. Se solicita «CONFIRMO 414B310E» para verificar creación coherente de ficha provisional y cita de la hija, con contacto responsable y sin cargos. Esa aceptación y el segundo hijo todavía están pendientes.
+
+## Prueba 15: confirmar la reserva de Lucía — aprobada
+
+El participante envió «CONFIRMO 414B310E» y recibió confirmación de Lucía Prueba Familia/Limpieza/Julia/martes 20/10/2026 09:00/60 minutos, referencia `5d766bea-1d54-4c6f-bf92-c31651e41d0e`.
+
+Ejecución `bbf32802-dcfe-4e47-8bc8-921ffe4240cd`, secuencia 68, KAPSO/COMPLETED, supervised-v7.8, un intento, cero inferencias/tokens. Entrada `e72f57f2-ea2e-42ed-9b9c-1edf4e926b08`; respuesta `ac4b2dec-f9d9-4839-94a5-faa1d039eb33`, READ y sin error. Crear_cita_confirmada OK; respuesta persistida a los 5,509 segundos del registro de ejecución.
+
+Se creó exactamente una ficha Lucía Prueba Familia, `bf95319a-999e-486c-9823-8b2d0d126d22`, provisional=true. Contacto `02111c34-ef3d-4b3a-be3b-51726d5f7c08`, teléfono del participante, nombre administrativo Willy, relación Tutor WhatsApp, guardian=true y payer=true. El paciente de la atención es Lucía, no el padre. El nombre completo del responsable y demás datos de la ficha provisional pueden completarse desde Pacientes; el perfil de WhatsApp no sustituye la verificación paciente/relación.
+
+Una cita WHATSAPP/CONFIRMED, versión 0, 20/10 09:00–10:00, 60 minutos y un historial CREATED; propuesta 414B310E CONFIRMED y vinculada a esa cita. Pacientes/citas/cargos/movimientos 10/14/9/11: aumentaron solo una ficha y una reserva, sin cargos ni dinero. AUTO/generación 8; Willy permanece cancelado con su historia conservada. No se repite otra confirmación de creación: esa idempotencia ya se probó en fase 6 y cambios/cancelación en fase 7.
+
+Se solicita ahora reservar para «mi otro hijo», omitiendo deliberadamente el nombre, para comprobar que lo pregunte y no reutilice a Lucía. Después se identificará al segundo hijo ficticio Mateo Prueba Familia y se confirmará otro horario. El bloque completo de contacto compartido todavía no se considera terminado.
 
 ## Casos restantes
 

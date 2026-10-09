@@ -7,6 +7,7 @@ import java.text.Normalizer;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +83,36 @@ public class AgentIdentityService {
     result.put("relationship", relationship);
     result.put("provisional", patient == null);
     return result;
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<Map<String, String>> continuationArguments(AgentRun run) {
+    var message = inbox.message(run.messageId(), false).orElseThrow();
+    return supervision
+        .verified(run.conversationId(), message.source(), clock.instant())
+        .filter(binding -> "GUARDIAN".equals(binding.get("relationship")))
+        .filter(
+            binding ->
+                Pattern.compile("\\bmi hij[oa]\\b")
+                        .matcher(normalize(message.body()))
+                        .results()
+                        .count()
+                    == 1)
+        .filter(
+            binding ->
+                Pattern.compile(
+                        "\\bmi hij[oa] "
+                            + Pattern.quote(normalize(binding.get("patient_name").toString()))
+                            + "(?:$| (?:soy|el|con|para|por|a las)\\b)")
+                    .matcher(normalize(message.body()))
+                    .find())
+        .map(
+            binding ->
+                Map.of(
+                    "patient_name",
+                    binding.get("patient_name").toString(),
+                    "relationship",
+                    "GUARDIAN"));
   }
 
   @Transactional
