@@ -1,8 +1,10 @@
 package com.odontocare.whatsapp.controller;
 
 import com.odontocare.shared.pagination.*;
+import com.odontocare.whatsapp.dto.ChatQuery;
 import com.odontocare.whatsapp.dto.WhatsAppContracts.*;
 import com.odontocare.whatsapp.model.WhatsAppConversation;
+import com.odontocare.whatsapp.service.ChatTimelineService;
 import com.odontocare.whatsapp.service.WhatsAppConversationService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/whatsapp")
 public class WhatsAppController {
   private final WhatsAppConversationService service;
+  private final ChatTimelineService timeline;
 
-  public WhatsAppController(WhatsAppConversationService service) {
+  public WhatsAppController(WhatsAppConversationService service, ChatTimelineService timeline) {
     this.service = service;
+    this.timeline = timeline;
   }
 
   @GetMapping("/connection")
@@ -50,6 +54,12 @@ public class WhatsAppController {
   @PreAuthorize("hasAuthority('WHATSAPP_WRITE')")
   public Message send(@PathVariable UUID id, @Valid @RequestBody SendRequest request) {
     return service.enqueue(id, request.body(), request.requestKey(), false);
+  }
+
+  @GetMapping("/conversations/{id}/timeline")
+  @PreAuthorize("hasAuthority('WHATSAPP_READ')")
+  public ChatPage timeline(@PathVariable UUID id, @Valid @ModelAttribute ChatQuery query) {
+    return timeline.messages(id, query);
   }
 
   @PostMapping("/conversations/{id}/test-reply")

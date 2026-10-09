@@ -110,6 +110,11 @@ public class KapsoMessagingService {
       return Message.of(old);
     }
     var conversation = repository.conversation(conversationId, true).orElseThrow();
+    if (config.isAgentEnabled() && ai.isEnabled()) {
+      supervision.initialize(conversationId, "KAPSO");
+      if (!"HUMAN".equals(supervision.control(conversationId, true).get("mode")))
+        throw ApiException.conflict("Asume la conversación antes de enviar una respuesta manual.");
+    }
     requireReplyAllowed(conversation);
     var now = Instant.now();
     var message = repository.enqueue(conversationId, body, key, now);

@@ -1,6 +1,6 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 8 de octubre de 2026. Versión del plan: 3.11. Alcance de referencia: versión 1.9 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 9 de octubre de 2026. Versión del plan: 3.12. Alcance de referencia: versión 1.10 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fases 8 y 9 pendientes de desarrollo e instrucción del usuario. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).
 
@@ -9,6 +9,9 @@ Ajustes previos a la revisión general completados el 02/10/2026: consulta de de
 Revisión general preparada el 02/10/2026, antes de fase 6: [guía secuencial de las fases 0 a 5](guia-pruebas-manuales-fases-0-a-5.md), [registro de resultados](registro-revision-manual.md) y archivos ficticios en datos-prueba. La guía contrasta las funciones actuales, reutiliza cinco pacientes e incluye variantes de clínica y finanzas, resultados esperados y comprobaciones por roles/tamaños. Su preparación no declara aprobada la ejecución manual. Las incidencias críticas que aparezcan se corregirán antes de avanzar con funciones dependientes.
 
 Revisión del usuario el 05/10/2026: informa que realizó aproximadamente toda la guía y que las funciones probadas parecen correctas. No se asigna aprobación individual a los bloques pendientes de registrar. Se completan sus dos ajustes: resumen de tres servicios con consulta completa remota y mes con tres citas por día más lista paginada y detalle reutilizado. 18 pruebas del servidor y 17 del navegador aprobadas; compilación, lint, formato y revisión visual en tres tamaños aprobados. Validación y límites en [ajustes de servicios y calendario](ajustes-listas-agenda-odontologos.md). La integración completa de fase 6 permanece pendiente.
+
+
+Ajuste autorizado del 09/10/2026, posterior al cierre de fases 6 y 7: interfaz de WhatsApp enfocada en atención, chat con carga por cursor, envío humano integrado, historial del asistente e información técnica secundarios. Limpieza de avisos de desarrollo en todas las páginas habituales. Se conserva la automatización y se refuerza el envío manual con control humano en el servidor. Trabajo en main; fase 8 sigue pendiente. [Uso y verificación](mejoras-interfaz-whatsapp.md).
 
 ## 1. Objetivo y estrategia
 

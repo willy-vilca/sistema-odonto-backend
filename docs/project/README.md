@@ -1,5 +1,7 @@
 # Instantáneas de las guías maestras
 
+Estado al 09/10/2026: main en ambos repositorios, plan 3.12 y alcance 1.10. Fases 6 y 7 cerradas; fase 8 pendiente. [Interfaz de atención de WhatsApp](mejoras-interfaz-whatsapp.md): chat con cursores, envío humano y vistas secundarias de información/historial. Regresión backend: 213 casos aprobados. Las notas anteriores de pruebas o fases pendientes son históricas.
+
 Las fuentes vigentes están en la raíz compartida: AGENTS.md, docs/propuesta-alcance-sistema-odontologico.md, docs/plan-desarrollo-sistema-odontologico.md, los cierres de fase y el prompt maestro del usuario.
 
 Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 08/10/2026; plan 3.11 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.

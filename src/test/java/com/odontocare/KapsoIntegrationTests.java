@@ -71,12 +71,14 @@ class KapsoIntegrationTests {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
-        "TRUNCATE agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
+        "TRUNCATE"
+            + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
             + " kapso_webhook_event,kapso_message,kapso_conversation,agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
     jdbc.update("DELETE FROM role_permission");
     for (var permission : Permission.values())
       jdbc.update("INSERT INTO role_permission VALUES('ADMIN',?)", permission.name());
     config.setEnabled(true);
+    config.setAgentEnabled(false);
     config.setWorkerEnabled(false);
     config.setApiKey("kapso-private-test-key");
     config.setWebhookSecret(SECRET);
@@ -103,6 +105,140 @@ class KapsoIntegrationTests {
     ai.setWorkerEnabled(false);
     config.setWorkerEnabled(false);
     twilioConfig.setWorkerEnabled(false);
+  }
+
+  @Test
+  void chatCursorsKeepArrivalOrderWithoutSkippingConcurrentMessagesOrSimulation() throws Exception {
+    receive("Primero");
+    receive("Segundo");
+    receive("Tercero");
+    String path = API + "/conversations/" + conversation() + "/timeline";
+    var latest = call(get(path).param("size", "2"), admin, null, 200);
+    assertThat(latest.path("items").size()).isEqualTo(2);
+    assertThat(latest.path("items").get(0).path("message").path("body").asString())
+        .isEqualTo("Segundo");
+    assertThat(latest.path("items").get(1).path("message").path("body").asString())
+        .isEqualTo("Tercero");
+    assertThat(latest.path("hasMore").asBoolean()).isTrue();
+    long before = latest.path("before").asLong(), after = latest.path("after").asLong();
+    receive("Cuarto");
+    repository.testInbound(
+        conversation(), "Simulación invisible en el chat", UUID.randomUUID(), Instant.now());
+    var older =
+        call(get(path).param("before", Long.toString(before)).param("size", "2"), admin, null, 200);
+    assertThat(older.path("items").size()).isEqualTo(1);
+    assertThat(older.path("items").get(0).path("message").path("body").asString())
+        .isEqualTo("Primero");
+    assertThat(older.path("hasMore").asBoolean()).isFalse();
+    var newer =
+        call(get(path).param("after", Long.toString(after)).param("size", "1"), admin, null, 200);
+    assertThat(newer.path("items").size()).isEqualTo(1);
+    assertThat(newer.path("items").get(0).path("message").path("body").asString())
+        .isEqualTo("Cuarto");
+    assertThat(newer.path("hasMore").asBoolean()).isFalse();
+    assertThat(count("agent_run")).isZero();
+    verifyNoInteractions(sender, model);
+  }
+
+  @Test
+  void chatFiltersAreLiteralAndDeliveryStatesRefreshFromPersistence() throws Exception {
+    receive("Precio 10%_especial ñ 😀");
+    receive("Precio 1000especial");
+    UUID sent = send("Mensaje manual", UUID.randomUUID());
+    jdbc.update("UPDATE kapso_message SET status='READ' WHERE id=?", sent);
+    String path = API + "/conversations/" + conversation() + "/timeline";
+    var literal = call(get(path).param("search", "10%_especial"), admin, null, 200);
+    assertThat(literal.path("items").size()).isEqualTo(1);
+    assertThat(literal.path("items").get(0).path("message").path("body").asString())
+        .contains("ñ 😀");
+    var read =
+        call(
+            get(path).param("messageDirection", "OUTBOUND").param("status", "READ"),
+            admin,
+            null,
+            200);
+    assertThat(read.path("items").size()).isEqualTo(1);
+    assertThat(read.path("items").get(0).path("message").path("id").asString())
+        .isEqualTo(sent.toString());
+    assertThat(
+            call(
+                    get(path).param("messageDirection", "INBOUND").param("status", "READ"),
+                    admin,
+                    null,
+                    200)
+                .path("items")
+                .size())
+        .isZero();
+  }
+
+  @Test
+  void chatRejectsUnboundedQueriesInvalidCursorsAndOtherNumbers() throws Exception {
+    receive("Hola");
+    String path = API + "/conversations/" + conversation() + "/timeline";
+    for (var param :
+        List.of(
+            Map.of("size", "51"),
+            Map.of("size", "0"),
+            Map.of("before", "-1"),
+            Map.of("status", "INVENTED"),
+            Map.of("messageDirection", "ANY"),
+            Map.of("before", "1", "after", "2"),
+            Map.of("search", "a".repeat(161)))) {
+      var request = get(path);
+      param.forEach(request::param);
+      call(request, admin, null, 400);
+    }
+    call(get(path), null, null, 401);
+    jdbc.update(
+        "UPDATE kapso_conversation SET phone_number_id='999999' WHERE id=?", conversation());
+    call(get(path), admin, null, 404);
+  }
+
+  @Test
+  void newManualRepliesRequireHumanControlButRepeatedAcceptedRequestsStayIdempotent()
+      throws Exception {
+    receive("Hola");
+    config.setAgentEnabled(true);
+    String path = API + "/conversations/" + conversation();
+    var body = Map.of("body", "Recepción responde", "requestKey", UUID.randomUUID());
+    call(post(path + "/messages").with(csrf()), admin, body, 409);
+    var context = call(get(path + "/supervision"), admin, null, 200);
+    call(
+        post(path + "/control").with(csrf()),
+        admin,
+        Map.of(
+            "mode",
+            "HUMAN",
+            "reason",
+            "Atención manual",
+            "generation",
+            context.path("generation").asLong()),
+        200);
+    var reply = call(post(path + "/messages").with(csrf()), admin, body, 200);
+    context = call(get(path + "/supervision"), admin, null, 200);
+    call(
+        post(path + "/control").with(csrf()),
+        admin,
+        Map.of(
+            "mode",
+            "AUTO",
+            "reason",
+            "Fin de atención",
+            "generation",
+            context.path("generation").asLong()),
+        200);
+    assertThat(call(post(path + "/messages").with(csrf()), admin, body, 200).path("id").asString())
+        .isEqualTo(reply.path("id").asString());
+    call(
+        post(path + "/messages").with(csrf()),
+        admin,
+        Map.of("body", "Otra respuesta", "requestKey", UUID.randomUUID()),
+        409);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM kapso_message WHERE direction='OUTBOUND'", Long.class))
+        .isEqualTo(1);
+    verifyNoInteractions(sender, model);
   }
 
   @Test

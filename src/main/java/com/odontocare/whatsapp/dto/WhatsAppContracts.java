@@ -25,6 +25,11 @@ public final class WhatsAppContracts {
 
   public record TestReplyRequest(@NotNull UUID requestKey) {}
 
+  public record ChatItem(long sequence, Message message) {}
+
+  /** Items always run from oldest to newest; hasMore follows the requested cursor direction. */
+  public record ChatPage(List<ChatItem> items, Long before, Long after, boolean hasMore) {}
+
   public record Message(
       UUID id,
       UUID conversationId,

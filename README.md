@@ -1,5 +1,7 @@
 # OdontoCare — backend
 
+Actualización 09/10/2026: desarrollo en main, alcance 1.10 y plan 3.12. Chat de WhatsApp con cursores del servidor y envío manual protegido por atención humana. [Uso de la nueva interfaz y verificación](docs/project/mejoras-interfaz-whatsapp.md). Regresión actual: 213 pruebas aprobadas; se conservan los cierres de fases 6 y 7 y la fase 8 permanece pendiente.
+
 Fases 0 a 7: configuración, pacientes, agenda, clínica, archivos, tratamientos, finanzas y agente por WhatsApp con Kapso/Groq. Reserva, cambios/cancelación, atención humana y recuperación con bitácora; fase 7 validada con WhatsApp real el 08/10/2026 y 209 pruebas backend finales. [Cierre de fase 7](docs/project/cierre-fase-7.md). Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.
 
 ## Inicio local
