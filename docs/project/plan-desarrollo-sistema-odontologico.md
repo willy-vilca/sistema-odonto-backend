@@ -312,6 +312,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Horario y texto del agente guardados desde la interfaz.** Política versión 2, jornada Lunes 09:00–10:00 y mensaje personalizado de fuera de horario, demás campos conservados y cambio auditado al usuario. Conversación todavía cerrada y datos intactos. Se solicita devolver y enviar una entrada nueva para comprobar respuesta; entrega y restauración pendientes, fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Horario y texto editables: entrega real aprobada.** Secuencia 84/c16703a7-7044-4f5c-8015-44936a634f25 COMPLETED/READ, cero inferencias/tokens: envió exactamente el texto configurado y derivó OUTSIDE_HOURS, sin reservas. Secuencia 83 retirada sin ejecución; datos conservados. Se solicita restaurar la configuración original y devolver control desde la interfaz antes de cerrar fase 7; restauración y cierre documental pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
