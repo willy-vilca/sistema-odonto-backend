@@ -394,13 +394,19 @@ El participante cerró desde la interfaz, motivo «Prueba de cierre fase 7», y 
 
 Entrada `ea1e3cf8-dbeb-47a8-99b6-6e7a331af7b2`, KAPSO/INBOUND/RECEIVED, 23:06:41 Lima. Ejecución `0dc321e9-38b3-4565-9f35-90c198997039`, secuencia 83, PAUSED/control_generation 18, cero pasos/tokens y ninguna respuesta asociada. No se reabrió automáticamente la conversación ni se creó reserva. Siguen 50 salidas y cifras 11/15/9/11, política original versión 0/jornadas vacías intacta. Las entradas se conservan para atención humana; volver a automatizar requiere devolución desde la interfaz.
 
-## Prueba 28: horario y texto editables — preparación solicitada
+## Prueba 28: horario y texto editables — configuración aprobada, entrega/restauración pendientes
 
 Configuración original registrada: enabled=true, schedule=[], changeLeadMinutes=0, allowReschedule/allowCancel=true. closedText «El asistente está fuera de su horario. Tu mensaje queda pendiente para recepción». Los otros tres textos se conservan. Política original versión 0, huella fbdde5cddd35bdd74da4d08edb53059a.
 
 Se solicita desde WhatsApp → Reglas del agente añadir únicamente Lunes 09:00–10:00 y cambiar Fuera de horario a «Gracias por escribirnos. El asistente está fuera de horario. Recepción revisará tu solicitud en su siguiente jornada.», manteniendo atención automática habilitada y demás valores. Esta jornada excluye el momento actual también si la sesión pasa a la madrugada del viernes. Guardar y avisar sin devolver aún la conversación cerrada. Configuración real, entrega del mensaje y restauración todavía pendientes.
 
 Después de comprobar, restaurar schedule=[] y el texto original desde la interfaz, conservar demás valores y verificar igualdad funcional; versión y auditoría cambiarán legítimamente. No alterar horarios de los profesionales ni sus reservas.
+
+### Configuración real comprobada
+
+El participante guardó desde la interfaz. Política versión 2: enabled=true, una jornada dayOfWeek=1/startMinute=540/endMinute=600, texto de fuera de horario personalizado exacto. Los demás valores y tres textos se conservaron. Auditoría más reciente `d795bd95-1a8c-44ef-b978-c9dd5eed5dc8`, AGENT_POLICY_UPDATED, actor Willy Vilca Huaytalla, 23:11:02 Lima. La versión observada es 2; no se afirma que hubo un solo guardado.
+
+Conversación todavía CLOSED/generación 18 y secuencia 83 PAUSED sin pasos/tokens/respuesta. Momento de comprobación: jueves 08/10/2026 23:11 Lima, fuera de la jornada del lunes; datos 11/15/9/11 conservados. Se solicita devolución desde la interfaz y una entrada nueva «Quiero una cita», que debe recibir el texto personalizado y derivar por OUTSIDE_HOURS sin modelo ni reservas. Entrega y restauración aún pendientes.
 
 ## Casos restantes
 

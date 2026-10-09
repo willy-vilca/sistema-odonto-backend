@@ -310,6 +310,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Cierre real aprobado; configuración final en prueba.** El usuario cerró desde la interfaz (CLOSED/generación 18, auditado). Entrada posterior secuencia 83 PAUSED, cero inferencias/pasos y sin respuesta/reserva; historial conservado. Se solicita horario del agente Lunes 09:00–10:00 y texto temporal de fuera de horario desde la interfaz, después restaurar jornadas vacías y texto original. Configuración, entrega y restauración pendientes; fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Horario y texto del agente guardados desde la interfaz.** Política versión 2, jornada Lunes 09:00–10:00 y mensaje personalizado de fuera de horario, demás campos conservados y cambio auditado al usuario. Conversación todavía cerrada y datos intactos. Se solicita devolver y enviar una entrada nueva para comprobar respuesta; entrega y restauración pendientes, fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
