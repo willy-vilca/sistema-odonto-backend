@@ -300,6 +300,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Dos hijos del mismo contacto: bloque real aprobado.** Secuencia 75/9a9a76d1-1032-44cb-be05-098caebc889a COMPLETED/READ y cero inferencias: se confirmó Mateo de 10:00 a 11:00, conservando Lucía de 09:00 a 10:00. Dos fichas provisionales y citas distintas, un contacto guardian/payer compartido, sin deuda por reservar. Cifras 11 pacientes/15 citas/9 cargos/11 movimientos; control AUTO/generación 10. Se solicita asumir desde la interfaz para iniciar supervisión real; fase 7 sigue abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Atención humana: toma y pausa reales aprobadas.** El usuario asumió desde la interfaz, actor Willy Vilca Huaytalla auditado, HUMAN/generación 11. Entrada real de cambio de Mateo: secuencia 76, PAUSED, cero inferencias/pasos y sin respuesta automática; mensaje conservado y citas/finanzas intactas. Se pide respuesta manual y después devolución; el ensayo de interrumpir una inferencia sigue identificado como interno. Fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
