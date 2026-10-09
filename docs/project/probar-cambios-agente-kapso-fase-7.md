@@ -1,13 +1,13 @@
 # Guía de demostración real: fase 7
 
-Preparada el 07/10/2026. **Consulta propia y disponibilidad reales comprobadas; demostración reanudada el 08/10/2026.** El último intento de preparar el cambio falló, se corrigió y se verificó internamente con Groq. Se respetó la ausencia del participante; ahora regresó y autorizó continuar. Backend/frontend comprobados y cita original intacta. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md) y [el punto exacto para retomar](diagnostico-groq-reserva-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
+Preparada el 07/10/2026, actualizada el 08/10/2026. **Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición y conflicto con agenda manual comprobados realmente.** La cita de Willy está ahora el martes 20/10/2026 09:00–10:00; la ocupación temporal de las 11:00 ya se canceló conservando su historial. Se continúa con cancelación, contacto compartido y supervisión; no repetir los bloques ya aprobados salvo corrección de una incidencia. El orden puede adaptarse para completar primero un flujo relacionado. Consultar [la evidencia de cada intercambio](validacion-real-agente-kapso-fase-7.md); esta guía por sí sola no declara el cierre de fase 7.
 
 ## Preparación
 
 1. Mantener backend, frontend, receptor 8082 y ngrok activos. No cambiar las claves privadas. Abrir **WhatsApp** como administrador o recepción.
 2. En **Reglas del agente**, comprobar atención automática habilitada, reprogramación/cancelación permitidas y anticipación mínima que permita las fechas de prueba. Para esta demostración, dejar las jornadas vacías permite atención a cualquier hora; guardar sus valores anteriores si se cambian.
 3. Abrir la conversación del participante y comprobar **Agente activo**. Si aparece atención humana o derivación, **Devolver al agente**. Enviar después una instrucción nueva; no reutilizar una confirmación anterior.
-4. La referencia inicial conservada de fase 6 es `fc272d39-566d-4b65-a610-0302e86d50b5`: Willy Vilca Huaytalla, Limpieza dental, Julia Aracelly Huaytalla Alarcon, martes 13/10/2026 09:00–10:00. Antes de empezar, consultar agenda para comprobar que sigue igual. Si la fecha ya pasó, acordar una reserva nueva antes de probar cambios.
+4. La referencia conservada de fase 6 es `fc272d39-566d-4b65-a610-0302e86d50b5`: Willy Vilca Huaytalla, Limpieza dental, Julia Aracelly Huaytalla Alarcon. Comenzó el 13/10/2026 09:00–10:00 y ya se reprogramó realmente al martes 20/10/2026 09:00–10:00, CONFIRMED/versión 1. Los bloques anteriores conservan la fecha inicial como guion histórico; usar la fecha vigente para los casos restantes. Si ya pasó, acordar una reserva nueva antes de probar cambios.
 5. No enviar los pasos siguientes todos juntos. Esperar cada respuesta, comprobar su llegada al teléfono y comunicar el texto recibido. Se revisarán ejecución, herramientas, propuesta, cita e historial después de cada bloque.
 
 ## 1. Consultar una cita propia
@@ -73,9 +73,9 @@ Esta integridad ya está verificada internamente. La demostración real confirma
 
 Enviar:
 
-> Soy Willy Vilca Huaytalla. Quiero cancelar mi próxima limpieza dental con Julia Huaytalla porque estaré de viaje. Confirma primero qué cita vas a cancelar.
+> Soy Willy Vilca Huaytalla. La cita es para mí. Quiero cancelar mi limpieza dental con Julia Huaytalla del martes 20/10/2026 a las 09:00 porque estaré de viaje. Confirma primero qué cita vas a cancelar.
 
-Debe mostrar la cita vigente, motivo y resumen. Responder primero:
+Debe mostrar la cita vigente, motivo y resumen sin aplicarlo todavía. El «sí» ambiguo ya se comprobó en la reprogramación; repetirlo en cancelación sirve para revisar esa operación concreta si hace falta:
 
 > sí
 
@@ -83,7 +83,7 @@ No debe cancelar con ese mensaje ambiguo. Tras recibir el resumen, enviar:
 
 > Sí, confirmo la cancelación.
 
-Debe cancelar solo esa cita y conservar su historial. Repetir el mensaje no añade otra cancelación ni modifica pagos/deudas. Este paso cancela la cita de demostración; si se quiere conservarla para presentar la fase 6, acordar antes otra cita de prueba para este bloque.
+Debe cancelar solo esa cita y conservar su historial. Repetir el mensaje no añade otra cancelación ni modifica pagos/deudas. Este paso cancela la cita ficticia de demostración; la evidencia de fase 6 y la historia de la reserva permanecen conservadas.
 
 ## 7. Dos pacientes desde el contacto de su responsable
 

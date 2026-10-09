@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado: validación real reanudada por el participante el 08/10/2026. La fase 7 permanece abierta.** Se respetó el aplazamiento durante su ausencia. El usuario regresó y autorizó continuar los mensajes; backend v7.3 y frontend iniciados y comprobados, con receptor/ngrok ya activos. Control AUTO/generación 4, sin tareas en cola ni respuestas salientes pendientes. Cita original CONFIRMED/versión 0 y un evento de historial; 9 pacientes, 12 citas, 9 cargos y 11 movimientos. Se solicita una propuesta nueva completa antes de probar su rechazo; no confirmar códigos anteriores. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes.
+**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición y conflicto entre propuesta y confirmación aprobados. Backend v7.7; control AUTO/generación 6. La cita de Willy permanece CONFIRMED/versión 1, martes 20/10/2026 09:00–10:00, con dos eventos de historial. La ocupación manual temporal del ensayo de conflicto ya está CANCELLED y conserva su historial; 9 pacientes, 13 citas, 9 cargos y 11 movimientos. Se continúa con cancelación, contacto compartido, supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
 
 ## Estado inicial
 
@@ -190,7 +190,7 @@ La cita sigue CONFIRMED/versión 1, 20/10 09:00–10:00. Conserva dos eventos de
 
 Siguiente bloque: proponer otro horario libre del 20/10, sin confirmar; ocuparlo después mediante una cita manual temporal para otro paciente ficticio, y confirmar para comprobar conflicto con conservación de la cita del 20/10 09:00. No se crea la ocupación antes de recibir la propuesta. Tras verificar, cancelar únicamente la cita temporal con motivo de prueba, conservando su historial. No hay pruebas de carga sobre Kapso.
 
-## Prueba 10: propuesta y ocupación manual posterior — preparada
+## Prueba 10: conflicto entre propuesta y confirmación — aprobada
 
 El participante pidió el 20/10/2026 a las 11:00 con Julia, recibió la propuesta A4BC2579 y todavía no la confirmó. Ejecución `4ee9ab6f-9ad2-411b-8dc0-a942f9482855`, secuencia 56, COMPLETED/READ, un intento y sin error; 7 460 tokens de entrada y 283 de salida. Entrada `5942b9cc-5772-403e-91a0-629b99d10d84`; respuesta `1a2ca61a-ac5e-4852-a514-7081d853acba`. Respuesta persistida a los 7,203 segundos del registro de ejecución.
 
@@ -202,8 +202,28 @@ El ensayo comprobó igualdad de la fila completa de Willy antes/después, histor
 
 Tras verificar el conflicto se cancelará exclusivamente la temporal, conservando su historial, con motivo «Fin de prueba de concurrencia fase 7». Helper y registro ignorados: `.runtime/Phase7ManualConflict.java`, `.runtime/phase7-manual-conflict-created.log`. No hay pruebas de carga sobre Kapso.
 
+### Confirmación real rechazada y limpieza de la ocupación temporal
+
+El participante envió «CONFIRMO A4BC2579» antes de vencer la propuesta y recibió: «No se aplicó el cambio; la cita original se conserva. El intervalo está ocupado o no respeta la separación entre citas. Podemos consultar otro horario o pedir ayuda a recepción». No se divulgaron datos del paciente que ocupaba el horario.
+
+Ejecución `6276d0d5-f15a-4048-923b-9261e4f170d4`, secuencia 57, KAPSO/FAILED con BOOKING_VALIDATION, un intento y flujo supervised-v7.7. Es el rechazo esperado de una regla de agenda, no un fallo del modelo. Cero inferencias/tokens. Entrada `ce63672b-34fd-4a1f-84bf-99a03863435e`; respuesta `53f828e5-9c67-474c-862a-d5d755a0be9e`, READ y sin error de envío. Respuesta persistida a los 3,650 segundos del registro de ejecución. Propuesta A4BC2579 pasó a CONFLICT, sin aplicar el cambio.
+
+La cita original conservó íntegra su fecha 20/10 09:00–10:00, CONFIRMED/versión 1 y dos historiales, con exactamente un RESCHEDULED. Las propuestas anteriores de reserva y reprogramación permanecen CONFIRMED. Control AUTO/generación 6; 9 pacientes, 13 citas, 9 cargos y 11 movimientos. El agente no canceló primero la reserva original ni inventó una reprogramación exitosa.
+
+Después de comprobar el resultado se canceló exclusivamente la cita manual temporal `ec4a37c6-b4a3-47a2-b5c3-698dc9733612`, mediante AppointmentService.changeStatus y guardas de paciente, profesional, servicio, nota y clave de solicitud. CANCELLED/versión 1; conserva CREATED y CANCELLED, actor Sistema, motivo «Fin de prueba de concurrencia fase 7», a las 19:02:19 Lima. El ensayo verificó igualdad de la fila completa de Willy, su historial, pacientes, finanzas y mensajes salientes antes/después de la limpieza. Registro local ignorado `.runtime/phase7-manual-conflict-cancelled.log`. La fila temporal no se borra: permanecen 13 citas, una de ellas cancelada por este ensayo.
+
+La integridad ante ocupación manual posterior queda demostrada con confirmación real de WhatsApp. Se solicita preparar la cancelación de la cita vigente de Willy, identificando paciente/relación, fecha, hora, servicio, profesional y motivo; todavía no se aplica ni se considera aprobada esa cancelación.
+
+## Prueba 11: propuesta de cancelación — preparación aprobada, aplicación pendiente
+
+El participante envió «Soy Willy Vilca Huaytalla. La cita es para mí. Quiero cancelar mi limpieza dental con Julia Huaytalla del martes 20/10/2026 a las 09:00 porque estaré de viaje. Confirma primero qué cita vas a cancelar». Recibió el resumen correcto de cancelación de Willy/Limpieza/Julia/20/10 09:00, motivo de viaje, código CBE82DEB y solicitud de confirmación.
+
+Ejecución `19b9d1eb-7242-4cbd-ac13-d28a2ece2ba4`, secuencia 58, KAPSO/COMPLETED, un intento, supervised-v7.7, dos inferencias; 4 495 tokens de entrada y 122 de salida. Entrada `498c0af4-82bd-4839-8039-e79681a51245`; respuesta `77fd7245-eb84-46ce-a004-0b860b04ca55`, READ y sin error. Verificar_paciente SELF → consultar_mis_citas limitada al paciente → proponer_cancelacion → guardar_respuesta. 5,739 segundos desde registro de ejecución hasta respuesta persistida.
+
+Propuesta `cbe82deb-0707-4446-8c07-6959eaa45d2b`, CANCEL/PENDING, cita original `fc272d39-566d-4b65-a610-0302e86d50b5`, versión 1, motivo «estoy de viaje»; creada 19:03:29, vence 19:33:29 Lima. No se canceló ni se cambió la cita: permanece CONFIRMED/versión 1, 09:00–10:00 y dos historiales. AUTO/generación 6 y pacientes/citas/cargos/movimientos 9/13/9/11. El sí ambiguo ya quedó comprobado en reprogramación, sin repetir innecesariamente ese intercambio. Próximo mensaje solicitado: «Sí, confirmo la cancelación»; la aplicación efectiva y su repetición aún no se consideran aprobadas.
+
 ## Casos restantes
 
-Conflicto con agenda manual; cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
+Cancelación correcta e historial; dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
