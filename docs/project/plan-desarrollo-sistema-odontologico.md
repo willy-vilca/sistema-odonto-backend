@@ -290,6 +290,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Primera hija reservada realmente.** Secuencia 68/bbf32802-dcfe-4e47-8bc8-921ffe4240cd COMPLETED/READ y cero inferencias: 414B310E creó una ficha provisional Lucía y una cita WHATSAPP/CONFIRMED el 20/10 09:00–10:00 con Julia. Teléfono del padre como contacto guardian/payer, sin cargos. 10 pacientes/14 citas/9 cargos/11 movimientos. Se prueba ahora solicitud para otro hijo sin nombre antes de identificar a Mateo; contacto compartido completo y supervisión aún pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Segundo hijo sin nombre: pregunta real aprobada.** Secuencia69/ecf735b8-d341-46f6-8c29-28c48bb62d41 COMPLETED/READ: solicitó el nombre completo, no creó otra cita ni reutilizó a Lucía. Cita de la hija y finanzas conservadas. Se identifica ahora a Mateo y se consultan horarios; segunda reserva y supervisión pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

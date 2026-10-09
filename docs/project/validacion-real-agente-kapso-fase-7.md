@@ -280,6 +280,14 @@ Una cita WHATSAPP/CONFIRMED, versión 0, 20/10 09:00–10:00, 60 minutos y un hi
 
 Se solicita ahora reservar para «mi otro hijo», omitiendo deliberadamente el nombre, para comprobar que lo pregunte y no reutilice a Lucía. Después se identificará al segundo hijo ficticio Mateo Prueba Familia y se confirmará otro horario. El bloque completo de contacto compartido todavía no se considera terminado.
 
+## Prueba 16: otro hijo sin nombre — aprobada
+
+El participante pidió otra limpieza para «mi otro hijo», con Julia el 20/10 por la mañana y relación de padre/responsable, sin informar el nombre. Recibió «Para poder reservar la cita necesito saber el nombre completo de tu otro hijo. Por favor indícalo».
+
+Ejecución `ecf735b8-d341-46f6-8c29-28c48bb62d41`, secuencia 69, KAPSO/COMPLETED, supervised-v7.8, un intento y dos inferencias aceptadas; 3 917 tokens de entrada, 92 de salida. Entrada `c242f0a0-5622-4c92-8304-f2b7e144754c`; respuesta `2e6a9e70-e46a-416d-8d75-5c219aadd865`, READ. Se conserva el intento intermedio verificar_paciente REJECTED; el agente terminó preguntando el dato faltante, sin reservar ni derivar. Respuesta persistida a los 3,993 segundos del registro de ejecución.
+
+Lucía conserva CONFIRMED/versión 0 y un historial. Permanecen 10 pacientes, 14 citas, 9 cargos y 11 movimientos, AUTO/generación 8. La solicitud nueva no reutilizó a Lucía para crear otra cita. Se solicita nombre explícito Mateo Prueba Familia, relación de padre/responsable y consulta de horarios del 20/10 con Julia; todavía sin elegir ni confirmar. La segunda reserva sigue pendiente.
+
 ## Casos restantes
 
 Dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
