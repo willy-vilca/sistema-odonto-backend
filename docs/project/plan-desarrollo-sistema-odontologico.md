@@ -306,6 +306,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Devolución, reanudación, privacidad y consulta clínica reales aprobadas.** La devolución desde la interfaz retiró la secuencia 76 sin reejecutarla ni cambiar reservas. Una consulta nueva falló al confundir búsqueda de ficha con consulta de citas; v7.10 requiere verificación y lectura real, 93 casos distintos del agente comprobados y vista previa Groq correcta. Repetición real secuencia 79 mostró solo Mateo con una inferencia. Secuencia 80 derivó la petición de datos ajenos/cambio de reglas sin consultarlos ni modificar política; secuencia 81 usó el texto clínico configurado, sin modelo/receta/expediente. HANDOFF/generación 15, cifras 11/15/9/11 conservadas. Reclamo, cierre y horarios reales pendientes; fase 7 abierta. [Diagnóstico](consulta-citas-propias-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Reclamo real derivado y pausado.** Secuencia 82/ea8fd557-b28e-4b99-90c2-71879671b93e COMPLETED/READ, cero inferencias/tokens: mensaje configurado y HANDOFF/generación 17, sin lectura/cambios de datos. Política original conservada. Cierre y horario/texto configurables reales pendientes; fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

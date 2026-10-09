@@ -2,7 +2,7 @@
 
 Sesión iniciada el 07/10/2026, zona America/Lima. Backend y frontend en rama `kapso`; Groq `openai/gpt-oss-20b`, flujo `supervised-v7.0`, Kapso Sandbox. El participante envía los mensajes desde su propio WhatsApp y confirma aquí el contenido recibido. No se registran credenciales ni razonamientos internos.
 
-**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.10; control HANDOFF/generación 15 por consulta clínica, sin usuario asignado. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
+**Estado vigente al 08/10/2026: fase 7 en validación real, todavía abierta.** Consulta propia, disponibilidad, negación, código descartado, reprogramación, repetición, conflicto entre propuesta y confirmación, cancelación expresa y cancelación repetida aprobados. Backend v7.10; control HANDOFF/generación 17 por reclamo, sin usuario asignado. La cita de Willy está CANCELLED/versión 2, martes 20/10/2026 09:00–10:00, conservando tres eventos de historial. La ocupación manual temporal del ensayo de conflicto también está CANCELLED y conserva su historial. Lucía y Mateo Prueba Familia tienen fichas provisionales distintas y citas WHATSAPP/CONFIRMED el 20/10 de 09:00–10:00 y 10:00–11:00, con el mismo contacto responsable; 11 pacientes, 15 citas, 9 cargos y 11 movimientos. Contacto compartido aprobado; se continúa con supervisión y límites. Las comprobaciones internas se conservan en [implementación y resultados](gestion-conversaciones-agente-fase-7.md); esta evidencia no sustituye casos todavía pendientes. Los apartados anteriores conservan los estados observados en cada momento.
 
 ## Estado inicial
 
@@ -380,8 +380,16 @@ Ejecución `69e0a54b-0638-430f-a78e-bcc6323b49a0`, secuencia 81, COMPLETED/READ,
 
 HANDOFF/generación 15, razón CLINICAL_REQUEST, sin usuario asignado. Auditoría de derivación `dc126bfa-1a55-40fc-9096-21a34cff5bfa`, actor Agente IA, 22:56:40 Lima. La alerta es la derivación visible para recepción en la aplicación; no se afirma un aviso externo por correo u otro chat. Política conserva la huella fbdde5cddd35bdd74da4d08edb53059a y cifras 11/15/9/11 intactas. Se solicita al participante devolver desde la interfaz para probar un reclamo; no hacerlo automáticamente.
 
+## Prueba 26: reclamo y solicitud de recepción — aprobada
+
+El participante devolvió el control desde la interfaz para el ensayo de reclamo y envió «Quiero hablar con recepción porque necesito hacer un reclamo». Recibió el mensaje administrativo configurado y la pausa del agente.
+
+Ejecución `ea8fd557-b28e-4b99-90c2-71879671b93e`, secuencia 82, COMPLETED/READ, supervised-v7.10, un intento y cero inferencias/tokens. Entrada `889fe354-e655-4415-bb2f-5a218b317444`; respuesta `43aab7c5-13b0-4d2d-b7c3-a460042d5fe9`. Solo guardar_respuesta; no consultas o modificaciones de cita, expediente o finanzas. Respuesta persistida a los 5,453 segundos del registro de ejecución.
+
+HANDOFF/generación 17, PATIENT_REQUEST, sin usuario asignado. Política intacta, versión 0, jornadas vacías, habilitada y cambios/cancelaciones permitidos; huella fbdde5cddd35bdd74da4d08edb53059a. Cifras 11/15/9/11 y 50 mensajes salientes totales. Se solicita cerrar desde la interfaz, motivo «Prueba de cierre fase 7», y enviar una entrada para comprobar persistencia sin automatización; cierre aún pendiente. No devolver el control por cuenta propia.
+
 ## Casos restantes
 
-Reclamo, cierre de conversación y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión. Toma/pausa/respuesta manual/devolución y reanudación reales, contacto compartido, límites de datos/reglas y derivación clínica ya comprobados.
+Cierre de conversación y horario/texto configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión. Toma/pausa/respuesta manual/devolución y reanudación reales, contacto compartido, límites de datos/reglas, derivación clínica y reclamo ya comprobados.
 
 No se declara cierre ni cumplimiento completo de A25/A26 hasta resolver las comprobaciones críticas pendientes.
