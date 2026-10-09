@@ -2,7 +2,7 @@
 
 Las fuentes vigentes están en la raíz compartida: AGENTS.md, docs/propuesta-alcance-sistema-odontologico.md, docs/plan-desarrollo-sistema-odontologico.md, los cierres de fase y el prompt maestro del usuario.
 
-Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 08/10/2026; plan 3.8 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
+Esta carpeta conserva copias exactas en Git. PROJECT_GUIDE.md corresponde a AGENTS.md; PROMPT-MAESTRO.txt conserva el texto original. Son instantáneas de respaldo, no guías independientes. Sincronizarlas cuando cambien las fuentes. Actualización: 08/10/2026; plan 3.9 y alcance 1.9. Fase 6 y A22 completados mediante reserva real con Kapso/Groq y respuesta READ. [Cierre](cierre-fase-6.md) y [trazas individuales](validacion-real-agente-kapso-fase-6.md). Los apuntes siguientes conservan el recorrido histórico de los tramos anteriores.
 
 Se conservan los cierres de fases 0 a 5, las decisiones de agenda, clínica, tratamientos y finanzas, y el procedimiento de respaldo preparado. La restauración integral sigue pendiente de fase 9. La recepción y salida real de plantillas de WhatsApp fueron confirmadas por el usuario; texto propio y demostración completa por WhatsApp siguen pendientes; el prototipo del agente ya se verificó. A22 no se declara cumplida.
 

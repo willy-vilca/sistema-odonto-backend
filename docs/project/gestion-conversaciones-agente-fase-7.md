@@ -106,3 +106,7 @@ Pendiente: [demostración real de fase 7](probar-cambios-agente-kapso-fase-7.md)
 ## Continuidad familiar e identificadores internos, v7.8
 
 El ensayo real de elección para Lucía derivó por identidad, sin error de cuota. Se conservó la selección explícita del hijo mediante verificación central y contexto persistido, con aislamiento de fuente, vigencia y permisos. Se bloquean respuestas que pidan IDs internos al paciente. 86 regresiones aprobadas y vista previa real Groq correcta, sin negocio ni envíos; la repetición real entregó propuesta de Lucía PENDING y recuperó una cuota por minuto. Reserva aplicada de ambos hijos y supervisión siguen pendientes. [Diagnóstico y límites](identidad-responsables-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).
+
+## Referencias de horario y derivación, v7.9
+
+Se corrigió la derivación prematura de Mateo por slot_id sin consulta de herramientas. 88 regresiones aprobadas, con permiso para derivar después de una falla real; vista previa Groq correcta, sin negocio/envíos. Backend actualizado y control devuelto solo para el ensayo conocido; repetición real de propuesta y segunda reserva pendientes. [Diagnóstico](identidad-responsables-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).

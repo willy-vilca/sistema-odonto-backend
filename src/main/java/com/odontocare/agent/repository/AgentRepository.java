@@ -22,6 +22,16 @@ public class AgentRepository {
     this.mapper = mapper;
   }
 
+  public boolean hasRejectedBookingLookup(UUID run) {
+    return Boolean.TRUE.equals(
+        jdbc.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM agent_step WHERE run_id=? AND kind='TOOL' AND"
+                + " state='REJECTED' AND name IN"
+                + " ('consultar_servicios','consultar_horarios','proponer_cita'))",
+            Boolean.class,
+            run));
+  }
+
   private static final RowMapper<AgentRun> RUN =
       (r, i) ->
           new AgentRun(

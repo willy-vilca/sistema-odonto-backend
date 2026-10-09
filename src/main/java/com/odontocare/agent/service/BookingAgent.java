@@ -427,6 +427,25 @@ public class BookingAgent {
                   "Se agotó el tiempo de esta solicitud; recepción revisará la conversación.");
             var json = mapper.readTree(call.arguments());
             args = json;
+            if (call.name().equals("derivar_recepcion")
+                && INTERNAL_REFERENCE.matcher(json.path("reason").asString("")).find()
+                && AgentRequestedTime.resolve(incoming.body()).isPresent()
+                && !runs.hasRejectedBookingLookup(run.id())
+                && evidence.stream()
+                    .noneMatch(fact -> fact.get("name").equals("consultar_horarios"))
+                && evidence.stream()
+                    .anyMatch(
+                        fact ->
+                            fact.get("name").equals("verificar_paciente")
+                                && fact.get("result") instanceof Map<?, ?> verified
+                                && Boolean.TRUE.equals(verified.get("verified")))) {
+              supervision.requireAction(run);
+              throw ApiException.badRequest(
+                  "Los identificadores internos no son datos faltantes del paciente. Antes de"
+                      + " derivar, consulta el servicio y sus horarios con consultar_servicios y"
+                      + " consultar_horarios; usa las referencias devueltas para preparar la"
+                      + " propuesta. Si una herramienta falla realmente, explica ese fallo.");
+            }
             result = tools.execute(run, call.name(), json);
           } catch (AgentInterrupted interrupted) {
             throw interrupted;
@@ -602,7 +621,7 @@ public class BookingAgent {
     Para consultar citas o reservar, verificar_paciente exige nombre completo explícito y relación SELF (soy/para mí) o GUARDIAN (mi hijo/soy responsable). En una reserva para mi hijo, patient_name es el nombre del hijo; el nombre del padre identifica al responsable, no al paciente. El perfil de WhatsApp no verifica identidad. Pregunta para quién es; no reveles fichas del teléfono ni reutilices un hijo para otra solicitud. pacientes_contacto busca solo el nombre informado. Nunca pidas documentos.
     Usa solo IDs/referencias obtenidos de herramientas. consultar_mis_citas filtra search por servicio/profesional o vacío, nunca por nombre del paciente; devuelve appointment_ref, service_id y dentist_id para cambios, sin buscar otra vez el catálogo. Si hay varias citas pregunta cuál. Una consulta no autoriza cambios.
     Para reprogramar: verificar_paciente, consultar_mis_citas, consultar_horarios con appointment_ref, fecha de destino y preferred_time si eligió hora; conserva duración original. Solo DESPUÉS usa proponer_reprogramacion con slot_id devuelto y motivo informado. appointment_ref identifica la cita y NO es un slot_id; una hora tampoco es un UUID. Para cancelar usa proponer_cancelacion con cita y motivo. Ambas presentan resumen y esperan confirmación; nunca anuncies cambio aplicado.
-    Para nueva reserva busca servicio con palabra corta (limpieza). Consulta horarios después de identificar al paciente. Si faltan service_id o slot_id, obténlos con consultar_servicios y consultar_horarios; nunca pidas identificadores internos al paciente. Fechas relativas según hoy/zona; mañana=days_from_today 1. Usa dentist_name si no tienes dentist_id de herramienta. Respeta el profesional solicitado.
+    Para nueva reserva busca servicio con palabra corta (limpieza). Consulta horarios después de identificar al paciente. Si faltan service_id o slot_id, obténlos con consultar_servicios y consultar_horarios; nunca pidas identificadores internos al paciente ni derives solo porque falten. Fechas relativas según hoy/zona; mañana=days_from_today 1. Usa dentist_name si no tienes dentist_id de herramienta. Respeta el profesional solicitado.
     consultar_horarios devuelve horarios reales. Sin hora elegida o si está ocupada, ofrece esas opciones y espera; no elijas otra hora por él. Si eligió una libre y quiere reservar, verificar_paciente y proponer_cita con slot_id y nombre explícitos (patient_id solo del contacto). Esta herramienta prepara y NO reserva.
     El servidor confirma exclusivamente tras entregar resumen y recibir «Sí, confirmo» o CONFIRMO código. No crees ni afirmes éxito sin resultado confirmado. Cambios de intención descartan propuestas anteriores. Si falla una herramienta no inventes resultados; termina de forma controlada o deriva. APP_TEST es vista previa sin envío.
     """

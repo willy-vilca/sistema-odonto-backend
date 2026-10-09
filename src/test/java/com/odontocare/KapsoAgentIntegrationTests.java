@@ -18,6 +18,8 @@ import java.time.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.*;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -1784,8 +1786,10 @@ class KapsoAgentIntegrationTests {
     assertThat(count("charge_entry")).isZero();
   }
 
-  @Test
-  void continuesExplicitGuardianChoiceWithTheVerifiedChildInsteadOfSelectingTheParentAgain() {
+  @ParameterizedTest
+  @ValueSource(strings = {"ASK_SLOT", "HANDOFF_SLOT"})
+  void continuesExplicitGuardianChoiceWithTheVerifiedChildInsteadOfSelectingTheParentAgain(
+      String unsupportedResponse) {
     String child = "Lucía Prueba Familia";
     submit(
         "Quiero una limpieza para mi hija "
@@ -1812,8 +1816,14 @@ class KapsoAgentIntegrationTests {
                               .equals("verificar_paciente"));
               return switch (calls.getAndIncrement()) {
                 case 0 ->
-                    new LanguageModelClient.Reply(
-                        "Indícame el slot_id del horario.", List.of(), 30, 10);
+                    unsupportedResponse.equals("HANDOFF_SLOT")
+                        ? tool(
+                            "derivar_recepcion",
+                            Map.of(
+                                "reason",
+                                "No se puede obtener el slot_id para la reserva solicitada"))
+                        : new LanguageModelClient.Reply(
+                            "Indícame el slot_id del horario.", List.of(), 30, 10);
                 case 1 -> tool("consultar_servicios", Map.of("search", "limpieza"));
                 case 2 ->
                     tool(
@@ -1849,10 +1859,12 @@ class KapsoAgentIntegrationTests {
     assertThat(done.responseText()).doesNotContain("slot_id", "patient_id");
     assertThat(
             jdbc.queryForObject(
-                "SELECT count(*) FROM agent_step WHERE run_id=? AND"
-                    + " name='validar_respuesta_administrativa' AND state='REJECTED'",
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name=? AND state='REJECTED'",
                 Long.class,
-                done.id()))
+                done.id(),
+                unsupportedResponse.equals("HANDOFF_SLOT")
+                    ? "derivar_recepcion"
+                    : "validar_respuesta_administrativa"))
         .isEqualTo(1);
     assertThat(queue.proposal(done.conversationId()).patientName()).isEqualTo(child);
     assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("AUTO");
@@ -1918,6 +1930,45 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void missingReferenceHandoffStillWorksAfterAnActualBookingLookupFailure() {
+    String child = "Lucía Prueba Familia";
+    submit("Mi hija " + child + ". Soy su padre y responsable.");
+    var initial = queue.claim().orElseThrow();
+    identity.verify(initial, child, "GUARDIAN");
+    queue.finish(initial.id(), "Selecciona horario.");
+    AtomicInteger calls = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            invocation ->
+                switch (calls.getAndIncrement()) {
+                  case 0 -> tool("consultar_servicios", Map.of("search", "limpieza"));
+                  case 1 ->
+                      tool(
+                          "consultar_horarios",
+                          Map.of(
+                              "service_id",
+                              UUID.randomUUID(),
+                              "dentist_id",
+                              doctorId,
+                              "days_from_today",
+                              1,
+                              "preferred_time",
+                              "09:00"));
+                  default ->
+                      tool(
+                          "derivar_recepcion",
+                          Map.of("reason", "Falló la consulta del servicio; no se obtuvo slot_id"));
+                });
+    submit("Elijo mañana a las 09:00 para mi hija " + child + ". Soy su padre y responsable.");
+    var done = process();
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+    assertThat(queue.detail(done.id()).reply().errorCode()).isEqualTo("HANDOFF_NOTICE");
+    assertThat(runs.hasRejectedBookingLookup(done.id())).isTrue();
+    assertThat(count("agent_proposal")).isZero();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
   void automaticHandoffAndConfiguredHoursAreVisibleAndDoNotAffectAppContext() {
     when(model.reply(anyList(), anyList()))
         .thenReturn(tool("derivar_recepcion", Map.of("reason", "Consulta clínica")));
@@ -1949,7 +2000,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.8");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.9");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }
