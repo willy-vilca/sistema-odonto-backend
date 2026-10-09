@@ -110,3 +110,7 @@ El ensayo real de elección para Lucía derivó por identidad, sin error de cuot
 ## Referencias de horario y derivación, v7.9
 
 Se corrigió la derivación prematura de Mateo por slot_id sin consulta de herramientas. 88 regresiones aprobadas, con permiso para derivar después de una falla real; vista previa Groq correcta, sin negocio/envíos. Backend actualizado y control devuelto solo para el ensayo conocido; repetición real de propuesta y segunda reserva pendientes. [Diagnóstico](identidad-responsables-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).
+
+## Consulta de citas propias y supervisión, v7.10
+
+Se corrigió la consulta tras devolver control: verificación seguida de lectura paginada real, sin inferencia redundante ni preguntas de cantidad sin respaldo. 93 casos distintos del agente verificados; Groq real y repetición de WhatsApp mostraron solo Mateo. Devolución sin reejecución, privacidad/reglas y derivación clínica reales aprobadas; reclamo, cierre y horario pendientes. [Diagnóstico](consulta-citas-propias-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).

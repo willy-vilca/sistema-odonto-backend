@@ -725,7 +725,6 @@ class KapsoAgentIntegrationTests {
             tool(
                 "verificar_paciente",
                 Map.of("patient_name", "Paciente Agente", "relationship", "SELF")))
-        .thenReturn(tool("consultar_mis_citas", Map.of("search", "limpieza")))
         .thenThrow(new ModelFailure("RATE_LIMIT", "No debe llegar aquí"));
     submit(
         "Soy Paciente Agente. Quiero consultar mis próximas citas. Por ahora no quiero cambiar ni"
@@ -733,7 +732,7 @@ class KapsoAgentIntegrationTests {
     var done = process();
     assertThat(done.state()).isEqualTo("COMPLETED");
     assertThat(done.responseText()).contains("Paciente Agente", "09:00", "60 minutos");
-    verify(model, times(2)).reply(anyList(), anyList());
+    verify(model, times(1)).reply(anyList(), anyList());
     assertThat(appointments()).isEqualTo(1);
     assertThat(
             jdbc.queryForObject(
@@ -836,13 +835,13 @@ class KapsoAgentIntegrationTests {
             tool(
                 "verificar_paciente",
                 Map.of("patient_name", "Paciente Agente", "relationship", "SELF")))
-        .thenReturn(tool("consultar_mis_citas", Map.of("search", "")));
+        .thenThrow(new ModelFailure("RATE_LIMIT", "No debe necesitar otra inferencia"));
     submit("Soy Paciente Agente. Quiero consultar mis próximas citas.");
     var done = process();
     assertThat(done.state()).isEqualTo("COMPLETED");
     assertThat(done.responseText()).contains("Revisión administrativa", "30 minutos");
     assertThat(appointments()).isEqualTo(1);
-    verify(model, times(2)).reply(anyList(), anyList());
+    verify(model, times(1)).reply(anyList(), anyList());
   }
 
   @Test
@@ -1969,6 +1968,113 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void ownAppointmentConsultationAfterHumanReturnReadsAgendaBeforeAskingWhichAppointment()
+      throws Exception {
+    UUID original = createOriginal(1, 9);
+    var initial = submit("Soy Paciente Agente. Quiero consultar mi cita.");
+    var control = supervision.context(initial.conversationId(), "KAPSO");
+    supervision.control(
+        initial.conversationId(),
+        new com.odontocare.agent.dto.SupervisionContracts.Control(
+            "HUMAN", "Prueba manual", control.generation()));
+    control = supervision.context(initial.conversationId(), "KAPSO");
+    supervision.control(
+        initial.conversationId(),
+        new com.odontocare.agent.dto.SupervisionContracts.Control(
+            "AUTO", "Fin de prueba manual", control.generation()));
+    AtomicInteger calls = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            invocation -> {
+              calls.incrementAndGet();
+              return tool(
+                  "verificar_paciente",
+                  Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
+            });
+    submit(
+        "Soy Paciente Agente. Solo quiero consultar mi próxima cita, sin hacer cambios ni reservar"
+            + " otra.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("Paciente Agente", "09:00", "Limpieza dental");
+    assertThat(done.responseText()).doesNotContain("dime una", "cuál de las citas");
+    assertThat(calls.get()).isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='consultar_mis_citas'",
+                Long.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(
+            jdbc.queryForObject("SELECT version FROM appointment WHERE id=?", Long.class, original))
+        .isZero();
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(count("charge_entry")).isZero();
+  }
+
+  @Test
+  void ownAppointmentConsultationCanAskForMissingIdentityWithoutReadingAppointments() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(
+            new LanguageModelClient.Reply(
+                "Indica tu nombre completo y si eres el paciente o su responsable.",
+                List.of(),
+                20,
+                10));
+    submit("Quiero consultar mi próxima cita.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("nombre completo");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='consultar_mis_citas'",
+                Long.class,
+                done.id()))
+        .isZero();
+    assertThat(appointments()).isZero();
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "¿Cuál de las citas te interesa? Si solo tiene una, dime una.",
+        "No encontré próximas citas activas."
+      })
+  void patientSearchDoesNotAuthorizeAppointmentAssertionsOrReplaceTheRealRead(String unsupported) {
+    createOriginal(1, 9);
+    AtomicInteger calls = new AtomicInteger();
+    when(model.reply(anyList(), anyList()))
+        .thenAnswer(
+            invocation ->
+                switch (calls.getAndIncrement()) {
+                  case 0 ->
+                      tool("pacientes_contacto", Map.of("search", "Paciente Agente", "page", 0));
+                  case 1 -> new LanguageModelClient.Reply(unsupported, List.of(), 20, 10);
+                  default ->
+                      tool(
+                          "verificar_paciente",
+                          Map.of("patient_name", "Paciente Agente", "relationship", "SELF"));
+                });
+    submit(
+        "Soy Paciente Agente. Solo quiero consultar mi próxima cita, sin hacer cambios ni reservar"
+            + " otra.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("Paciente Agente", "09:00");
+    assertThat(done.responseText()).doesNotContain("dime una", "No encontré");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='validar_consulta_citas'"
+                    + " AND state='REJECTED'",
+                Long.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(calls.get()).isEqualTo(3);
+    assertThat(appointments()).isEqualTo(1);
+    assertThat(count("charge_entry")).isZero();
+  }
+
+  @Test
   void automaticHandoffAndConfiguredHoursAreVisibleAndDoNotAffectAppContext() {
     when(model.reply(anyList(), anyList()))
         .thenReturn(tool("derivar_recepcion", Map.of("reason", "Consulta clínica")));
@@ -2000,7 +2106,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.9");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.10");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

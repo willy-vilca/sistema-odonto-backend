@@ -24,7 +24,15 @@ public class AgentToolDefinitions {
     boolean changing =
         allowsProposal
             && AgentIdentityService.normalize(request).matches("(?s).*(reprogram|cancel|anul).*");
-    if (verified && changing && !ownConsulted)
+    boolean ownConsultation = AgentAdministrativeIntent.ownAppointmentConsultation(request);
+    if (ownConsultation && !verified)
+      return all().stream()
+          .filter(
+              tool ->
+                  Set.of("verificar_paciente", "derivar_recepcion")
+                      .contains(((Map<?, ?>) tool.get("function")).get("name")))
+          .toList();
+    if (verified && (changing || ownConsultation) && !ownConsulted)
       return all().stream()
           .filter(
               tool -> ((Map<?, ?>) tool.get("function")).get("name").equals("consultar_mis_citas"))

@@ -102,6 +102,31 @@ class AgentToolDefinitionsTests {
   }
 
   @Test
+  void ownConsultationRequiresVerificationThenARealAppointmentReadWithoutForcingAvailability() {
+    String request = "Solo quiero consultar su próxima cita, sin hacer cambios ni reservar otra";
+    var evidence = new ArrayList<Map<String, Object>>();
+    assertThat(names(evidence, request))
+        .containsExactlyInAnyOrder("verificar_paciente", "derivar_recepcion");
+    evidence.add(
+        Map.of(
+            "name",
+            "pacientes_contacto",
+            "result",
+            Map.of("items", List.of(Map.of("id", "patient")))));
+    assertThat(names(evidence, request)).doesNotContain("consultar_mis_citas");
+    evidence.add(Map.of("name", "verificar_paciente", "result", Map.of("verified", true)));
+    assertThat(names(evidence, request)).containsExactly("consultar_mis_citas");
+    assertThat(
+            AgentAdministrativeIntent.ownAppointmentConsultation(
+                "Quiero ver horarios para mi próxima cita"))
+        .isFalse();
+    assertThat(
+            AgentAdministrativeIntent.ownAppointmentConsultation(
+                "Quiero reprogramar mi cita y consultar mis citas"))
+        .isFalse();
+  }
+
+  @Test
   void newBookingCanQueryCatalogButCannotProposeAnUnverifiedPatientOrMissingSlot() {
     var evidence = new ArrayList<Map<String, Object>>();
     evidence.add(
