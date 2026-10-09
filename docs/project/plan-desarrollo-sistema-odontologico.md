@@ -302,6 +302,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Atención humana: toma y pausa reales aprobadas.** El usuario asumió desde la interfaz, actor Willy Vilca Huaytalla auditado, HUMAN/generación 11. Entrada real de cambio de Mateo: secuencia 76, PAUSED, cero inferencias/pasos y sin respuesta automática; mensaje conservado y citas/finanzas intactas. Se pide respuesta manual y después devolución; el ensayo de interrumpir una inferencia sigue identificado como interno. Fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Respuesta manual real durante pausa aprobada.** El participante envió desde la aplicación y confirmó recepción; mensaje c6e9aa04-ff36-48fe-920a-2d333546e93b READ, un intento y sin error, fuente manual KAPSO. HUMAN/generación 11 y secuencia 76 PAUSED sin inferencias conservados, citas/finanzas intactas. Se solicita devolución desde la interfaz, todavía sin entrada nueva, para verificar que no reejecute la solicitud anterior; fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

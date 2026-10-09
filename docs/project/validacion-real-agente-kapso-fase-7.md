@@ -342,6 +342,16 @@ Entrada real `80e8ba60-bbd7-4913-9755-1e49146e81f4`, KAPSO/INBOUND/RECEIVED, 20:
 
 Se solicita ahora enviar una respuesta manual desde Mensaje de respuesta/Enviar mensaje en la aplicación, conservando Atención humana. El usuario confirmará la llegada al WhatsApp antes de probar la devolución del control. No devolverlo por cuenta propia ni ejecutar la solicitud antigua durante este bloque. Respuesta manual y devolución todavía pendientes.
 
+## Prueba 21: respuesta manual durante atención humana — aprobada
+
+El participante envió desde Mensaje de respuesta/Enviar mensaje de la aplicación: «Hola, te atiende recepción. Estoy revisando tu solicitud de cambio para Mateo. Por ahora su cita sigue el martes 20/10/2026 de 10:00 a 11:00 con Julia Huaytalla». Confirmó que llegó a su WhatsApp.
+
+Mensaje `c6e9aa04-ff36-48fe-920a-2d333546e93b`, KAPSO/OUTBOUND, READ, un intento y sin error. Creado 08/10 a las 21:56:41 Lima; estado READ registrado a las 21:56:54. Fuente KAPSO de envío manual, no una respuesta generada por el agente. Las salidas totales de la conversación aumentaron de 44 a 45, únicamente este mensaje.
+
+La conversación sigue HUMAN/generación 11 con el usuario asignado. La solicitud anterior de cambio, ejecución `33217919-3b22-4ed4-a685-9a9936e870a6`, secuencia 76, continúa PAUSED, sin tokens, pasos o respuesta asociada. Las citas de Lucía y Mateo siguen CONFIRMED/versión 0 y un historial cada una; cifras 11/15/9/11 conservadas. El envío manual funciona durante la pausa de IA y no reprograma por sí mismo la cita.
+
+Se solicita ahora devolver el control desde la interfaz, motivo «Fin de prueba de atención manual fase 7», y confirmar Agente activo antes de enviar una nueva entrada. Se comprobará que la secuencia 76 no se reejecute, no genere otra salida y no prepare/aplique un cambio. La devolución aún no se considera aprobada; no realizarla por cuenta propia.
+
 ## Casos restantes
 
 Atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
