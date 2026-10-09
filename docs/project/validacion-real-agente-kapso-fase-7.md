@@ -298,7 +298,7 @@ La identidad se verificó de nuevo para Mateo Prueba Familia/GUARDIAN, provision
 
 Se solicita elegir 20/10 10:00 para Mateo, con nombre y relación explícitos, para preparar el resumen sin confirmar todavía. El bloque completo de dos reservas desde el mismo responsable sigue pendiente de esa propuesta y su aceptación.
 
-## Prueba 18: elegir horario de Mateo — incidencia corregida; repetición real pendiente
+## Prueba 18: elegir horario de Mateo — aprobada tras corrección
 
 El participante eligió el 20/10/2026 a las 10:00 con Julia para su hijo Mateo Prueba Familia y reiteró ser padre/responsable. Recibió la derivación a recepción y pausa del agente. La prueba funcional falló aunque la ejecución se guardara COMPLETED.
 
@@ -309,6 +309,14 @@ Corrección supervised-v7.9: para paciente verificado y hora elegida, no aceptar
 88 regresiones del agente aprobadas, incluidas 53 Kapso/agente, empaquetado correcto. El caso nuevo falló antes de corregir y comprueba que se prepara la propuesta en vez de derivar por slot_id; otro caso permite la derivación después de un error real de consulta. Groq real en APP_TEST `eef297af-abf0-4580-8b62-1faa9360daee` preparó Mateo/Limpieza/Julia/20/10 10:00/60 minutos en 2,551 segundos, tres inferencias, un intento, sin pasos rechazados y sin cambios de negocio/control real/envíos. Esa vista previa no confirma una reserva real de Mateo.
 
 Backend actualizado y salud UP, frontend/receptor/ngrok conservados. Se devolvió únicamente la derivación conocida de esta ejecución mediante servicio auditado, comprobando referencia, generación, motivo, pasos y ausencia de responsable humano o entrada real posterior. AUTO/generación 10, sin tareas antiguas pendientes; exige mensaje nuevo. Se solicita repetir la elección completa por WhatsApp, sin confirmar todavía. Lucía conserva su cita; no se creó ficha ni cita de Mateo. Pacientes/citas/cargos/movimientos 10/14/9/11. [Diagnóstico y límites](identidad-responsables-agente-fase-7.md).
+
+### Repetición real con propuesta correcta
+
+El participante repitió la elección y recibió el resumen correcto de Mateo Prueba Familia/Limpieza/Julia/martes 20/10/2026 10:00/60 minutos, código 78612830 y solicitud de confirmación. No volvió a derivar por la referencia de horario ni pidió identificadores internos.
+
+Ejecución `8a293983-2b1d-4560-b473-4eba8d6a6a33`, secuencia 74, KAPSO/COMPLETED, supervised-v7.9, dos intentos y cuatro inferencias aceptadas; 8 708 tokens de entrada, 232 de salida. Entrada `a321405c-9bb3-4025-9fe8-b9992a5c99a7`; respuesta `7555385c-cf01-4c66-8d96-3872674d3641`, READ. Verificar_paciente Mateo/GUARDIAN → consultar_servicios → consultar_horarios con 10:00 → proponer_cita → guardar_respuesta. La devolución del control exigió una nueva verificación. Hubo HTTP 429/TOKENS_PER_MINUTE antes de proponer, con dos segundos de espera; retomó resultados anteriores sin duplicar herramientas. Esta cuota recuperada no es la causa del fallo funcional anterior de la secuencia 71. Respuesta persistida a los 10,022 segundos desde el registro de ejecución.
+
+Propuesta `78612830-959e-418b-bfe5-ff67146ffc0d`, KAPSO/PENDING, Mateo, patient_id/appointment_id vacíos. Creada 19:57:11, vence 20:27:11 Lima. Intervalo 20/10 10:00–11:00, 60 minutos, profesional y servicio correctos. Lucía conserva 09:00–10:00 CONFIRMED/versión 0/un historial; no existe todavía ficha de Mateo. Cifras 10/14/9/11, AUTO/generación 10. Se solicita «CONFIRMO 78612830» para aplicar la segunda reserva y comprobar ambas fichas/contactos/citas; todavía no se considera aplicado el bloque completo de dos hijos.
 
 ## Casos restantes
 

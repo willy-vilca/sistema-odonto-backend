@@ -296,6 +296,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Derivación prematura de Mateo corregida.** Secuencia71 verificó Mateo correctamente, pero el modelo derivó por slot_id antes de consultar catálogo/horarios; sin cuota ni mutaciones, fallo funcional conservado. v7.9 rechaza esa derivación cuando faltan referencias recuperables y no hubo fallo real de herramientas; conserva derivaciones legítimas/control humano. 88 regresiones aprobadas y vista previa Groq real preparó la propuesta correcta de las10:00 en2,551 segundos sin negocio/envíos. Backend actualizado, AUTO/generación10 y repetición real solicitada antes de confirmar. Segunda reserva y supervisión pendientes. [Diagnóstico](identidad-responsables-agente-fase-7.md), [evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Propuesta real de Mateo aprobada tras corrección.** Secuencia74/8a293983-2b1d-4560-b473-4eba8d6a6a33 COMPLETED/READ: verificó Mateo/GUARDIAN, consultó servicio y disponibilidad de10:00 y preparó78612830/PENDING. Recuperó cuota por minuto sin repetir herramientas; Lucía y finanzas intactas, todavía sin ficha/cita Mateo. Se solicita confirmación antes de cerrar el bloque de contacto compartido; fase7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
