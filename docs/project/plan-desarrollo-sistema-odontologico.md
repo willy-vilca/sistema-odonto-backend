@@ -292,6 +292,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Segundo hijo sin nombre: pregunta real aprobada.** Secuencia69/ecf735b8-d341-46f6-8c29-28c48bb62d41 COMPLETED/READ: solicitó el nombre completo, no creó otra cita ni reutilizó a Lucía. Cita de la hija y finanzas conservadas. Se identifica ahora a Mateo y se consultan horarios; segunda reserva y supervisión pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Mateo identificado y horarios reales aprobados.** Secuencia70/14c8d29a-858e-4164-95d4-4ee58050c711 COMPLETED/READ, nueva identidad Mateo/GUARDIAN y horarios desde10:00 respetando a Lucía09:00–10:00. Todavía sin ficha/cita del hijo; propuesta y aceptación pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.

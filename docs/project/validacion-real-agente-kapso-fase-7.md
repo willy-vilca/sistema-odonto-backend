@@ -288,6 +288,16 @@ Ejecución `ecf735b8-d341-46f6-8c29-28c48bb62d41`, secuencia 69, KAPSO/COMPLETED
 
 Lucía conserva CONFIRMED/versión 0 y un historial. Permanecen 10 pacientes, 14 citas, 9 cargos y 11 movimientos, AUTO/generación 8. La solicitud nueva no reutilizó a Lucía para crear otra cita. Se solicita nombre explícito Mateo Prueba Familia, relación de padre/responsable y consulta de horarios del 20/10 con Julia; todavía sin elegir ni confirmar. La segunda reserva sigue pendiente.
 
+## Prueba 17: identificar a Mateo y consultar horarios — aprobada; reserva pendiente
+
+El participante informó «Mi otro hijo se llama Mateo Prueba Familia. Soy su padre y responsable», pidió limpieza con Julia el 20/10 por la mañana y consultó horarios libres. Recibió 10:00–11:00, 10:15–11:15 y 10:30–11:30; se aclaró que todavía no se creó ni cambió una cita.
+
+Ejecución `14c8d29a-858e-4164-95d4-4ee58050c711`, secuencia 70, KAPSO/COMPLETED, supervised-v7.8, un intento, tres inferencias, sin pasos rechazados; 5 977 tokens de entrada y 158 de salida. Entrada `39595079-9208-4648-a474-ea16187ccf8b`; respuesta `e5fefeb1-3956-408b-9b2d-46bc0078c039`, READ. Verificar_paciente → consultar_servicios → consultar_horarios → guardar_respuesta. Respuesta persistida a los 5,069 segundos desde registrar la ejecución.
+
+La identidad se verificó de nuevo para Mateo Prueba Familia/GUARDIAN, provisional=true, patient_id vacío; no heredó a Lucía. Los horarios consultados respetan la cita existente de la hija, 09:00–10:00, y ofrecen opciones desde las 10:00. Lucía conserva CONFIRMED/versión 0 y un historial; todavía no existe ficha Mateo Prueba Familia. 10 pacientes, 14 citas, 9 cargos y 11 movimientos, AUTO/generación 8.
+
+Se solicita elegir 20/10 10:00 para Mateo, con nombre y relación explícitos, para preparar el resumen sin confirmar todavía. El bloque completo de dos reservas desde el mismo responsable sigue pendiente de esa propuesta y su aceptación.
+
 ## Casos restantes
 
 Dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.
