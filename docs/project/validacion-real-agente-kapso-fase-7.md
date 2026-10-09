@@ -240,6 +240,16 @@ La cita sigue CANCELLED/versión 2, tres historiales y un único CANCELLED. CBE8
 
 Se verificó antes del siguiente bloque que no existen fichas con «Prueba Familia». Se pide una limpieza para la hija ficticia Lucía Prueba Familia con Julia el 20/10 por la mañana, identificando al padre y responsable Willy y solicitando primero horarios. Debe verificar GUARDIAN, diferenciar a la hija del contacto y no crear su ficha/cita hasta la confirmación. La prueba familiar aún no está aprobada.
 
+## Prueba 13: horarios para una hija del mismo contacto — aprobada; reserva pendiente
+
+El participante pidió una limpieza para su hija ficticia Lucía Prueba Familia con Julia el 20/10/2026 por la mañana, identificándose como padre y responsable y solicitando primero horarios. Recibió tres opciones reales: 09:00–10:00, 09:15–10:15 y 09:30–10:30, con pregunta de elección y aclaración de que aún no se creó ni cambió una cita.
+
+Ejecución `84a22bbc-9311-4083-81d7-e6b3d5cb1f36`, secuencia 61, KAPSO/COMPLETED, supervised-v7.7, dos intentos, 6 181 tokens de entrada y 187 de salida. Entrada `f54fd1eb-42e7-45be-b094-1a7b35ef83cb`; respuesta `383179cb-0724-454a-8b74-3a1f09e7e64e`, READ y sin error de envío. Respuesta persistida a los 8,416 segundos del registro de ejecución.
+
+Verificar_paciente identificó Lucía Prueba Familia, GUARDIAN, provisional=true y patient_id vacío; no reutilizó la ficha de Willy. Un HTTP 400/tool_use_failed intermedio se registró como TOOL_GENERATION y se recuperó en el segundo intento, conservando la verificación ya realizada. Consultar_servicios devolvió Limpieza dental, S/ 200 y 60 minutos; consultar_horarios calculó las tres opciones con Julia. No se ejecutó creación de ficha/cita ni se ocultó el rechazo intermedio.
+
+Contexto KAPSO: patient_name Lucía Prueba Familia, relationship GUARDIAN y patient_id/appointment_id vacíos. No existen todavía fichas Prueba Familia; siguen 9 pacientes, 13 citas, 9 cargos y 11 movimientos, AUTO/generación 6. La cita anterior de Willy sigue CANCELLED/versión 2/tres historiales. Se solicita elegir 20/10 a las 09:00 para Lucía, sin confirmar todavía; debe preparar el resumen de la hija y volver a comprobar disponibilidad al confirmar. El bloque completo de dos hijos aún está pendiente.
+
 ## Casos restantes
 
 Dos pacientes de un teléfono responsable; atención humana y devolución; límites de acceso e instrucciones para cambiar reglas; derivaciones y horario configurable. Las comprobaciones internas de vencimiento, control durante una llamada, fallos y recuperación seguirán identificadas como internas salvo que se repitan y documenten realmente en esta sesión.

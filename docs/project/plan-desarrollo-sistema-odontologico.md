@@ -284,6 +284,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Cancelación repetida real aprobada.** Secuencia 60/1f8fe3b0-dbbf-49cd-bb90-95d600cea810, COMPLETED/READ, repeated=true y cero inferencias: mantiene la cita CANCELLED/versión 2, tres historiales y una sola cancelación. Propuesta y mensaje original de aceptación conservados, sin cambios financieros. Se continúa con dos pacientes del mismo responsable; no hay fichas Prueba Familia antes de comenzar. Fase 7 abierta. [Evidencia](validacion-real-agente-kapso-fase-7.md).
 
+**Contacto compartido: primera consulta real aprobada, reserva pendiente.** Secuencia 61/84a22bbc-9311-4083-81d7-e6b3d5cb1f36 COMPLETED/READ: verificó Lucía Prueba Familia como paciente provisional y relación GUARDIAN, conservando al padre como contacto. Ofreció horarios calculados del 20/10 con Julia sin crear ficha/cita. Recuperó un rechazo intermedio de herramienta con contexto persistido; no se presenta como ejecución sin incidencias. Se solicita elección de las 09:00 antes de confirmar; dos hijos todavía pendientes. [Evidencia](validacion-real-agente-kapso-fase-7.md).
+
 **Trabajo incluido.**
 
 - Consultar citas propias verificadas, reprogramar y cancelar con confirmación e historial, sin divulgar citas de otros pacientes.
