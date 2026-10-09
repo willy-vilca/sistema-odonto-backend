@@ -1,5 +1,7 @@
 # Guía de trabajo del proyecto
 
+Decisión vigente del 09/10/2026: el usuario confirmó Kapso y Groq/openai/gpt-oss-20b para la etapa actual y pidió integrar kapso en main. Backend y frontend ya están en main; continuar el desarrollo en main. Se incorporaron sus historiales mediante fast-forward, conservando las ramas kapso como referencia. La comparación de árboles confirmó igualdad completa de los archivos versionados antes del registro documental; configuraciones privadas conservadas e ignoradas. Seguir docs/integracion-kapso-main.md. Las notas anteriores que ordenan trabajar en kapso son históricas. Fase 8 continúa pendiente de instrucción.
+
 Estado vigente al 08/10/2026: fases 6 y 7 completadas y validadas. Seguir docs/cierre-fase-7.md y la evidencia individual; plan 3.11, alcance funcional 1.9, flujo supervised-v7.10. Control AUTO/generación 21 y política original restaurada (versión 3); 209 pruebas backend finales aprobadas. Las notas históricas de fases 6/7 que indicaban casos pendientes conservan el recorrido, no el estado actual. Fase 8 pendiente: iniciarla solo ante la siguiente instrucción del usuario.
 
 Antes de planificar, implementar o validar el sistema, leer `docs/propuesta-alcance-sistema-odontologico.md` y `docs/plan-desarrollo-sistema-odontologico.md`. El alcance contiene las decisiones vigentes y los criterios de aceptación; el plan organiza su implementación y validación por fases.
