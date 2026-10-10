@@ -63,6 +63,8 @@ public class RoleService {
               + " instalación.");
     if (!code.equals("ADMIN") && permissions.contains("ROLES_WRITE"))
       throw ApiException.badRequest("Solo el administrador puede modificar la política de roles.");
+    if (permissions.contains("REPORTS_EXPORT") && !permissions.contains("REPORTS_READ"))
+      throw ApiException.badRequest("Exportar reportes requiere también consultar reportes.");
     for (String permission : permissions) {
       if (permission.endsWith("_WRITE")
           && !Set.of("PAYMENTS_WRITE", "EXPENSES_WRITE", "FINANCE_CONFIG_WRITE")

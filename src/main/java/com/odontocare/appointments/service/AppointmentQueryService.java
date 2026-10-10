@@ -110,12 +110,16 @@ public class AppointmentQueryService {
       List<AppointmentResponse> items, String timeZone, LocalDate from, LocalDate to) {}
 
   public CalendarResponse calendar(UUID dentist, LocalDate from, LocalDate to) {
+    return calendar(dentist, null, from, to);
+  }
+
+  public CalendarResponse calendar(UUID dentist, UUID patient, LocalDate from, LocalDate to) {
     if (to.isBefore(from) || java.time.temporal.ChronoUnit.DAYS.between(from, to) > 41)
       throw ApiException.badRequest("El calendario admite un intervalo máximo de 42 días.");
     var zone = zone();
     var page =
         appointments.findAll(
-            criteria(new PageQuery(), dentist, null, null, from, to, zone),
+            criteria(new PageQuery(), dentist, patient, null, from, to, zone),
             PageRequest.of(0, 1000, Sort.by("startsAt").and(Sort.by("id"))));
     if (page.getTotalElements() > 1000)
       throw ApiException.badRequest(

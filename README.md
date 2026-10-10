@@ -1,5 +1,7 @@
 # OdontoCare — backend
 
+Estado al 10/10/2026: fases 0 a 8 desarrolladas; panel por permisos, nueve reportes, cortes de saldos/cuotas, CSV/PDF y navegación integrada. [Cierre de fase 8](docs/project/cierre-fase-8.md), alcance 1.11 y plan 3.13. Regresión actual: 232 pruebas backend aprobadas. V23 incorpora permisos de reportes e índices sin crear otro libro financiero; solicita nueva sesión al renovar las versiones de acceso. Recordatorios automáticos/A28 aplazados por el usuario y fase 9 pendiente. Desarrollo en main. Los apartados siguientes conservan su contexto histórico.
+
 Actualización 09/10/2026: desarrollo en main, alcance 1.10 y plan 3.12. Chat de WhatsApp con cursores del servidor y envío manual protegido por atención humana. [Uso de la nueva interfaz y verificación](docs/project/mejoras-interfaz-whatsapp.md). Regresión actual: 213 pruebas aprobadas; se conservan los cierres de fases 6 y 7 y la fase 8 permanece pendiente.
 
 Fases 0 a 7: configuración, pacientes, agenda, clínica, archivos, tratamientos, finanzas y agente por WhatsApp con Kapso/Groq. Reserva, cambios/cancelación, atención humana y recuperación con bitácora; fase 7 validada con WhatsApp real el 08/10/2026 y 209 pruebas backend finales. [Cierre de fase 7](docs/project/cierre-fase-7.md). Java 21, Spring Boot 4.1.1, Maven y PostgreSQL.

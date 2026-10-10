@@ -44,9 +44,10 @@ public class AppointmentController {
   @PreAuthorize("hasAuthority('APPOINTMENTS_READ')")
   public AppointmentQueryService.CalendarResponse calendar(
       @RequestParam(required = false) UUID dentistId,
+      @RequestParam(required = false) UUID patientId,
       @RequestParam LocalDate from,
       @RequestParam LocalDate to) {
-    return queries.calendar(dentistId, from, to);
+    return queries.calendar(dentistId, patientId, from, to);
   }
 
   @GetMapping("/availability")

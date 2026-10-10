@@ -1,8 +1,11 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
-Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.10. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones del entorno Twilio. La versión 1.6 prioriza el agente antes del upgrade de WhatsApp. La versión 1.7 confirma GroqCloud/openai/gpt-oss-20b por API y las pruebas en la instalación ficticia actual. La versión 1.8 registra la conexión manual de Kapso. La versión 1.9 confirma Kapso para desarrollo/pruebas y autoriza el agente con respuestas autónomas, confirmación natural y reserva consistente. La versión 1.10 registra la interfaz de atención de WhatsApp solicitada el 09/10/2026: chat, respuesta humana integrada, información secundaria y eliminación de avisos de desarrollo.
+Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.11. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones del entorno Twilio. La versión 1.6 prioriza el agente antes del upgrade de WhatsApp. La versión 1.7 confirma GroqCloud/openai/gpt-oss-20b por API y las pruebas en la instalación ficticia actual. La versión 1.8 registra la conexión manual de Kapso. La versión 1.9 confirma Kapso para desarrollo/pruebas y autoriza el agente con respuestas autónomas, confirmación natural y reserva consistente. La versión 1.10 registra la interfaz de atención de WhatsApp solicitada el 09/10/2026: chat, respuesta humana integrada, información secundaria y eliminación de avisos de desarrollo.
 
 Este documento es la guía funcional y técnica de referencia para elaborar el plan de desarrollo, implementar el sistema y comprobar la primera entrega. Las funciones incluidas son compromisos de esta entrega; las ampliaciones posteriores quedan expresamente fuera de ella. Las decisiones técnicas de prueba adoptadas se distinguen de los requisitos funcionales y pueden ajustarse sin reducirlos.
+
+
+Decisión vigente del 10/10/2026, versión 1.11: desarrollar panel inicial por permisos, reportes, exportaciones y navegación integrada del paciente. Aplazar recordatorios automáticos a una implementación posterior, sin condicionar el cierre de esta fase ni presentar A28 como implementado. [Diseño del tramo](diseno-fase-8.md).
 
 ## 1. Objetivo y alcance del producto
 
@@ -16,7 +19,7 @@ El ciclo principal será: contacto del paciente → reserva → atención → re
 
 Requisitos expresos: pacientes; historial clínico; servicios realizados; archivos odontológicos; ingresos, egresos, saldos y cuotas; agenda; reservas automáticas mediante un agente de IA integrado con WhatsApp.
 
-También forman parte del alcance aceptado: odontograma básico, planes de tratamiento, presupuestos, consentimientos documentales, usuarios y permisos, reportes, auditoría, recordatorios y bandeja de conversaciones con atención humana.
+También forman parte del alcance aceptado: odontograma básico, planes de tratamiento, presupuestos, consentimientos documentales, usuarios y permisos, reportes, auditoría y bandeja de conversaciones con atención humana. Los recordatorios automáticos quedan aplazados a una implementación posterior por instrucción del usuario del 10/10/2026.
 
 ## 2. Configuración y reutilización
 
@@ -195,7 +198,7 @@ No tendrá acceso directo a ejecutar SQL ni a modificar libremente la base de da
 7. **Selección y confirmación.** Se presenta un resumen concreto de paciente, servicio, profesional, fecha, hora y duración. El paciente confirma y se registra automáticamente, sin aprobación previa de recepción. Para simplificar la primera entrega no se retienen horarios mientras el paciente decide: se vuelve a comprobar su disponibilidad al guardar.
 8. **Registro.** El agente solicita crear la cita. El servidor vuelve a validar la disponibilidad y guarda la reserva con una clave que impide duplicarla si se repite la solicitud. Si el horario fue ocupado, devuelve el conflicto para que el agente consulte alternativas.
 9. **Respuesta.** Solo después del registro exitoso se envía la confirmación con referencia de cita. El envío se conserva como tarea pendiente con reintentos; si falla, la cita permanece registrada y recepción recibe una alerta. Reintentar el envío no vuelve a crear la cita.
-10. **Seguimiento.** La cita aparece en la agenda con origen WhatsApp y relación con la conversación. Podrá recibir recordatorios autorizados y gestionar cambios aplicando las mismas reglas.
+10. **Seguimiento.** La cita aparece en la agenda con origen WhatsApp y relación con la conversación. Puede gestionar cambios aplicando las mismas reglas; los recordatorios se aplazan a otra implementación.
 
 ```mermaid
 flowchart TD
@@ -265,7 +268,7 @@ Comprobación vigente al 05/10/2026: Twilio distingue el Sandbox clásico de su 
 
 Se demostrará el agente con mensajes reales desde WhatsApp y citas persistidas en PostgreSQL, además de pruebas internas de sus herramientas. Una conversación simulada o la recepción de un evento ficticio por sí solas no cumplen el criterio de integración completa.
 
-Los recordatorios se probarán usando las plantillas disponibles en ese entorno. Fuera de las 24 horas desde el último mensaje del usuario se requieren plantillas aprobadas; se respetan el permiso de contacto y la atención humana. [Política oficial de mensajes](https://whatsappbusiness.com/policy/).
+Para la implementación posterior de recordatorios (aplazada el 10/10/2026), su prueba utilizará las plantillas disponibles en el entorno que se autorice entonces. Fuera de las 24 horas desde el último mensaje del usuario se requieren plantillas aprobadas; se respetan el permiso de contacto y la atención humana. [Política oficial de mensajes](https://whatsappbusiness.com/policy/).
 
 El conector de WhatsApp estará separado de la lógica de reserva para permitir posteriormente un número empresarial de producción o un proveedor diferente. Conectar el número real de un cliente, conservar su historial o habilitar coexistencia con su aplicación móvil no son requisitos de esta primera entrega.
 
@@ -293,7 +296,7 @@ La siguiente agrupación define los componentes que debe cubrir la primera entre
 | Base operativa | Configuración, usuarios, pacientes, catálogo y agenda | Recepción puede gestionar citas sin conflictos |
 | Área clínica | Historia, atenciones, odontograma básico, documentos, planes y presupuestos | Se conserva la evolución de un paciente y el avance de su tratamiento |
 | Área financiera | Cargos, pagos parciales, anticipos, cuotas, egresos y reportes | Estado de cuenta explicable y corregible con auditoría |
-| Integración completa | Agente conectado a los módulos, reprogramación, cancelación, bandeja y recordatorios | Reservas reales con trazabilidad y atención humana disponible |
+| Integración completa | Agente conectado a los módulos, reprogramación, cancelación, bandeja y supervisión | Reservas reales con trazabilidad y atención humana disponible |
 
 La IA es obligatoria en la primera entrega completa, aunque su conexión se pruebe antes que el resto de módulos. No se deja como una ampliación opcional.
 
@@ -332,7 +335,7 @@ La entrega se comprobará contra esta tabla y contra las reglas de cada módulo.
 | A25 | Reprogramación y cancelación | Identificar y confirmar la cita correcta; si falla el nuevo horario, conservar la cita original; guardar historial de cambios. |
 | A26 | Atención humana y límites del agente | Asumir una conversación y pausar la IA; derivar consultas clínicas; impedir al agente registrar pagos o modificar deudas. |
 | A27 | Bitácora verificable | Seguir desde el mensaje real las llamadas a herramientas, resultados y errores hasta la cita persistida; las credenciales no aparecen en la bitácora. |
-| A28 | Recordatorios autorizados | Programar y enviar un recordatorio de prueba usando las condiciones y plantillas admitidas por el entorno; respetar solicitudes de dejar de recibirlos. |
+| A28 | Recordatorios autorizados — aplazado | Fuera del tramo vigente por instrucción del usuario del 10/10/2026; no exige implementación ni prueba en fase 8 o su validación de entrega actual. Se conserva para una implementación posterior. |
 | A29 | Usuarios, permisos y auditoría | Configurar roles, denegar una operación restringida y consultar quién cambió una cita, registro clínico o movimiento financiero. |
 | A30 | Respaldo y restauración integral | Restaurar una copia de PostgreSQL y recuperar datos, imágenes, PDF y relaciones entre ellos. |
 | A31 | Diseño y experiencia de usuario en computadora, tablet y celular | Revisar todas las pantallas y completar los flujos principales en los tres formatos; comprobar legibilidad, jerarquía, navegación, teclado, interacción táctil, validaciones y ausencia de desbordamientos de página. |
@@ -362,10 +365,12 @@ La entrega se comprobará contra esta tabla y contra las reglas de cada módulo.
 | Agente y evidencia | Implementación propia sencilla, bitácora y demostración verificable; sin necesidad de n8n | Criterio del usuario y decisión técnica adoptada |
 | WhatsApp de prueba | Kapso Sandbox para desarrollo/pruebas con agente Groq; Twilio inicial preservado | Flujo real de reserva y respuestas verificado el 07/10/2026; A22 cumplido |
 | Formatos y tamaño inicial | JPG/JPEG, PNG, WebP y PDF; límite inicial de 20 MiB ajustable | Valores técnicos iniciales adoptados |
-| Módulos complementarios | Odontograma básico, presupuestos, planes, consentimientos documentales, usuarios, reportes, auditoría y recordatorios | Propuesta aceptada por el usuario |
+| Módulos complementarios | Odontograma básico, presupuestos, planes, consentimientos documentales, usuarios, reportes y auditoría; recordatorios aplazados | Decisión actualizada por el usuario el 10/10/2026 |
 
 No quedan decisiones funcionales pendientes que impidan elaborar el plan de desarrollo. El proveedor y modelo de IA, versiones de dependencias, cuentas y credenciales de prueba, configuración inicial de demostración y entorno de ejecución se resolverán como tareas técnicas del plan. No requieren inventar requisitos de un cliente futuro ni ampliar este alcance.
 
 La implementación y sus comprobaciones se organizan en [el plan de desarrollo](plan-desarrollo-sistema-odontologico.md). Cualquier cambio de alcance autorizado deberá actualizar este documento, el plan y los criterios de aceptación antes de considerarse parte de la entrega.
 
 Validación registrada el 07/10/2026: fase 6 y A22 cumplidos mediante el intercambio real del participante con Kapso/Groq, herramientas de agenda, propuesta enviada, confirmación expresa, cita WHATSAPP/CONFIRMED y respuesta READ. Se probaron también consultas, datos faltantes, negación, lunes cerrado, próximo martes, repetición, alternativas y límites. El alcance funcional permanece en versión 1.9. [Evidencia](validacion-real-agente-kapso-fase-6.md) y [cierre](cierre-fase-6.md); las ampliaciones de fase 7 siguen pendientes.
+
+Validación del 10/10/2026: A21 y la integración prevista en fase 8 verificados mediante panel, nueve reportes, filtros/totales del servidor, CSV/PDF, constancias existentes y navegación del paciente por permisos. 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques. A28 permanece aplazado; fase 9 pendiente. [Cierre](cierre-fase-8.md).

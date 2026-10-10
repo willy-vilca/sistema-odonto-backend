@@ -1,8 +1,8 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 9 de octubre de 2026. Versión del plan: 3.12. Alcance de referencia: versión 1.10 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 10 de octubre de 2026. Versión del plan: 3.13. Alcance de referencia: versión 1.11 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
-Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fases 8 y 9 pendientes de desarrollo e instrucción del usuario. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).
+Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fase 8 completada técnicamente y verificada el 10/10/2026, pendiente de revisión del usuario; recordatorios aplazados expresamente. Regresión actual: 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques. [Cierre de fase 8](cierre-fase-8.md). Fase 9 pendiente de instrucción. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).
 
 Ajustes previos a la revisión general completados el 02/10/2026: consulta de detalle del servicio protegida, precio autocompletado y editable, terminología de tratamientos y avisos flotantes. 79 pruebas del servidor y 52 del navegador aprobadas, con revisión responsiva y recuperación de reprogramación. [Resultados y correcciones](ajustes-previos-fase-6.md).
 
@@ -17,7 +17,7 @@ Ajuste autorizado del 09/10/2026, posterior al cierre de fases 6 y 7: interfaz d
 
 Desarrollar toda la primera entrega mediante fases funcionales que se puedan utilizar, probar y ajustar antes de continuar con trabajo dependiente. Cada fase incluye interfaz, reglas del servidor, persistencia y validación: no se construye todo el backend para dejar la interfaz al final, ni se presentan pantallas sin comportamiento real como módulos terminados.
 
-La secuencia prioriza configuración, pacientes y agenda; después atención clínica, tratamientos y gestión financiera; luego el agente de IA integrado a una base operativa estable; y finalmente reportes, recordatorios y preparación de la entrega. Se prepara temprano el acceso de prueba a WhatsApp para reducir el riesgo de descubrir problemas de conexión al implementar el agente.
+La secuencia prioriza configuración, pacientes y agenda; después atención clínica, tratamientos y gestión financiera; luego el agente de IA integrado a una base operativa estable; y finalmente reportes y preparación de la entrega; recordatorios aplazados a una implementación posterior. Se prepara temprano el acceso de prueba a WhatsApp para reducir el riesgo de descubrir problemas de conexión al implementar el agente.
 
 La arquitectura vigente es React + Vite + TypeScript + TailwindCSS, Spring Boot con Java 21 y Maven, y PostgreSQL, con imágenes y PDF dentro de la misma base, instalación independiente por consultorio y una sola sede. Uno o varios odontólogos se configuran desde la aplicación. La disponibilidad depende de cada odontólogo y de la duración del servicio, sin gestión separada de sillones.
 
@@ -70,7 +70,7 @@ La seguridad, auditoría, fechas según zona horaria del consultorio, manejo de 
 | 5 | Pagos, cuotas, saldos, egresos y caja | Fase 4 |
 | 6 | Reserva automática por WhatsApp con agente de IA | Fase 5 y acceso al entorno de mensajería y modelo |
 | 7 | Completada y validada | WhatsApp real: consulta propia, cambios/cancelación, idempotencia, conflicto manual, dos hijos del mismo responsable, toma/pausa/respuesta manual/devolución, límites, derivaciones, cierre y horario/texto; configuración original restaurada, AUTO/generación 21. Regresión completa final 209 casos backend sin fallos/errores/omitidos, catorce escenarios de navegador previos en tres tamaños e interrupción/recuperación con dos procesos internos. Finanzas e historiales conservados. [Cierre](cierre-fase-7.md), [evidencia real](validacion-real-agente-kapso-fase-7.md) |
-| 8 | Reportes, panel, exportaciones y recordatorios | Fase 7 |
+| 8 | Reportes, panel y exportaciones | Fase 7; recordatorios aplazados |
 | 9 | Validación integral y entrega reproducible | Fase 8 |
 
 ### Fase 0. Base técnica y sistema visual
@@ -275,7 +275,9 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Criterios relacionados.** A05 y A25 en WhatsApp; A26; completar A23, A24 y A27 para el agente; ampliación de A01 con configuración de mensajes; A31 en estas pantallas.
 
-### Fase 8. Reportes, panel, exportaciones y recordatorios
+### Fase 8. Reportes, panel y exportaciones
+
+**Estado.** Completada técnicamente y verificada el 10/10/2026, pendiente de revisión del usuario. Panel como primera página después de iniciar sesión; nueve reportes, CSV/PDF y navegación integrada. 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques. Recordatorios aplazados; [cierre y reglas](cierre-fase-8.md) y [diseño](diseno-fase-8.md).
 
 **Objetivo.** Completar las herramientas complementarias de consulta y seguimiento sobre módulos ya operativos.
 
@@ -286,15 +288,13 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 - Distinguir presupuestos, cargos emitidos, trabajo realizado y dinero recibido; mostrar cobros menos egresos como flujo neto de caja.
 - Exportaciones autorizadas en formatos adecuados al reporte y acceso a las constancias PDF ya desarrolladas. Consultar, filtrar y paginar en el servidor, sin descargar toda la información para armar un listado.
 - Completar la navegación integrada de la ficha del paciente entre clínica, documentos, tratamientos, agenda y cuenta, conservando los permisos.
-- Programar recordatorios desde el servidor con zona horaria del consultorio, plantillas permitidas, autorización de contacto, estados de envío y recuperación de errores.
-- Al cancelar o reprogramar una cita, invalidar el recordatorio anterior y preparar el correcto; evitar envíos duplicados y respetar la baja de mensajes.
 - Revisar consistencia visual entre módulos y ajustar navegación y acceso a las tareas habituales usando resultados reales de las fases anteriores.
 
-**Validación.** Comparar los reportes con un conjunto controlado de atenciones y movimientos; verificar totales y filtros, descargables y permisos. Enviar un recordatorio real admitido por el entorno de prueba; cancelar o reprogramar antes del envío y comprobar que no sale el aviso antiguo; registrar una baja y comprobar que se respeta. Completar los recorridos desde ficha, agenda y panel en los tres formatos de pantalla.
+**Validación.** Comparar los reportes con un conjunto controlado de atenciones y movimientos; verificar totales y filtros, descargables y permisos. Completar los recorridos desde ficha, agenda y panel en los tres formatos de pantalla.
 
-**Condición de salida.** Los reportes coinciden con los movimientos registrados, las vistas están integradas y los recordatorios funcionan con las condiciones del entorno autorizado. Todos los módulos del alcance están disponibles para validación integral.
+**Condición de salida.** Los reportes coinciden con los movimientos registrados, el panel inicial y las vistas están integrados según permisos. Todos los módulos del alcance están disponibles para validación integral.
 
-**Criterios relacionados.** A21 y A28; completar integración de A01 y A04; confirmar coherencia de A19; A31 en estas pantallas.
+**Criterios relacionados.** A21; A28 aplazado por el usuario; completar integración de A01 y A04; confirmar coherencia de A19; A31 en estas pantallas.
 
 ### Fase 9. Validación integral y entrega reproducible
 
@@ -302,7 +302,7 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 
 **Trabajo incluido.**
 
-- Recorrer los criterios A01–A32 y registrar para cada uno su evidencia, resultado y correcciones necesarias.
+- Recorrer los criterios A01–A32 vigentes (A28 aplazado) y registrar para cada uno su evidencia, resultado y correcciones necesarias.
 - Comprobar instalación desde base vacía y actualización mediante migraciones, configuración propia del consultorio y separación entre instalaciones independientes.
 - Verificar permisos, auditoría y protección de archivos en el conjunto del sistema, incluida interacción entre roles.
 - Respaldar y restaurar PostgreSQL con datos, imágenes, PDF y relaciones; comprobar archivos después de la restauración y conservar respaldos fuera de la base activa.
@@ -316,7 +316,7 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 1. Paciente nuevo contacta por WhatsApp, confirma cita, aparece en agenda, recibe atención, se registra un servicio individual, se genera un cargo, paga y recibe constancia.
 2. Paciente acepta un plan, se genera la deuda, paga por cuotas y completa varias sesiones sin cargos duplicados; el estado de cuenta y los reportes coinciden.
 3. Dos odontólogos atienden simultáneamente; dos solicitudes para el mismo odontólogo se resuelven sin solapamiento.
-4. Un paciente reprograma o cancela por WhatsApp; se conserva el historial y se actualizan los recordatorios.
+4. Un paciente reprograma o cancela por WhatsApp; se conserva el historial y se conserva su historial; los recordatorios permanecen aplazados.
 5. Falla un envío o se reinicia el servidor; la reserva y los movimientos sobreviven y los reintentos no duplican operaciones.
 6. Se restaura una copia en un entorno de prueba y se recuperan la ficha, documentos, cuentas y relaciones verificables.
 
@@ -357,7 +357,7 @@ Las fases indicadas como cierre son las que completan la cobertura funcional del
 | A25 Reprogramación y cancelación | 2 y 7 | 7: manual y mediante IA |
 | A26 Atención humana y límites | 1, 6 y 7 | 7 |
 | A27 Bitácora verificable | 6 y 7 | 7 |
-| A28 Recordatorios | 8 | 8 |
+| A28 Recordatorios — aplazado | Implementación posterior | Excluido del tramo vigente por el usuario |
 | A29 Usuarios, permisos y auditoría | 1 y todas las fases funcionales | 9: revisión conjunta |
 | A30 Respaldo y restauración | Preparación en 0 y 3 | 9: restauración integral |
 | A31 Diseño y adaptación responsiva | 0 y todas las fases funcionales | 9: todos los flujos y pantallas |
@@ -377,7 +377,7 @@ Estados de trabajo: pendiente, en desarrollo, en validación, en ajustes y compl
 | 5 | Completada | 02/10/2026: pagos, anticipos, cuotas, saldos, correcciones, egresos, sustentos y caja con PDF históricos y zoom. 77 pruebas backend y 48 escenarios de navegador aprobados, con 11 financieros también comprobados tras el ajuste del visor. Migraciones y respaldo conservan datos locales; revisión en computadora, tablet y celular. [Evidencia](cierre-fase-5.md). Revisada inicialmente por el usuario; revisión manual integral de fases 0 a 5 pendiente según la guía preparada. WhatsApp real pendiente de fase 6 y restauración integral de fase 9 |
 | 6 | Completada y validada | Kapso/Groq: catorce intercambios reales READ, una cita WHATSAPP/CONFIRMED el martes 13/10/2026 09:00–10:00 con Julia para limpieza. A22 cumplido. Precio, fechas, datos faltantes, negación, confirmación ambigua, repetición, alternativas y límites verificados; fallos detectados corregidos y conservados en bitácora. 150 pruebas backend aprobadas; concurrencia, atomicidad, deduplicación y recuperación probadas en la aplicación. Seis escenarios de interfaz en tres tamaños. [Cierre](cierre-fase-6.md), [validación real](validacion-real-agente-kapso-fase-6.md) |
 | 7 | Completada y validada | WhatsApp real: consulta propia, cambios/cancelación, idempotencia, conflicto manual, dos hijos del mismo responsable, toma/pausa/respuesta manual/devolución, límites, derivaciones, cierre y horario/texto; configuración original restaurada, AUTO/generación 21. Regresión completa final 209 casos backend sin fallos/errores/omitidos, catorce escenarios de navegador previos en tres tamaños e interrupción/recuperación con dos procesos internos. Finanzas e historiales conservados. [Cierre](cierre-fase-7.md), [evidencia real](validacion-real-agente-kapso-fase-7.md) |
-| 8 | Pendiente | Depende de fase 7 |
+| 8 | Completada técnicamente y verificada | Panel inicial por permisos; nueve reportes, totales exactos, cortes, CSV/PDF y enlaces del paciente. 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques; revisión visual en tres tamaños. Recordatorios/A28 aplazados. [Cierre](cierre-fase-8.md); revisión del usuario pendiente |
 | 9 | Pendiente | Depende de fase 8 |
 
 ## 7. Entregables y límites
