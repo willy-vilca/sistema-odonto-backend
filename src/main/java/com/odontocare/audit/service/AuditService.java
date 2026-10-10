@@ -42,6 +42,7 @@ public class AuditService {
       String entityType,
       Object entityId,
       String summary) {
+    if (!AuditPolicy.essential(action)) return;
     repository.save(
         new AuditEvent(
             actorId,

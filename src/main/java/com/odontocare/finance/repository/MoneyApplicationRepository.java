@@ -10,6 +10,11 @@ public interface MoneyApplicationRepository
   @Query("select coalesce(sum(a.amount),0) from MoneyApplication a where a.paymentId=:id")
   BigDecimal paymentApplied(UUID id);
 
+  @Query(
+      "select coalesce(sum(a.amount),0) from MoneyApplication a, ChargeBalance c where"
+          + " a.paymentId=:id and a.chargeId=c.id and c.closed=true")
+  BigDecimal closedApplied(UUID id);
+
   @Query("select coalesce(sum(a.amount),0) from MoneyApplication a where a.chargeId=:id")
   BigDecimal chargeApplied(UUID id);
 

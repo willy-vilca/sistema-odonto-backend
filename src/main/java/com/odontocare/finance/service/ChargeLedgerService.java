@@ -26,6 +26,7 @@ public class ChargeLedgerService {
   private final PlanSessionRepository sessions;
   private final TreatmentPlanRepository plans;
   private final AuditService audit;
+  private final ChargeStateService states;
   private final ClinicalAccess access;
   private final ObjectMapper mapper;
   private final com.odontocare.finance.repository.MoneyApplicationRepository applications;
@@ -39,13 +40,15 @@ public class ChargeLedgerService {
       AuditService audit,
       ClinicalAccess access,
       ObjectMapper mapper,
-      com.odontocare.finance.repository.MoneyApplicationRepository applications) {
+      com.odontocare.finance.repository.MoneyApplicationRepository applications,
+      ChargeStateService states) {
     this.entries = entries;
     this.patients = patients;
     this.items = items;
     this.sessions = sessions;
     this.plans = plans;
     this.audit = audit;
+    this.states = states;
     this.access = access;
     this.mapper = mapper;
     this.applications = applications;
@@ -108,6 +111,7 @@ public class ChargeLedgerService {
         throw ApiException.conflict("La clave ya pertenece a otro ajuste.");
       return response(prior.get());
     }
+    states.requireOpen(originalId);
     if (request.amount().signum() == 0)
       throw ApiException.badRequest("El ajuste debe cambiar el importe.");
     if (original.getPlanId() != null) {
@@ -145,6 +149,7 @@ public class ChargeLedgerService {
         throw ApiException.conflict("La clave corresponde a otro descuento.");
       return response(prior.get());
     }
+    states.requireOpen(id);
     var current = entries.originDebt(id);
     if (r.amount().compareTo(current) > 0 || cancel && r.amount().compareTo(current) != 0)
       throw ApiException.badRequest(
@@ -195,6 +200,7 @@ public class ChargeLedgerService {
       String key,
       String hash,
       String reason) {
+    states.requireOpen(original.getId());
     var entry = new ChargeEntry();
     entry.setPatientId(original.getPatientId());
     entry.setPlanId(original.getPlanId());
@@ -221,6 +227,18 @@ public class ChargeLedgerService {
   @Transactional
   public PageResponse<EntryResponse> list(
       UUID patientId, UUID planId, UUID originId, String kind, String currency, PageQuery query) {
+    return list(patientId, planId, originId, kind, currency, null, query);
+  }
+
+  @Transactional
+  public PageResponse<EntryResponse> list(
+      UUID patientId,
+      UUID planId,
+      UUID originId,
+      String kind,
+      String currency,
+      Boolean closed,
+      PageQuery query) {
     if (kind != null && !Set.of("PLAN", "SERVICE", "ADJUSTMENT", "CANCELLATION").contains(kind))
       throw ApiException.badRequest("Tipo de movimiento no válido.");
     if (currency != null && !currency.matches("[A-Z]{3}"))
@@ -237,6 +255,15 @@ public class ChargeLedgerService {
           spec.and(
               (r, c, b) ->
                   b.or(b.equal(r.get("id"), originId), b.equal(r.get("originalId"), originId)));
+    if (closed != null)
+      spec =
+          spec.and(
+              (r, q, b) -> {
+                var sub = q.subquery(UUID.class);
+                var balance = sub.from(com.odontocare.finance.model.ChargeBalance.class);
+                sub.select(balance.get("id")).where(b.equal(balance.get("closed"), closed));
+                return b.coalesce(r.get("originalId"), r.get("id")).in(sub);
+              });
     var page =
         entries.findAll(
             spec,
@@ -276,6 +303,10 @@ public class ChargeLedgerService {
         c.getQuantity(),
         c.getReason(),
         c.getActorName(),
-        c.getCreatedAt());
+        c.getCreatedAt(),
+        states.closed(c.getOriginalId() == null ? c.getId() : c.getOriginalId()),
+        c.getOriginalId() == null
+            ? entries.originDebt(c.getId()).subtract(applications.chargeApplied(c.getId()))
+            : null);
   }
 }

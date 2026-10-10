@@ -32,6 +32,12 @@ public class AuditQueryService {
                 query.getSearch(), "actorName", "summary", "action", "entityId")
             .and(SearchSpecifications.equal("entityType", entityType))
             .and(SearchSpecifications.equal("action", action));
+    spec =
+        spec.and(
+            (r, q, b) ->
+                b.and(
+                    b.not(r.get("action").in(AuditPolicy.OMITTED)),
+                    b.notLike(r.get("action"), "%!_READ", '!')));
     ZoneId zone = ZoneId.of(profiles.findById((short) 1).orElseThrow().getTimeZone());
     if (fromDate != null)
       spec =

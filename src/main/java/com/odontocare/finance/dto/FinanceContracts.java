@@ -32,7 +32,9 @@ public final class FinanceContracts {
       Integer quantity,
       String reason,
       String actorName,
-      Instant createdAt) {}
+      Instant createdAt,
+      boolean closed,
+      BigDecimal pending) {}
 
   public record DebtSummary(
       String currency, BigDecimal charges, BigDecimal adjustments, BigDecimal netDebt) {}

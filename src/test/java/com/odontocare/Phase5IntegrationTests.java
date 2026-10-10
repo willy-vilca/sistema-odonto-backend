@@ -66,12 +66,17 @@ class Phase5IntegrationTests {
 
   @BeforeEach
   void prepare() throws Exception {
+    clock.now.set(Instant.parse("2030-01-01T12:00:00Z"));
     assertThat(jdbc.queryForObject("select current_database()", String.class))
         .isEqualTo("sistema_odontologo_test");
     jdbc.execute(
-        "TRUNCATE agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
-            + " agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
-    jdbc.update("UPDATE agent_policy SET enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true WHERE id=1");
+        "TRUNCATE"
+            + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
+            + " agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_state,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
+    jdbc.update(
+        "UPDATE agent_policy SET"
+            + " enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true"
+            + " WHERE id=1");
     jdbc.update(
         "UPDATE installation_profile SET"
             + " time_zone='America/Lima',minimum_lead_minutes=0,appointment_gap_minutes=0,patient_prefix='PAC',patient_next_number=1,version=0");
@@ -1299,5 +1304,463 @@ class Phase5IntegrationTests {
     jdbc.update("update installation_profile set receipt_next_number=2");
     var payment = create("/api/v1/finance/payments", body);
     assertThat(payment.get("receiptCode").asText()).isEqualTo("COL-000002");
+  }
+
+  Map<String, Object> lifecycle() {
+    return Map.of("requestKey", UUID.randomUUID(), "reason", "Revisión documentada");
+  }
+
+  JsonNode closeCharge(JsonNode charge) throws Exception {
+    return call(
+        post("/api/v1/finance/charges/" + charge.get("id").asText() + "/close").with(csrf()),
+        admin,
+        lifecycle(),
+        200);
+  }
+
+  Map<String, Object> checkoutBody(JsonNode encounter, String amount, String method) {
+    return Map.of(
+        "requestKey",
+        UUID.randomUUID(),
+        "version",
+        encounter.get("version").asLong(),
+        "amount",
+        amount,
+        "occurredOn",
+        "2030-01-01",
+        "method",
+        method,
+        "reference",
+        "Cobro directo");
+  }
+
+  String checkoutUrl(JsonNode encounter) {
+    return "/api/v1/clinical/encounters/" + encounter.get("id").asText() + "/checkout";
+  }
+
+  @Test
+  void chargeClosureSeparatesActiveAndHistoricalMoneyAndReopensWithoutNewDebt() throws Exception {
+    var c = charge();
+    pay("1200", c);
+    pay("100", null);
+    var body = lifecycle();
+    var url = "/api/v1/finance/charges/" + c.get("id").asText();
+    var closed = call(post(url + "/close").with(csrf()), admin, body, 200);
+    assertThat(closed.path("closed").asBoolean()).isTrue();
+    var active = summary();
+    assertThat(active.path("debt").asText()).isEqualTo("0");
+    assertThat(active.path("received").decimalValue()).isEqualByComparingTo("100.00");
+    assertThat(active.path("applied").asText()).isEqualTo("0");
+    assertThat(active.path("advance").decimalValue()).isEqualByComparingTo("100.00");
+    var history =
+        read("/api/v1/finance/summary?patientId="
+                + patient.path("id").asText()
+                + "&historical=true")
+            .get(0);
+    assertThat(history.path("debt").decimalValue()).isEqualByComparingTo("1200");
+    assertThat(history.path("received").decimalValue()).isEqualByComparingTo("1300");
+    assertThat(
+            read("/api/v1/finance/charges?patientId=" + patient.path("id").asText())
+                .path("totalElements")
+                .asInt())
+        .isZero();
+    assertThat(
+            read("/api/v1/charges?patientId=" + patient.path("id").asText() + "&closed=true")
+                .path("totalElements")
+                .asInt())
+        .isEqualTo(1);
+    call(post(url + "/close").with(csrf()), admin, body, 200);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from audit_event where action='CHARGE_CLOSED'", Integer.class))
+        .isEqualTo(1);
+    call(post(url + "/reopen").with(csrf()), admin, lifecycle(), 200);
+    assertThat(summary().path("debt").decimalValue()).isEqualByComparingTo("1200");
+    assertThat(summary().path("received").decimalValue()).isEqualByComparingTo("1300");
+    // Repeating the old close must not reapply it after reopening.
+    assertThat(call(post(url + "/close").with(csrf()), admin, body, 200).path("closed").asBoolean())
+        .isFalse();
+    assertThat(jdbc.queryForObject("select count(*) from charge_entry", Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void closingAnUnpaidChargeFailsAndClosedChargesRejectEveryBalanceMutation() throws Exception {
+    var c = charge();
+    var url = "/api/v1/finance/charges/" + c.path("id").asText();
+    call(post(url + "/close").with(csrf()), admin, lifecycle(), 400);
+    var payment = pay("1200", c);
+    closeCharge(c);
+    call(
+        post("/api/v1/charges/" + c.path("id").asText() + "/adjustments").with(csrf()),
+        admin,
+        Map.of("requestKey", UUID.randomUUID(), "amount", 100, "reason", "Ajuste"),
+        409);
+    call(
+        post(url + "/discount").with(csrf()),
+        admin,
+        Map.of("requestKey", UUID.randomUUID(), "amount", 100, "reason", "Descuento"),
+        409);
+    var apply =
+        Map.of(
+            "requestKey",
+            UUID.randomUUID(),
+            "reason",
+            "Liberar",
+            "allocations",
+            List.of(allocation(c, "100")));
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/release").with(csrf()),
+        admin,
+        apply,
+        409);
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/reverse").with(csrf()),
+        admin,
+        correction("1200", List.of()),
+        409);
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/refund").with(csrf()),
+        admin,
+        correction("100", List.of(allocation(c, "100"))),
+        409);
+    var advance = pay("100", null);
+    call(
+        post("/api/v1/finance/payments/" + advance.path("id").asText() + "/apply").with(csrf()),
+        admin,
+        apply,
+        409);
+    assertThat(jdbc.queryForObject("select count(*) from money_movement", Integer.class))
+        .isEqualTo(2);
+    assertThat(jdbc.queryForObject("select count(*) from money_application", Integer.class))
+        .isEqualTo(1);
+    call(post(url + "/reopen").with(csrf()), admin, lifecycle(), 200);
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/refund").with(csrf()),
+        admin,
+        correction("100", List.of(allocation(c, "100"))),
+        200);
+    assertThat(summary().path("pending").decimalValue()).isEqualByComparingTo("100");
+  }
+
+  @Test
+  void refundingOnlyAnUnappliedAdvanceDoesNotTouchAClosedCharge() throws Exception {
+    var c = charge();
+    var payment =
+        create(
+            "/api/v1/finance/payments",
+            paymentBody("1300", "TRANSFER", List.of(allocation(c, "1200"))));
+    closeCharge(c);
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/refund").with(csrf()),
+        admin,
+        correction("50", List.of()),
+        200);
+    assertThat(summary().path("advance").decimalValue()).isEqualByComparingTo("50");
+    assertThat(read("/api/v1/finance/charges/" + c.path("id").asText()).path("closed").asBoolean())
+        .isTrue();
+  }
+
+  @Test
+  void closureAndPaymentReversalAreSerializedWithoutBreakingClosedBalance() throws Exception {
+    var c = charge();
+    var payment = pay("1200", c);
+    var pool = Executors.newFixedThreadPool(2);
+    var gate = new CountDownLatch(1);
+    try {
+      var close =
+          pool.submit(
+              () -> {
+                gate.await();
+                return mvc.perform(
+                        post("/api/v1/finance/charges/" + c.path("id").asText() + "/close")
+                            .session(admin)
+                            .with(csrf())
+                            .contentType("application/json")
+                            .content(mapper.writeValueAsString(lifecycle())))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus();
+              });
+      var reverse =
+          pool.submit(
+              () -> {
+                gate.await();
+                return mvc.perform(
+                        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/reverse")
+                            .session(admin)
+                            .with(csrf())
+                            .contentType("application/json")
+                            .content(mapper.writeValueAsString(correction("1200", List.of()))))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus();
+              });
+      gate.countDown();
+      var a = close.get(15, TimeUnit.SECONDS);
+      var b = reverse.get(15, TimeUnit.SECONDS);
+      assertThat((a == 200 && b == 409) || (a == 400 && b == 200)).isTrue();
+      assertThat(
+              jdbc.queryForObject(
+                  "select count(*) from financial_charge_balance where closed and pending<>0",
+                  Integer.class))
+          .isZero();
+    } finally {
+      pool.shutdownNow();
+    }
+  }
+
+  @Test
+  void quickCheckoutFinalizesPaysClosesAndRetriesExactlyOnce() throws Exception {
+    var e = encounter();
+    var preview = read(checkoutUrl(e));
+    assertThat(preview.path("amount").decimalValue()).isEqualByComparingTo("100");
+    var body = checkoutBody(e, "100", "TRANSFER");
+    var result = call(post(checkoutUrl(e)).with(csrf()), admin, body, 200);
+    assertThat(result.path("encounter").path("status").asText()).isEqualTo("FINAL");
+    assertThat(result.path("payment").path("amount").decimalValue()).isEqualByComparingTo("100");
+    var repeated = call(post(checkoutUrl(e)).with(csrf()), admin, body, 200);
+    assertThat(repeated.path("repeated").asBoolean()).isTrue();
+    assertThat(repeated.path("payment").path("id")).isEqualTo(result.path("payment").path("id"));
+    assertThat(jdbc.queryForObject("select count(*) from charge_state where closed", Integer.class))
+        .isEqualTo(1);
+    assertThat(jdbc.queryForObject("select count(*) from money_movement", Integer.class))
+        .isEqualTo(1);
+    assertThat(jdbc.queryForObject("select count(*) from encounter_revision", Integer.class))
+        .isEqualTo(1);
+    assertThat(summary().path("pending").decimalValue()).isEqualByComparingTo("0");
+    assertThat(summary().path("received").decimalValue()).isEqualByComparingTo("0");
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "100", "TRANSFER"), 409);
+  }
+
+  @Test
+  void checkoutFailureRollsBackClinicalFinalizationDebtAndPayment() throws Exception {
+    var e = encounter();
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "100", "CASH"), 409);
+    assertThat(read("/api/v1/clinical/encounters/" + e.path("id").asText()).path("status").asText())
+        .isEqualTo("DRAFT");
+    for (String table :
+        List.of("charge_entry", "money_movement", "encounter_revision", "charge_state"))
+      assertThat(jdbc.queryForObject("select count(*) from " + table, Integer.class)).isZero();
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "99", "TRANSFER"), 409);
+    assertThat(jdbc.queryForObject("select count(*) from charge_entry", Integer.class)).isZero();
+    open();
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "100", "CASH"), 200);
+  }
+
+  @Test
+  void checkoutDoesNotDoubleChargeIncludedPlanSessions() throws Exception {
+    var plan = accepted("1200", 3);
+    var e = sessionEncounter(itemOf(plan), 1);
+    assertThat(read(checkoutUrl(e)).path("individualCharges").asInt()).isZero();
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "0", "TRANSFER"), 400);
+    assertThat(debt()).isEqualByComparingTo("1200");
+    assertThat(jdbc.queryForObject("select count(*) from treatment_session", Integer.class))
+        .isZero();
+    finish(e);
+    assertThat(debt()).isEqualByComparingTo("1200");
+    assertThat(jdbc.queryForObject("select count(*) from treatment_session", Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void appointmentWorkflowPrefillsAndFindsExistingAttentionWithOwnershipChecks() throws Exception {
+    create(
+        "/api/v1/schedules/periods",
+        Map.of(
+            "dentistId",
+            doctor.path("id").asText(),
+            "dayOfWeek",
+            2,
+            "kind",
+            "WORK",
+            "startMinute",
+            540,
+            "endMinute",
+            1080,
+            "active",
+            true));
+    var appt = reserve(doctor, "2030-01-01T09:00");
+    var path = "/api/v1/clinical/from-appointment/" + appt.path("id").asText();
+    var start = read(path);
+    assertThat(start.path("defaults").path("patientId")).isEqualTo(patient.path("id"));
+    assertThat(start.path("defaults").path("dentistId")).isEqualTo(doctor.path("id"));
+    assertThat(start.path("defaults").path("appointmentId")).isEqualTo(appt.path("id"));
+    var body = new HashMap<>(encounterBody());
+    body.put("appointmentId", appt.path("id").asText());
+    var e = create("/api/v1/clinical/encounters", body);
+    assertThat(read(path).path("existing").path("id")).isEqualTo(e.path("id"));
+    call(get(path), login("luis"), null, 403);
+    clock.now.set(Instant.parse("2030-01-01T15:00:00Z"));
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "100", "TRANSFER"), 200);
+    assertThat(read("/api/v1/appointments/" + appt.path("id").asText()).path("status").asText())
+        .isEqualTo("ATTENDED");
+  }
+
+  @Test
+  void auditSkipsRoutineBrowsingKeepsCriticalChangesAndFiltersLegacyNoise() throws Exception {
+    var c = charge();
+    var before = jdbc.queryForObject("select count(*) from audit_event", Integer.class);
+    for (int i = 0; i < 4; i++) {
+      summary();
+      read("/api/v1/charges?patientId=" + patient.path("id").asText());
+      read("/api/v1/finance/movements?patientId=" + patient.path("id").asText());
+    }
+    assertThat(jdbc.queryForObject("select count(*) from audit_event", Integer.class))
+        .isEqualTo(before);
+    pay("1200", c);
+    closeCharge(c);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from audit_event where action in"
+                    + " ('PAYMENT_REGISTERED','CHARGE_CLOSED')",
+                Integer.class))
+        .isEqualTo(2);
+    jdbc.update(
+        "insert into audit_event(id,actor_name,action,entity_type,entity_id,summary,occurred_at)"
+            + " values (?,'Sistema','MONEY_READ','PAYMENT','antiguo','Consulta antigua',now())",
+        UUID.randomUUID());
+    assertThat(read("/api/v1/audit-events?action=MONEY_READ").path("totalElements").asInt())
+        .isZero();
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from audit_event where action='MONEY_READ'", Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void aPaymentSharedBetweenClosedAndOpenChargesKeepsOnlyActiveApplications() throws Exception {
+    var first = charge();
+    var e = finish(encounter());
+    var second =
+        read("/api/v1/charges?patientId=" + patient.path("id").asText() + "&kind=SERVICE")
+            .path("items")
+            .get(0);
+    var payment =
+        create(
+            "/api/v1/finance/payments",
+            paymentBody(
+                "1500", "TRANSFER", List.of(allocation(first, "1200"), allocation(second, "100"))));
+    closeCharge(first);
+    assertThat(summary().path("debt").decimalValue()).isEqualByComparingTo("100");
+    assertThat(summary().path("received").decimalValue()).isEqualByComparingTo("300");
+    assertThat(summary().path("advance").decimalValue()).isEqualByComparingTo("200");
+    var movement =
+        read("/api/v1/finance/movements?patientId=" + patient.path("id").asText())
+            .path("items")
+            .get(0);
+    assertThat(movement.path("closedApplied").decimalValue()).isEqualByComparingTo("1200");
+    closeCharge(second);
+    assertThat(summary().path("received").decimalValue()).isEqualByComparingTo("200");
+    assertThat(
+            jdbc.queryForObject(
+                "select sum(amount) from money_movement", java.math.BigDecimal.class))
+        .isEqualByComparingTo("1500");
+  }
+
+  @Test
+  void quickCheckoutHonorsCombinedPermissionsAndReopeningNeedsAdjustmentPermission()
+      throws Exception {
+    var e = encounter();
+    call(get(checkoutUrl(e)), login("ana"), null, 403);
+    call(post(checkoutUrl(e)).with(csrf()), login("ana"), checkoutBody(e, "100", "TRANSFER"), 403);
+    assertThat(jdbc.queryForObject("select count(*) from money_movement", Integer.class)).isZero();
+    create(
+        "/api/v1/users",
+        Map.of(
+            "username",
+            "quick-cash",
+            "displayName",
+            "Caja",
+            "email",
+            "",
+            "password",
+            password,
+            "active",
+            true,
+            "roles",
+            List.of("CASHIER")));
+    for (String permission : List.of("PAYMENTS_WRITE", "FINANCES_READ"))
+      jdbc.update(
+          "insert into role_permission values ('CASHIER',?) on conflict do nothing", permission);
+    var cashier = login("quick-cash");
+    var c = charge();
+    pay("1200", c);
+    call(
+        post("/api/v1/finance/charges/" + c.path("id").asText() + "/close").with(csrf()),
+        cashier,
+        lifecycle(),
+        200);
+    call(
+        post("/api/v1/finance/charges/" + c.path("id").asText() + "/reopen").with(csrf()),
+        cashier,
+        lifecycle(),
+        403);
+    call(post(checkoutUrl(e)).with(csrf()), cashier, checkoutBody(e, "100", "TRANSFER"), 403);
+  }
+
+  @Test
+  void concurrentIdenticalCheckoutsCreateOneClinicalVersionPaymentAndClosure() throws Exception {
+    var e = encounter();
+    var body = checkoutBody(e, "100", "TRANSFER");
+    var pool = Executors.newFixedThreadPool(2);
+    var gate = new CountDownLatch(1);
+    try {
+      List<Future<Integer>> results = new ArrayList<>();
+      for (int i = 0; i < 2; i++)
+        results.add(
+            pool.submit(
+                () -> {
+                  gate.await();
+                  return mvc.perform(
+                          post(checkoutUrl(e))
+                              .session(admin)
+                              .with(csrf())
+                              .contentType("application/json")
+                              .content(mapper.writeValueAsString(body)))
+                      .andReturn()
+                      .getResponse()
+                      .getStatus();
+                }));
+      gate.countDown();
+      for (var result : results) assertThat(result.get(15, TimeUnit.SECONDS)).isEqualTo(200);
+      for (String table :
+          List.of(
+              "charge_entry",
+              "money_movement",
+              "money_application",
+              "encounter_revision",
+              "charge_state"))
+        assertThat(jdbc.queryForObject("select count(*) from " + table, Integer.class))
+            .isEqualTo(1);
+      assertThat(
+              read("/api/v1/finance/movements?patientId=" + patient.path("id").asText())
+                  .path("items")
+                  .get(0)
+                  .path("closedApplied")
+                  .decimalValue())
+          .isEqualByComparingTo("100");
+    } finally {
+      pool.shutdownNow();
+    }
+  }
+
+  @Test
+  void aFreeIndividualProcedureClosesWithoutInventingMoneyOrAReceipt() throws Exception {
+    var body = new HashMap<>(encounterBody());
+    var clinical = new HashMap<>(content("Atención preventiva sin honorarios"));
+    clinical.put(
+        "procedures",
+        List.of(Map.of("description", "Evaluación gratuita", "quantity", 1, "unitPrice", 0)));
+    body.put("content", clinical);
+    var e = create("/api/v1/clinical/encounters", body);
+    var result =
+        call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "0", "TRANSFER"), 200);
+    assertThat(result.path("payment").isNull()).isTrue();
+    assertThat(jdbc.queryForObject("select count(*) from money_movement", Integer.class)).isZero();
+    assertThat(jdbc.queryForObject("select count(*) from financial_document", Integer.class))
+        .isZero();
+    assertThat(jdbc.queryForObject("select count(*) from charge_state where closed", Integer.class))
+        .isEqualTo(1);
   }
 }

@@ -1,5 +1,7 @@
 # Instantáneas de las guías maestras
 
+Revisión completada del 10/10/2026: cuenta activa con cierre/reapertura de cargos, auditoría esencial y cita → atención → cobro opcional. [Guía de funcionamiento y comprobación](cargos-auditoria-atencion-rapida.md). Alcance 1.12 y plan 3.14; 245 pruebas backend y 49 escenarios distintos de navegador aprobados en bloques. Main en ambos repositorios; fase 9 y recordatorios siguen pendientes. V24 conserva los libros históricos y bloquea modificaciones de cargos finalizados. Las notas siguientes mantienen el recorrido histórico.
+
 Estado al 10/10/2026: alcance 1.11 y plan 3.13; fase 8 completada técnicamente y verificada, pendiente de revisión del usuario. [Cierre de fase 8](cierre-fase-8.md), [diseño](diseno-fase-8.md). Panel inicial, nueve reportes, CSV/PDF y navegación por permisos. 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques. Recordatorios/A28 aplazados expresamente; fase 9 pendiente.
 
 Estado al 09/10/2026: main en ambos repositorios, plan 3.12 y alcance 1.10. Fases 6 y 7 cerradas; fase 8 pendiente. [Interfaz de atención de WhatsApp](mejoras-interfaz-whatsapp.md): chat con cursores, envío humano y vistas secundarias de información/historial. Regresión backend: 213 casos aprobados. Las notas anteriores de pruebas o fases pendientes son históricas.

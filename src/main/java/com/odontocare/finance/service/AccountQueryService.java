@@ -20,6 +20,7 @@ public class AccountQueryService {
   private final ChargeBalanceRepository balances;
   private final PatientRepository patients;
   private final AuditService audit;
+  private final ChargeStateRepository states;
   private final FinanceOperationRepository operations;
 
   public AccountQueryService(
@@ -29,7 +30,8 @@ public class AccountQueryService {
       ChargeBalanceRepository balances,
       PatientRepository patients,
       AuditService audit,
-      FinanceOperationRepository operations) {
+      FinanceOperationRepository operations,
+      ChargeStateRepository states) {
     this.charges = charges;
     this.movements = movements;
     this.applications = applications;
@@ -37,6 +39,7 @@ public class AccountQueryService {
     this.patients = patients;
     this.audit = audit;
     this.operations = operations;
+    this.states = states;
   }
 
   @Transactional(isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
@@ -45,7 +48,28 @@ public class AccountQueryService {
     audit.record("ACCOUNT_READ", "PAYMENT", patient, "Consultó estado financiero");
     Set<String> currencies = new TreeSet<>(charges.currencies(patient));
     currencies.addAll(movements.currencies(patient));
+    return currencies.stream().map(c -> activeSummary(patient, c)).toList();
+  }
+
+  @Transactional(isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+  public List<AccountSummary> historicalSummary(UUID patient) {
+    patients.findById(patient).orElseThrow(ApiException::notFound);
+    Set<String> currencies = new TreeSet<>(charges.currencies(patient));
+    currencies.addAll(movements.currencies(patient));
     return currencies.stream().map(c -> summary(patient, c)).toList();
+  }
+
+  private AccountSummary activeSummary(UUID patient, String currency) {
+    var historical = summary(patient, currency);
+    var debt = states.activeTotal(patient, currency, false);
+    var applied = states.activeTotal(patient, currency, true);
+    return new AccountSummary(
+        currency,
+        debt,
+        applied.add(historical.advance()),
+        applied,
+        debt.subtract(applied),
+        historical.advance());
   }
 
   public AccountSummary summary(UUID patient, String currency) {
@@ -65,16 +89,30 @@ public class AccountQueryService {
         c.getCurrency(),
         c.getDebt(),
         c.getApplied(),
-        c.getPending());
+        c.getPending(),
+        states.closed(id));
   }
 
   @Transactional
   public PageResponse<OpenCharge> charges(
       UUID patient, String currency, boolean pendingOnly, PageQuery query) {
+    return charges(patient, currency, pendingOnly, false, null, query);
+  }
+
+  @Transactional
+  public PageResponse<OpenCharge> charges(
+      UUID patient,
+      String currency,
+      boolean pendingOnly,
+      Boolean closed,
+      UUID encounterId,
+      PageQuery query) {
     var spec =
         SearchSpecifications.<ChargeBalance>text(query.getSearch(), "description")
             .and(SearchSpecifications.equal("patientId", patient))
-            .and(SearchSpecifications.equal("currency", currency));
+            .and(SearchSpecifications.equal("currency", currency))
+            .and(SearchSpecifications.equal("closed", closed))
+            .and(SearchSpecifications.equal("encounterId", encounterId));
     if (pendingOnly) spec = spec.and((r, c, b) -> b.greaterThan(r.get("pending"), BigDecimal.ZERO));
     return PageResponse.of(
         balances
@@ -89,7 +127,8 @@ public class AccountQueryService {
                         c.getCurrency(),
                         c.getDebt(),
                         c.getApplied(),
-                        c.getPending())));
+                        c.getPending(),
+                        c.isClosed())));
   }
 
   @Transactional(isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
@@ -200,6 +239,7 @@ public class AccountQueryService {
         effective,
         applied,
         m.getKind().equals("PAYMENT") ? effective.subtract(applied) : BigDecimal.ZERO,
+        m.getKind().equals("PAYMENT") ? applications.closedApplied(m.getId()) : BigDecimal.ZERO,
         m.getOccurredOn(),
         m.getMethod(),
         m.getReference(),

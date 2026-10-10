@@ -9,6 +9,8 @@ public interface ChargeEntryRepository
     extends JpaRepository<ChargeEntry, UUID>, JpaSpecificationExecutor<ChargeEntry> {
   Optional<ChargeEntry> findBySourceKey(String key);
 
+  List<ChargeEntry> findByEncounterIdAndOriginalIdIsNull(UUID encounterId);
+
   @Query("select coalesce(sum(c.amount),0) from ChargeEntry c where c.planId=:id")
   BigDecimal planDebt(UUID id);
 

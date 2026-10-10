@@ -23,6 +23,7 @@ public class InstallmentService {
   private final FinanceOperationService operations;
   private final ClinicalAccess access;
   private final AuditService audit;
+  private final ChargeStateService states;
 
   public InstallmentService(
       InstallmentRepository installments,
@@ -32,7 +33,8 @@ public class InstallmentService {
       PatientRepository patients,
       FinanceOperationService operations,
       ClinicalAccess access,
-      AuditService audit) {
+      AuditService audit,
+      ChargeStateService states) {
     this.installments = installments;
     this.schedules = schedules;
     this.charges = charges;
@@ -41,6 +43,7 @@ public class InstallmentService {
     this.operations = operations;
     this.access = access;
     this.audit = audit;
+    this.states = states;
   }
 
   @Transactional
@@ -49,6 +52,7 @@ public class InstallmentService {
     patients.lockById(c.getPatientId()).orElseThrow();
     var prior = operations.previous(r.requestKey(), "INSTALLMENTS", r);
     if (prior.isPresent()) return prior.get().getResultId();
+    states.requireOpen(c.getId());
     if (c.getOriginalId() != null) throw ApiException.badRequest("Selecciona el cargo original.");
     var total =
         r.installments().stream().map(DueRequest::amount).reduce(BigDecimal.ZERO, BigDecimal::add);

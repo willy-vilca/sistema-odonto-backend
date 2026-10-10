@@ -31,8 +31,9 @@ public class PaymentController {
 
   @GetMapping("/summary")
   @PreAuthorize("hasAuthority('FINANCES_READ')")
-  public List<AccountSummary> summary(@RequestParam UUID patientId) {
-    return queries.summary(patientId);
+  public List<AccountSummary> summary(
+      @RequestParam UUID patientId, @RequestParam(defaultValue = "false") boolean historical) {
+    return historical ? queries.historicalSummary(patientId) : queries.summary(patientId);
   }
 
   @GetMapping("/charges/{id}")
@@ -47,8 +48,10 @@ public class PaymentController {
       @RequestParam UUID patientId,
       @RequestParam(required = false) String currency,
       @RequestParam(defaultValue = "false") boolean pendingOnly,
+      @RequestParam(defaultValue = "false") Boolean closed,
+      @RequestParam(required = false) UUID encounterId,
       @Valid @ModelAttribute PageQuery query) {
-    return queries.charges(patientId, currency, pendingOnly, query);
+    return queries.charges(patientId, currency, pendingOnly, closed, encounterId, query);
   }
 
   @GetMapping("/movements")

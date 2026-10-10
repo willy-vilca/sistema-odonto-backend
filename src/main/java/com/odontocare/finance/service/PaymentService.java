@@ -24,6 +24,7 @@ public class PaymentService {
   private final FinancialDocumentService documents;
   private final ClinicalAccess access;
   private final AuditService audit;
+  private final ChargeStateService states;
 
   public PaymentService(
       MoneyMovementRepository movements,
@@ -35,7 +36,8 @@ public class PaymentService {
       AccountQueryService queries,
       FinancialDocumentService documents,
       ClinicalAccess access,
-      AuditService audit) {
+      AuditService audit,
+      ChargeStateService states) {
     this.movements = movements;
     this.applications = applications;
     this.charges = charges;
@@ -46,6 +48,7 @@ public class PaymentService {
     this.documents = documents;
     this.access = access;
     this.audit = audit;
+    this.states = states;
   }
 
   public void requireDate(java.time.LocalDate date) {
@@ -104,6 +107,7 @@ public class PaymentService {
           || !c.getCurrency().equals(m.getCurrency()))
         throw ApiException.badRequest(
             "El cargo debe ser original, del paciente y de la misma moneda.");
+      states.requireOpen(c.getId());
       var limit =
           release
               ? applications.pairApplied(m.getId(), c.getId())

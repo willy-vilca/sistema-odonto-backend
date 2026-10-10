@@ -10,4 +10,6 @@ public interface EncounterRepository
   Optional<UUID> patientId(UUID id);
 
   boolean existsByAppointmentId(UUID appointmentId);
+
+  Optional<Encounter> findByAppointmentId(UUID appointmentId);
 }

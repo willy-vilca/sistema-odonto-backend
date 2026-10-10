@@ -9,6 +9,9 @@ import java.util.*;
 public final class PaymentContracts {
   private PaymentContracts() {}
 
+  public record ChargeStateRequest(
+      @NotNull UUID requestKey, @NotBlank @Size(max = 500) String reason) {}
+
   public record Allocation(
       @NotNull UUID chargeId,
       @NotNull @DecimalMin("0.01") @DecimalMax("9999999999.99") @Digits(integer = 10, fraction = 2)
@@ -94,6 +97,7 @@ public final class PaymentContracts {
       BigDecimal effectiveAmount,
       BigDecimal applied,
       BigDecimal available,
+      BigDecimal closedApplied,
       LocalDate occurredOn,
       String method,
       String reference,
@@ -128,7 +132,8 @@ public final class PaymentContracts {
       String currency,
       BigDecimal debt,
       BigDecimal applied,
-      BigDecimal pending) {}
+      BigDecimal pending,
+      boolean closed) {}
 
   public record DueRequest(
       @NotNull LocalDate dueOn,

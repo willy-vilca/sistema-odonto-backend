@@ -15,6 +15,16 @@ public class ChargeBalance {
   private BigDecimal debt;
   private BigDecimal applied;
   private BigDecimal pending;
+  private boolean closed;
+  private UUID encounterId;
+
+  public boolean isClosed() {
+    return closed;
+  }
+
+  public UUID getEncounterId() {
+    return encounterId;
+  }
 
   public UUID getId() {
     return id;

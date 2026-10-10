@@ -25,8 +25,9 @@ public class ChargeController {
       @RequestParam(required = false) UUID originalId,
       @RequestParam(required = false) String kind,
       @RequestParam(required = false) String currency,
+      @RequestParam(required = false) Boolean closed,
       @Valid @ModelAttribute PageQuery query) {
-    return service.list(patientId, planId, originalId, kind, currency, query);
+    return service.list(patientId, planId, originalId, kind, currency, closed, query);
   }
 
   @GetMapping("/summary")

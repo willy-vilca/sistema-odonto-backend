@@ -1,11 +1,13 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
-Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.11. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones del entorno Twilio. La versión 1.6 prioriza el agente antes del upgrade de WhatsApp. La versión 1.7 confirma GroqCloud/openai/gpt-oss-20b por API y las pruebas en la instalación ficticia actual. La versión 1.8 registra la conexión manual de Kapso. La versión 1.9 confirma Kapso para desarrollo/pruebas y autoriza el agente con respuestas autónomas, confirmación natural y reserva consistente. La versión 1.10 registra la interfaz de atención de WhatsApp solicitada el 09/10/2026: chat, respuesta humana integrada, información secundaria y eliminación de avisos de desarrollo.
+Fecha de confirmación: 30 de septiembre de 2026. Versión: 1.12. Estado: alcance confirmado por el usuario para la primera entrega. La versión 1.2 incorporó TailwindCSS, arquitectura por capas, listados procesados en el servidor y las instrucciones permanentes de desarrollo. La versión 1.3 registra los ajustes de interfaz del 02/10/2026; la versión 1.4 incorpora los resúmenes de servicios y citas mensuales del 05/10/2026. La versión 1.5 precisa las restricciones del entorno Twilio. La versión 1.6 prioriza el agente antes del upgrade de WhatsApp. La versión 1.7 confirma GroqCloud/openai/gpt-oss-20b por API y las pruebas en la instalación ficticia actual. La versión 1.8 registra la conexión manual de Kapso. La versión 1.9 confirma Kapso para desarrollo/pruebas y autoriza el agente con respuestas autónomas, confirmación natural y reserva consistente. La versión 1.10 registra la interfaz de atención de WhatsApp solicitada el 09/10/2026: chat, respuesta humana integrada, información secundaria y eliminación de avisos de desarrollo.
 
 Este documento es la guía funcional y técnica de referencia para elaborar el plan de desarrollo, implementar el sistema y comprobar la primera entrega. Las funciones incluidas son compromisos de esta entrega; las ampliaciones posteriores quedan expresamente fuera de ella. Las decisiones técnicas de prueba adoptadas se distinguen de los requisitos funcionales y pueden ajustarse sin reducirlos.
 
 
 Decisión vigente del 10/10/2026, versión 1.11: desarrollar panel inicial por permisos, reportes, exportaciones y navegación integrada del paciente. Aplazar recordatorios automáticos a una implementación posterior, sin condicionar el cierre de esta fase ni presentar A28 como implementado. [Diseño del tramo](diseno-fase-8.md).
+
+Decisión vigente de revisión del 10/10/2026, versión 1.12: el usuario aprobó la revisión de fase 8 y autorizó cuenta activa con cierre/reapertura de cargos saldados, auditoría limitada a acciones esenciales y el flujo opcional cita → atención → cobro. Los cargos finalizados quedan bloqueados para ajustes y dinero aplicado hasta reabrirlos; las operaciones y reportes históricos se conservan. El cobro combinado requiere datos de pago y permisos, es transaccional e idempotente y no vuelve a cobrar sesiones incluidas en planes. [Funcionamiento y validación](cargos-auditoria-atencion-rapida.md).
 
 ## 1. Objetivo y alcance del producto
 
@@ -340,6 +342,14 @@ La entrega se comprobará contra esta tabla y contra las reglas de cada módulo.
 | A30 | Respaldo y restauración integral | Restaurar una copia de PostgreSQL y recuperar datos, imágenes, PDF y relaciones entre ellos. |
 | A31 | Diseño y experiencia de usuario en computadora, tablet y celular | Revisar todas las pantallas y completar los flujos principales en los tres formatos; comprobar legibilidad, jerarquía, navegación, teclado, interacción táctil, validaciones y ausencia de desbordamientos de página. |
 | A32 | Listados procesados en el servidor | En cada tabla o lista de datos, comprobar paginación, filtros y búsqueda textual en la API y PostgreSQL; verificar que el navegador recibe solo la página pedida, con tamaño máximo y ordenación permitida. |
+
+Los ajustes de revisión incorporan también estos criterios:
+
+| Código | Función | Comprobación |
+|---|---|---|
+| A33 | Cierre y reapertura de cargos | Finalizar únicamente cargos sin saldo; excluirlos y excluir su dinero aplicado de la cuenta activa, conservando anticipos e historia. Impedir cambios y devoluciones de aplicaciones cerradas, reabrir con permiso/motivo y repetir sin duplicar operaciones. |
+| A34 | Auditoría esencial | Consultar listas y saldos sin crear registros generales; mantener cambios críticos y accesos documentales sensibles, ocultar ruido histórico sin borrarlo y conservar la bitácora propia del agente. |
+| A35 | Atención y cobro desde la cita | Preseleccionar paciente/profesional/cita y recuperar una atención existente. Finalizar con paso directo a cobro o finalizar/cobrar/cerrar atómicamente, sin duplicar cargos de planes, con permisos y recuperación íntegra ante fallos o repetición. |
 
 ## 14. Registro de decisiones confirmadas
 

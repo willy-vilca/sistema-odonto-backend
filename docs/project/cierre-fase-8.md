@@ -1,5 +1,7 @@
 # Cierre de fase 8: panel, reportes y exportaciones
 
+Revisión del usuario del 10/10/2026: favorable. Sus ajustes posteriores de cargos, auditoría y atención rápida están implementados y verificados en [la guía de revisión](cargos-auditoria-atencion-rapida.md), alcance 1.12 y plan 3.14. Los resultados de este cierre se conservan como evidencia propia de fase 8.
+
 10/10/2026. Alcance 1.11, plan 3.13. Fase completada técnicamente y verificada, pendiente de revisión del usuario. Los recordatorios automáticos/A28 permanecen aplazados a una implementación posterior por su instrucción expresa; no se implementaron ni se consideran cumplidos. Fase 9 no iniciada.
 
 ## Funciones incorporadas

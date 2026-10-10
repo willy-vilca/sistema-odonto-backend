@@ -1,8 +1,8 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
-Fecha: 10 de octubre de 2026. Versión del plan: 3.13. Alcance de referencia: versión 1.11 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
+Fecha: 10 de octubre de 2026. Versión del plan: 3.14. Alcance de referencia: versión 1.12 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
-Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fase 8 completada técnicamente y verificada el 10/10/2026, pendiente de revisión del usuario; recordatorios aplazados expresamente. Regresión actual: 232 pruebas backend y 76 escenarios distintos de navegador aprobados en bloques. [Cierre de fase 8](cierre-fase-8.md). Fase 9 pendiente de instrucción. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).
+Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fase 8 completada técnicamente, verificada y revisada favorablemente por el usuario el 10/10/2026; recordatorios aplazados expresamente. Regresión de los ajustes actuales: 245 pruebas backend distintas y 49 escenarios de navegador aprobados en bloques; la evidencia previa de fase 8 se conserva. [Cierre de fase 8](cierre-fase-8.md). Fase 9 pendiente de instrucción. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).
 
 Ajustes previos a la revisión general completados el 02/10/2026: consulta de detalle del servicio protegida, precio autocompletado y editable, terminología de tratamientos y avisos flotantes. 79 pruebas del servidor y 52 del navegador aprobadas, con revisión responsiva y recuperación de reprogramación. [Resultados y correcciones](ajustes-previos-fase-6.md).
 
@@ -12,6 +12,8 @@ Revisión del usuario el 05/10/2026: informa que realizó aproximadamente toda l
 
 
 Ajuste autorizado del 09/10/2026, posterior al cierre de fases 6 y 7: interfaz de WhatsApp enfocada en atención, chat con carga por cursor, envío humano integrado, historial del asistente e información técnica secundarios. Limpieza de avisos de desarrollo en todas las páginas habituales. Se conserva la automatización y se refuerza el envío manual con control humano en el servidor. Trabajo en main; fase 8 sigue pendiente. [Uso y verificación](mejoras-interfaz-whatsapp.md).
+
+Ajustes de revisión autorizados el 10/10/2026: finalizar/reabrir cargos sin saldo, excluir los finalizados y sus aplicaciones de la cuenta activa, bloquear cambios hasta reapertura y notificar cargos pagados. Auditoría general esencial con ruido histórico filtrado y bitácora del agente conservada. Acceso desde cita a borrador preseleccionado y finalización con paso directo a cobro o cobro completo transaccional. Se conservan módulos independientes y permisos. Trabajo completado y verificado en main: 245 pruebas backend y 49 escenarios de navegador aprobados en bloques, con evidencia responsiva y respaldo previo a V24. No inicia fase 9. [Guía de uso y evidencia](cargos-auditoria-atencion-rapida.md).
 
 ## 1. Objetivo y estrategia
 
@@ -325,6 +327,8 @@ La comprobación externa temprana se documenta si puede ejecutarse. Si faltan ac
 **Criterios relacionados.** A30 y validación final de A01–A32.
 
 ## 5. Cobertura de los criterios del alcance
+
+Los ajustes de revisión del 10/10/2026 completan A33 (cierre/reapertura), A34 (auditoría esencial) y A35 (atención/cobro desde agenda). Su evidencia está en la guía de ajustes; la futura validación integral incluirá estos criterios además de los anteriores.
 
 Las fases indicadas como cierre son las que completan la cobertura funcional del criterio; la fase 9 revisa todos nuevamente en los escenarios integrales. La calidad visual y la autorización se comprueban también en cada fase que agrega una pantalla o una operación.
 
