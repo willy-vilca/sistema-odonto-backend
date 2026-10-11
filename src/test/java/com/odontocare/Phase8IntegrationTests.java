@@ -489,7 +489,7 @@ class Phase8IntegrationTests {
 
   @Test
   void pdfHasReadableSpanishFiltersTotalsAndMultiplePages() throws Exception {
-    appointments(7);
+    appointments(40);
     byte[] bytes =
         mvc.perform(
                 get("/api/v1/reports/APPOINTMENTS/export")
@@ -509,8 +509,9 @@ class Phase8IntegrationTests {
               "Clínica Ñandú",
               "María Ñandú",
               "Julia Prueba",
-              "Totales del resultado filtrado",
-              "Registro 7");
+              "Resumen",
+              "Detalle del resultado filtrado",
+              "Fecha y hora");
       assertThat(text).doesNotContain(id(patient), id(doctor));
       Files.createDirectories(Path.of(".runtime/phase8-pdf"));
       Files.write(Path.of(".runtime/phase8-pdf/citas.pdf"), bytes);

@@ -11,7 +11,6 @@ import com.odontocare.installation.repository.*;
 import com.odontocare.patients.repository.PatientRepository;
 import com.odontocare.shared.pagination.*;
 import com.odontocare.shared.web.ApiException;
-import java.math.BigDecimal;
 import java.security.*;
 import java.util.*;
 import org.springframework.stereotype.Service;
@@ -23,25 +22,21 @@ public class FinancialDocumentService {
   private final FinancialDocumentRepository documents;
   private final FinancialContentRepository contents;
   private final MoneyMovementRepository movements;
-  private final ChargeEntryRepository charges;
-  private final MoneyApplicationRepository applications;
   private final InstallationProfileRepository profiles;
   private final InstallationLogoRepository logos;
   private final PatientRepository patients;
   private final DocumentValidator validator;
   private final DocumentPolicyRepository policies;
   private final FinancialPdfService pdf;
+  private final FinancialPdfContentService pdfContent;
   private final ClinicalAccess access;
   private final AuditService audit;
   private final FinanceOperationRepository operations;
-  private final InstallmentService installments;
 
   public FinancialDocumentService(
       FinancialDocumentRepository documents,
       FinancialContentRepository contents,
       MoneyMovementRepository movements,
-      ChargeEntryRepository charges,
-      MoneyApplicationRepository applications,
       InstallationProfileRepository profiles,
       InstallationLogoRepository logos,
       PatientRepository patients,
@@ -51,22 +46,20 @@ public class FinancialDocumentService {
       ClinicalAccess access,
       AuditService audit,
       FinanceOperationRepository operations,
-      InstallmentService installments) {
+      FinancialPdfContentService pdfContent) {
     this.documents = documents;
     this.contents = contents;
     this.movements = movements;
-    this.charges = charges;
-    this.applications = applications;
     this.profiles = profiles;
     this.logos = logos;
     this.patients = patients;
     this.validator = validator;
     this.policies = policies;
     this.pdf = pdf;
+    this.pdfContent = pdfContent;
     this.access = access;
     this.audit = audit;
     this.operations = operations;
-    this.installments = installments;
   }
 
   public String nextCode() {
@@ -87,40 +80,15 @@ public class FinancialDocumentService {
   }
 
   public void receipt(MoneyMovement m, List<Allocation> rows, String reason) {
-    var patient = patients.findById(m.getPatientId()).orElseThrow();
-    var lines = new ArrayList<String>();
-    lines.add("Paciente: " + patient.getFullName() + " · " + patient.getCode());
-    lines.add("Fecha: " + m.getOccurredOn() + " · Responsable: " + m.getActorName());
-    lines.add("Movimiento: " + kind(m.getKind()) + " · Medio: " + method(m.getMethod()));
-    lines.add("Importe: " + m.getCurrency() + " " + money(m.getAmount()));
-    lines.add("Referencia: " + m.getReference());
-    lines.add("Concepto: " + m.getDescription());
-    lines.add("Motivo: " + reason);
-    if (m.getOriginalId() != null)
-      lines.add(
-          "Pago original: " + movements.findById(m.getOriginalId()).orElseThrow().getReceiptCode());
-    BigDecimal allocated = BigDecimal.ZERO;
-    for (var row : rows) {
-      lines.add(
-          charges.findById(row.chargeId()).orElseThrow().getDescription()
-              + " · "
-              + money(row.amount()));
-      allocated = allocated.add(row.amount());
-    }
-    if (m.getKind().equals("PAYMENT"))
-      lines.add("Anticipo al emitir: " + money(m.getAmount().subtract(allocated)));
+    var content = pdfContent.receipt(m, rows, reason);
     store(
         m.getId(),
         m.getPatientId(),
         m.getReceiptCode() + ".pdf",
         "application/pdf",
-        render("Constancia de " + kind(m.getKind()), m.getReceiptCode(), lines),
+        render("Constancia de " + kind(m.getKind()), m.getReceiptCode(), content),
         "Constancia interna " + m.getReceiptCode(),
         true);
-  }
-
-  private String money(BigDecimal amount) {
-    return amount.setScale(2, java.math.RoundingMode.UNNECESSARY).toPlainString();
   }
 
   private String kind(String value) {
@@ -138,16 +106,10 @@ public class FinancialDocumentService {
         .get(value);
   }
 
-  private String method(String value) {
-    return Map.of(
-            "CASH", "Efectivo", "TRANSFER", "Transferencia", "CARD", "Tarjeta", "OTHER", "Otro")
-        .get(value);
-  }
-
-  private byte[] render(String title, String code, List<String> lines) {
+  private byte[] render(String title, String code, com.odontocare.shared.pdf.PdfContent content) {
     var identity = profiles.lockInstallation().orElseThrow();
     var logo = logos.findById((short) 1).map(l -> l.getContent()).orElse(null);
-    return pdf.render(identity, logo, title, code, lines);
+    return pdf.render(identity, logo, title, code, content);
   }
 
   private FinancialDocument store(
@@ -215,128 +177,7 @@ public class FinancialDocumentService {
         throw ApiException.conflict("La clave ya corresponde a otra operación.");
       return response(documents.findById(prior.get().getResultId()).orElseThrow());
     }
-    var patient = patients.findById(r.patientId()).orElseThrow();
-    var lines = new ArrayList<String>();
-    lines.add("Paciente: " + patient.getFullName() + " · " + patient.getCode());
-    lines.add("Emitido: " + access.today() + " · Responsable: " + access.actor().getDisplayName());
-    lines.add("Moneda: " + r.currency());
-    var spec =
-        SearchSpecifications.<ChargeEntry>text("")
-            .and(SearchSpecifications.equal("patientId", r.patientId()))
-            .and(SearchSpecifications.equal("currency", r.currency()));
-    if (charges.count(spec) > 5000)
-      throw ApiException.badRequest("El estado supera 5000 movimientos de cargos.");
-    for (int page = 0; ; page++) {
-      var result =
-          charges.findAll(
-              spec,
-              org.springframework.data.domain.PageRequest.of(
-                  page, 100, org.springframework.data.domain.Sort.by("createdAt", "id")));
-      result.forEach(
-          c ->
-              lines.add(
-                  Map.of(
-                              "PLAN",
-                              "Cargo de plan",
-                              "SERVICE",
-                              "Cargo por servicio",
-                              "ADJUSTMENT",
-                              "Ajuste",
-                              "CANCELLATION",
-                              "Cancelación")
-                          .get(c.getKind())
-                      + " · "
-                      + c.getDescription()
-                      + " · "
-                      + money(c.getAmount())));
-      if (!result.hasNext()) break;
-    }
-    var moneySpec =
-        SearchSpecifications.<MoneyMovement>text("")
-            .and(SearchSpecifications.equal("patientId", r.patientId()))
-            .and(SearchSpecifications.equal("currency", r.currency()));
-    if (movements.count(moneySpec) > 5000)
-      throw ApiException.badRequest("El estado supera 5000 movimientos de dinero.");
-    for (int page = 0; ; page++) {
-      var result =
-          movements.findAll(
-              moneySpec,
-              org.springframework.data.domain.PageRequest.of(
-                  page, 100, org.springframework.data.domain.Sort.by("createdAt", "id")));
-      result.forEach(
-          m ->
-              lines.add(
-                  m.getOccurredOn()
-                      + " · "
-                      + kind(m.getKind())
-                      + " · "
-                      + m.getReceiptCode()
-                      + " · "
-                      + money(m.getAmount())));
-      if (!result.hasNext()) break;
-    }
-    lines.add("");
-    var applicationSpec =
-        SearchSpecifications.<MoneyApplication>text("")
-            .and(SearchSpecifications.equal("patientId", r.patientId()));
-    if (applications.count(applicationSpec) > 5000)
-      throw ApiException.badRequest("El estado supera 5000 aplicaciones.");
-    lines.add("Aplicaciones y liberaciones:");
-    for (int index = 0; ; index++) {
-      var page =
-          applications.findAll(
-              applicationSpec,
-              org.springframework.data.domain.PageRequest.of(
-                  index, 100, org.springframework.data.domain.Sort.by("createdAt", "id")));
-      for (var application : page) {
-        var original = charges.findById(application.getChargeId()).orElseThrow();
-        if (original.getCurrency().equals(r.currency()))
-          lines.add(
-              movements.findById(application.getPaymentId()).orElseThrow().getReceiptCode()
-                  + " · "
-                  + original.getDescription()
-                  + " · "
-                  + money(application.getAmount()));
-      }
-      if (!page.hasNext()) break;
-    }
-    lines.add("Cuotas y vencimientos vigentes:");
-    for (int index = 0; index < 51; index++) {
-      var q = new PageQuery();
-      q.setPage(index);
-      q.setSize(100);
-      q.setSort("dueOn");
-      var dues = installments.list(r.patientId(), null, true, null, null, q);
-      dues.items().stream()
-          .filter(i -> i.currency().equals(r.currency()))
-          .forEach(
-              i ->
-                  lines.add(
-                      "Cuota "
-                          + i.position()
-                          + " · "
-                          + i.dueOn()
-                          + " · Importe "
-                          + money(i.amount())
-                          + " · Pagado "
-                          + money(i.paid())
-                          + " · Pendiente "
-                          + money(i.pending())));
-      if (index + 1 >= dues.totalPages()) break;
-      if (index == 50) throw ApiException.badRequest("El estado supera 5000 cuotas.");
-    }
-    var debt =
-        charges
-            .charges(r.patientId(), r.currency())
-            .add(charges.adjustments(r.patientId(), r.currency()));
-    var applied = applications.applied(r.patientId(), r.currency());
-    var received = movements.received(r.patientId(), r.currency());
-    lines.add("");
-    lines.add("Deuda generada: " + money(debt));
-    lines.add("Dinero recibido neto: " + money(received));
-    lines.add("Aplicado a cargos: " + money(applied));
-    lines.add("Saldo pendiente: " + money(debt.subtract(applied)));
-    lines.add("Anticipo disponible: " + money(received.subtract(applied)));
+    var content = pdfContent.statement(r.patientId(), r.currency());
     String code = nextCode();
     var d =
         store(
@@ -344,7 +185,7 @@ public class FinancialDocumentService {
             r.patientId(),
             code + ".pdf",
             "application/pdf",
-            render("Estado de cuenta", code, lines),
+            render("Estado de cuenta", code, content),
             "Estado de cuenta " + code,
             true);
     var op = new FinanceOperation();
@@ -362,43 +203,7 @@ public class FinancialDocumentService {
 
   public void cashReport(CashSession session) {
     String code = nextCode();
-    var lines = new ArrayList<String>();
-    lines.add("Apertura: " + session.getCreatedAt() + " · " + session.getOpenedBy());
-    lines.add("Cierre: " + session.getClosedAt() + " · " + session.getClosedBy());
-    lines.add("Moneda: " + session.getCurrency());
-    lines.add("Fondo inicial: " + money(session.getOpening()));
-    lines.add("Efectivo esperado: " + money(session.getExpected()));
-    lines.add("Efectivo contado: " + money(session.getCounted()));
-    lines.add("Diferencia: " + money(session.getDifference()));
-    lines.add("Otros medios (neto): " + money(movements.nonCashNet(session.getId())));
-    lines.add("Observaciones: " + session.getReason());
-    lines.add("");
-    var spec =
-        SearchSpecifications.<MoneyMovement>text("")
-            .and(SearchSpecifications.equal("cashSessionId", session.getId()));
-    if (movements.count(spec) > 5000)
-      throw ApiException.badRequest("El arqueo supera 5000 movimientos.");
-    for (int page = 0; ; page++) {
-      var result =
-          movements.findAll(
-              spec,
-              org.springframework.data.domain.PageRequest.of(
-                  page, 100, org.springframework.data.domain.Sort.by("createdAt", "id")));
-      result.forEach(
-          m ->
-              lines.add(
-                  m.getOccurredOn()
-                      + " · "
-                      + kind(m.getKind())
-                      + " · "
-                      + method(m.getMethod())
-                      + " · "
-                      + money(m.getAmount())
-                      + " · "
-                      + m.getDescription()));
-      if (!result.hasNext()) break;
-    }
-    var bytes = render("Arqueo de caja", code, lines);
+    var bytes = render("Arqueo de caja", code, pdfContent.cash(session));
     storeCash(session.getId(), code, bytes);
   }
 

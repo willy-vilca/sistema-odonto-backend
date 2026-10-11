@@ -27,6 +27,7 @@ public class ReportExportService {
   private final ReportCsvRenderer csv;
   private final ReportPdfRenderer pdf;
   private final InstallationProfileRepository profiles;
+  private final com.odontocare.installation.repository.InstallationLogoRepository logos;
   private final ClinicalAccess clinicalAccess;
   private final AuditService audit;
 
@@ -40,7 +41,8 @@ public class ReportExportService {
       ReportPdfRenderer pdf,
       InstallationProfileRepository profiles,
       ClinicalAccess clinicalAccess,
-      AuditService audit) {
+      AuditService audit,
+      com.odontocare.installation.repository.InstallationLogoRepository logos) {
     this.repository = repository;
     this.access = access;
     this.reports = reports;
@@ -51,6 +53,7 @@ public class ReportExportService {
     this.profiles = profiles;
     this.clinicalAccess = clinicalAccess;
     this.audit = audit;
+    this.logos = logos;
   }
 
   @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -99,6 +102,7 @@ public class ReportExportService {
       bytes =
           pdf.render(
               profiles.findById((short) 1).orElseThrow(),
+              logos.findById((short) 1).map(logo -> logo.getContent()).orElse(null),
               definition,
               window,
               repository.metrics(table, count),

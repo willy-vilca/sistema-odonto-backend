@@ -855,7 +855,7 @@ class Phase5IntegrationTests {
             .getContentAsByteArray();
     try (var pdf = org.apache.pdfbox.Loader.loadPDF(statementBytes)) {
       assertThat(new org.apache.pdfbox.text.PDFTextStripper().getText(pdf))
-          .contains("Saldo pendiente: 900.00", "Identidad modificada");
+          .contains("Saldo pendiente", "900.00", "Identidad modificada");
     }
     mvc.perform(
             get("/api/v1/finance/documents/" + statement.get("id").asText() + "/preview")
@@ -1223,7 +1223,7 @@ class Phase5IntegrationTests {
         .isEqualTo(bytes);
     try (var pdf = org.apache.pdfbox.Loader.loadPDF(bytes)) {
       assertThat(new org.apache.pdfbox.text.PDFTextStripper().getText(pdf))
-          .contains("Efectivo esperado: 100.00", "Diferencia: -5.00");
+          .contains("Efectivo esperado", "100.00", "Diferencia", "-5.00");
     }
   }
 
@@ -1235,7 +1235,16 @@ class Phase5IntegrationTests {
         java.util.stream.IntStream.range(0, 160)
             .mapToObj(i -> "Concepto " + i + " · S/ 100.00 · " + "NombreSinEspacios".repeat(30))
             .toList();
-    var bytes = pdfRenderer.render(identity, image("png"), "Estado de cuenta", "REC-000001", lines);
+    var structured =
+        new com.odontocare.shared.pdf.PdfContent()
+            .table(
+                "Cargos y ajustes",
+                List.of(
+                    com.odontocare.shared.pdf.PdfContent.column("Tratamiento", 4),
+                    com.odontocare.shared.pdf.PdfContent.amount("Importe", 1)),
+                lines.stream().map(line -> List.of(line, "100.00")).toList());
+    var bytes =
+        pdfRenderer.render(identity, image("png"), "Estado de cuenta", "REC-000001", structured);
     try (var document = org.apache.pdfbox.Loader.loadPDF(bytes)) {
       assertThat(document.getNumberOfPages()).isGreaterThan(3);
       var text = new org.apache.pdfbox.text.PDFTextStripper().getText(document);
