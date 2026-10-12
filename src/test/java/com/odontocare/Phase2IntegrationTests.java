@@ -66,7 +66,7 @@ class Phase2IntegrationTests {
   @BeforeEach
   void prepare() throws Exception {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
@@ -746,5 +746,123 @@ class Phase2IntegrationTests {
     b.put("requestKey", UUID.randomUUID().toString());
     b.put("localStart", "2030-11-03T01:30");
     call(post("/api/v1/appointments").with(csrf()), admin, b, 400);
+  }
+
+  @Test
+  void quickPatientUsesOwnPhoneForPaymentAndPreservesFamilyAndDuplicateProtection()
+      throws Exception {
+    var first =
+        create(
+            "/api/v1/patients/quick",
+            Map.of("fullName", "  Elena  Datos Básicos  ", "phone", "+51912345678"));
+    assertThat(first.path("fullName").asText()).isEqualTo("Elena Datos Básicos");
+    assertThat(first.path("provisional").asBoolean()).isTrue();
+    assertThat(first.path("birthDate").isNull()).isTrue();
+    var contact = first.path("contacts").get(0);
+    assertThat(contact.path("name").asText()).isEqualTo("Elena Datos Básicos");
+    assertThat(contact.path("relationship").asText()).isEqualTo("Paciente");
+    assertThat(contact.path("payer").asBoolean()).isTrue();
+    assertThat(contact.path("guardian").asBoolean()).isFalse();
+    call(
+        post("/api/v1/patients/quick").with(csrf()),
+        admin,
+        Map.of("fullName", "elena datos básicos", "phone", "+51912345678"),
+        409);
+    create(
+        "/api/v1/patients/quick",
+        Map.of("fullName", "Mateo Datos Básicos", "phone", "+51912345678"));
+    var full = copy(first);
+    full.put("provisional", false);
+    var withoutBirth =
+        call(put("/api/v1/patients/" + first.path("id").asText()).with(csrf()), admin, full, 200);
+    assertThat(withoutBirth.path("birthDate").isNull()).isTrue();
+    var withBirth = copy(withoutBirth);
+    withBirth.put("birthDate", "1990-01-01");
+    call(put("/api/v1/patients/" + first.path("id").asText()).with(csrf()), admin, withBirth, 200);
+    call(
+        post("/api/v1/patients/quick").with(csrf()),
+        admin,
+        Map.of("fullName", "Elena Datos Básicos", "phone", "+51912345678"),
+        409);
+    assertThat(
+            call(get("/api/v1/patients").param("search", "Datos Básicos"), admin, null, 200)
+                .path("totalElements")
+                .asInt())
+        .isEqualTo(2);
+  }
+
+  @Test
+  void concurrentQuickCreationCannotDuplicateAPatient() throws Exception {
+    var body = Map.of("fullName", "Paciente Concurrente", "phone", "+51912345678");
+    var gate = new CountDownLatch(1);
+    try (var pool = Executors.newFixedThreadPool(2)) {
+      var tasks = new ArrayList<Future<Integer>>();
+      for (int i = 0; i < 2; i++)
+        tasks.add(
+            pool.submit(
+                () -> {
+                  gate.await();
+                  return mvc.perform(
+                          post("/api/v1/patients/quick")
+                              .session(admin)
+                              .with(csrf())
+                              .contentType("application/json")
+                              .content(mapper.writeValueAsString(body)))
+                      .andReturn()
+                      .getResponse()
+                      .getStatus();
+                }));
+      gate.countDown();
+      assertThat(List.of(tasks.get(0).get(), tasks.get(1).get()))
+          .containsExactlyInAnyOrder(201, 409);
+    }
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from patient where full_name='Paciente Concurrente'",
+                Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void quickPatientValidatesInputAndAccessAndOwnerCanUseOneAccount() throws Exception {
+    call(
+        post("/api/v1/patients/quick").with(csrf()),
+        admin,
+        Map.of("fullName", "", "phone", "+51912345678"),
+        400);
+    call(
+        post("/api/v1/patients/quick").with(csrf()),
+        admin,
+        Map.of("fullName", "Paciente", "phone", "123"),
+        400);
+    call(
+        post("/api/v1/patients/quick").with(csrf()),
+        null,
+        Map.of("fullName", "Paciente", "phone", "+51912345678"),
+        401);
+    var ownerId =
+        jdbc.queryForObject("select id from user_account where username=?", UUID.class, username);
+    var owner =
+        create(
+            "/api/v1/dentists",
+            Map.of(
+                "userId",
+                ownerId,
+                "fullName",
+                "Odontólogo propietario",
+                "licenseNumber",
+                "MINI-001",
+                "specialty",
+                "",
+                "active",
+                true,
+                "serviceIds",
+                List.of(service.path("id").asText())));
+    assertThat(owner.path("userId").asText()).isEqualTo(ownerId.toString());
+    assertThat(
+            read("/api/v1/dentists/eligible-users?search=" + username)
+                .path("totalElements")
+                .asInt())
+        .isEqualTo(1);
   }
 }

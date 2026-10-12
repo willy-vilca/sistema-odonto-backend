@@ -65,7 +65,7 @@ class Phase4IntegrationTests {
   @BeforeEach
   void prepare() throws Exception {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"

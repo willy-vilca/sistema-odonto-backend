@@ -112,7 +112,15 @@ public class EncounterService {
     encounter.setDentistId(dentist.getId());
     encounter.setAppointmentId(request.appointmentId());
     encounter.setAttendedOn(request.attendedOn());
-    encounter.setReason(request.reason().strip());
+    String reason = request.reason().strip();
+    if (reason.isEmpty()) {
+      reason =
+          request.content().procedures().stream()
+              .map(Procedure::description)
+              .collect(java.util.stream.Collectors.joining(", "));
+      if (reason.isEmpty()) reason = "Atención odontológica";
+    }
+    encounter.setReason(reason.substring(0, Math.min(500, reason.length())));
     encounter.setDraft(mapper.writeValueAsString(request.content()));
     encounters.saveAndFlush(encounter);
     audit.record(
@@ -133,13 +141,7 @@ public class EncounterService {
     access.requireDentist(encounter.getDentistId());
     if (!encounter.getStatus().equals("DRAFT"))
       throw ApiException.conflict("La atención ya está finalizada.");
-    var patient = patients.findById(encounter.getPatientId()).orElseThrow();
-    if (patient.getProvisional())
-      throw ApiException.badRequest(
-          "Completa la ficha provisional antes de finalizar la atención.");
     var content = mapper.readValue(encounter.getDraft(), EncounterContent.class);
-    if (content.evolution().isBlank() || content.diagnoses().isBlank())
-      throw ApiException.badRequest("Para finalizar registra evolución y diagnóstico.");
     if (encounter.getAppointmentId() != null)
       booking.completeClinical(encounter.getAppointmentId());
     billing.finalizeProcedures(encounter, content.procedures());
@@ -157,8 +159,6 @@ public class EncounterService {
     access.requireDentist(encounter.getDentistId());
     if (!encounter.getStatus().equals("FINAL"))
       throw ApiException.conflict("Solo se corrigen atenciones finalizadas.");
-    if (request.content().evolution().isBlank() || request.content().diagnoses().isBlank())
-      throw ApiException.badRequest("Conserva evolución y diagnóstico en la corrección.");
     validateProcedures(request.content());
     append(encounter, request.content(), request.correctionReason().strip());
     encounters.saveAndFlush(encounter);

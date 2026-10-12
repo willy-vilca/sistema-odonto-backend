@@ -84,7 +84,7 @@ public final class ClinicalContracts {
       @NotNull UUID dentistId,
       UUID appointmentId,
       @NotNull LocalDate attendedOn,
-      @NotBlank @Size(max = 500) String reason,
+      @NotNull @Size(max = 500) String reason,
       @NotNull @Valid EncounterContent content,
       @NotNull @PositiveOrZero Long version) {}
 

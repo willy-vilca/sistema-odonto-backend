@@ -46,4 +46,11 @@ public class PatientController {
   public PatientResponse update(@PathVariable UUID id, @Valid @RequestBody PatientRequest request) {
     return service.update(id, request);
   }
+
+  @PostMapping("/quick")
+  @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("hasAuthority('PATIENTS_WRITE')")
+  public PatientResponse createQuick(@Valid @RequestBody QuickPatientRequest request) {
+    return service.createQuick(request);
+  }
 }

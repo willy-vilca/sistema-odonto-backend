@@ -15,9 +15,6 @@ public class PatientValidator {
   }
 
   public void validate(PatientRequest request, ZoneId zone) {
-    if (!request.provisional() && request.birthDate() == null)
-      throw ApiException.badRequest(
-          "Completa la fecha de nacimiento o marca la ficha como provisional.");
     if (request.birthDate() != null
         && request.birthDate().isAfter(LocalDate.now(clock.withZone(zone))))
       throw ApiException.badRequest("La fecha de nacimiento no puede ser futura.");

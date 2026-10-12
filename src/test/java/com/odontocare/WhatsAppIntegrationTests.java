@@ -70,7 +70,7 @@ class WhatsAppIntegrationTests {
   @BeforeEach
   void prepareIsolatedDatabase() throws Exception {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,"

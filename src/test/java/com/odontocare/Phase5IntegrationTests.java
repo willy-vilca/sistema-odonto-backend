@@ -68,7 +68,7 @@ class Phase5IntegrationTests {
   void prepare() throws Exception {
     clock.now.set(Instant.parse("2030-01-01T12:00:00Z"));
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
@@ -1771,5 +1771,162 @@ class Phase5IntegrationTests {
         .isZero();
     assertThat(jdbc.queryForObject("select count(*) from charge_state where closed", Integer.class))
         .isEqualTo(1);
+  }
+
+  Map<String, Object> minimalEncounterBody() {
+    var body = new HashMap<>(encounterBody());
+    body.put("reason", "");
+    body.put(
+        "content",
+        Map.of(
+            "anamnesis",
+            "",
+            "evolution",
+            "",
+            "diagnoses",
+            "",
+            "indications",
+            "",
+            "procedures",
+            List.of(
+                Map.of(
+                    "serviceId",
+                    service.path("id").asText(),
+                    "description",
+                    "Limpieza realizada",
+                    "quantity",
+                    1))));
+    return body;
+  }
+
+  @Test
+  void provisionalWalkInCanFinishPayAndCloseAtomicallyWithoutClinicalText() throws Exception {
+    patient =
+        create(
+            "/api/v1/patients/quick",
+            Map.of("fullName", "Atención sin cita", "phone", "+51912345678"));
+    var e = create("/api/v1/clinical/encounters", minimalEncounterBody());
+    assertThat(e.path("reason").asText()).isEqualTo("Limpieza realizada");
+    assertThat(e.path("appointmentId").isNull()).isTrue();
+    var payment = checkoutBody(e, "100", "TRANSFER");
+    var completed = call(post(checkoutUrl(e)).with(csrf()), admin, payment, 200);
+    call(post(checkoutUrl(e)).with(csrf()), admin, payment, 200);
+    assertThat(completed.path("encounter").path("status").asText()).isEqualTo("FINAL");
+    for (var table :
+        List.of(
+            "charge_entry",
+            "money_movement",
+            "money_application",
+            "encounter_revision",
+            "charge_state"))
+      assertThat(jdbc.queryForObject("select count(*) from " + table, Integer.class)).isEqualTo(1);
+    assertThat(jdbc.queryForObject("select count(*) from appointment", Integer.class)).isZero();
+    assertThat(summary().path("pending").decimalValue()).isEqualByComparingTo("0");
+    var history =
+        read("/api/v1/finance/summary?historical=true&patientId=" + patient.path("id").asText())
+            .get(0);
+    assertThat(history.path("received").decimalValue()).isEqualByComparingTo("100");
+    var finalEncounter = read("/api/v1/clinical/encounters/" + e.path("id").asText());
+    call(
+        post("/api/v1/clinical/encounters/" + e.path("id").asText() + "/corrections").with(csrf()),
+        admin,
+        Map.of(
+            "version",
+            finalEncounter.path("version").asLong(),
+            "correctionReason",
+            "Precisar indicaciones",
+            "content",
+            minimalEncounterBody().get("content")),
+        200);
+    assertThat(jdbc.queryForObject("select count(*) from encounter_revision", Integer.class))
+        .isEqualTo(2);
+    assertThat(jdbc.queryForObject("select count(*) from charge_entry", Integer.class))
+        .isEqualTo(1);
+  }
+
+  @Test
+  void provisionalPatientCanAcceptPlanPayAdvanceScheduleDuesAndCompleteIncludedSessions()
+      throws Exception {
+    patient =
+        create(
+            "/api/v1/patients/quick",
+            Map.of("fullName", "Plan con ficha básica", "phone", "+51912345678"));
+    var plan = accepted("1200", 3);
+    var charge =
+        read("/api/v1/finance/charges?patientId=" + patient.path("id").asText())
+            .path("items")
+            .get(0);
+    var payment = pay("300", charge);
+    var advance = pay("200", null);
+    var application =
+        Map.of(
+            "requestKey",
+            UUID.randomUUID(),
+            "reason",
+            "Aplicar adelanto",
+            "allocations",
+            List.of(allocation(charge, "200")));
+    for (int i = 0; i < 2; i++)
+      call(
+          post("/api/v1/finance/payments/" + advance.path("id").asText() + "/apply").with(csrf()),
+          admin,
+          application,
+          200);
+    assertThat(summary().path("received").decimalValue()).isEqualByComparingTo("500");
+    assertThat(summary().path("pending").decimalValue()).isEqualByComparingTo("700");
+    var installments =
+        Map.of(
+            "requestKey",
+            UUID.randomUUID(),
+            "chargeId",
+            charge.path("id").asText(),
+            "reason",
+            "Cuotas acordadas",
+            "installments",
+            List.of(
+                Map.of("dueOn", "2029-12-31", "amount", "500"),
+                Map.of("dueOn", "2030-02-01", "amount", "700")));
+    create("/api/v1/finance/installments", installments);
+    assertThat(
+            read("/api/v1/finance/installments?patientId="
+                    + patient.path("id").asText()
+                    + "&active=true")
+                .path("totalElements")
+                .asInt())
+        .isEqualTo(2);
+    var session = sessionEncounter(itemOf(plan), 1);
+    finish(session);
+    assertThat(debt()).isEqualByComparingTo("1200");
+    var doc =
+        create(
+            "/api/v1/finance/documents/statement",
+            Map.of(
+                "requestKey",
+                UUID.randomUUID(),
+                "patientId",
+                patient.path("id").asText(),
+                "currency",
+                "PEN"));
+    mvc.perform(
+            get("/api/v1/finance/documents/" + doc.path("id").asText() + "/content").session(admin))
+        .andExpect(status().isOk());
+    assertThat(
+            read("/api/v1/patients/" + patient.path("id").asText()).path("provisional").asBoolean())
+        .isTrue();
+  }
+
+  @Test
+  void minimalWalkInCheckoutFailureStillRollsBackEverything() throws Exception {
+    patient =
+        create(
+            "/api/v1/patients/quick",
+            Map.of("fullName", "Pago protegido", "phone", "+51912345678"));
+    var e = create("/api/v1/clinical/encounters", minimalEncounterBody());
+    call(post(checkoutUrl(e)).with(csrf()), admin, checkoutBody(e, "99", "TRANSFER"), 409);
+    for (var table :
+        List.of("charge_entry", "money_movement", "encounter_revision", "charge_state"))
+      assertThat(jdbc.queryForObject("select count(*) from " + table, Integer.class)).isZero();
+    assertThat(read("/api/v1/clinical/encounters/" + e.path("id").asText()).path("status").asText())
+        .isEqualTo("DRAFT");
   }
 }

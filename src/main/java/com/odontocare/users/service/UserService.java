@@ -99,7 +99,9 @@ public class UserService {
         && users.countActiveAdministrators() <= 1) {
       throw ApiException.conflict("Debe quedar al menos una cuenta administradora activa.");
     }
-    if ((!request.active() || !request.roles().contains(RoleCode.DENTIST))
+    if ((!request.active()
+            || (!request.roles().contains(RoleCode.DENTIST)
+                && !request.roles().contains(RoleCode.ADMIN)))
         && dentists.existsByUserIdAndActiveTrue(id)) {
       throw ApiException.conflict(
           "Desactiva primero al odontólogo asociado antes de retirar su acceso o su rol.");

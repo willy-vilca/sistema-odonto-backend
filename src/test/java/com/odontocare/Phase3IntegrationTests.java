@@ -65,7 +65,7 @@ class Phase3IntegrationTests {
   @BeforeEach
   void prepare() throws Exception {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
@@ -793,5 +793,67 @@ class Phase3IntegrationTests {
                 byte[].class,
                 UUID.fromString(id)))
         .isEqualTo(original);
+  }
+
+  @Test
+  void provisionalPatientSupportsBackgroundOdontogramFilesAndConsent() throws Exception {
+    patient =
+        create(
+            "/api/v1/patients/quick",
+            Map.of("fullName", "Historia con datos básicos", "phone", "+51912345678"));
+    var identity =
+        Map.of(
+            "patientId",
+            patient.path("id").asText(),
+            "dentistId",
+            doctor.path("id").asText(),
+            "recordedOn",
+            "2029-12-31",
+            "reason",
+            "Registro inicial");
+    var background = new HashMap<String, Object>(identity);
+    background.put(
+        "background",
+        Map.of(
+            "antecedents",
+            "Sin antecedentes informados",
+            "allergies",
+            "",
+            "medications",
+            "",
+            "anamnesis",
+            ""));
+    create("/api/v1/clinical/states/BACKGROUND", background);
+    var odontogram = new HashMap<String, Object>(identity);
+    odontogram.put(
+        "odontogram",
+        Map.of(
+            "notes",
+            "",
+            "marks",
+            List.of(
+                Map.of("tooth", 16, "surface", "O", "finding", "CARIES", "note", "Observación"))));
+    create("/api/v1/clinical/states/ODONTOGRAM", odontogram);
+    var doc = upload(pdf(), "consentimiento.pdf", category(), 201);
+    create(
+        "/api/v1/documents/consents",
+        Map.of(
+            "patientId",
+            patient.path("id").asText(),
+            "documentId",
+            doc.path("id").asText(),
+            "name",
+            "Consentimiento informado",
+            "responsible",
+            "Historia con datos básicos",
+            "relationship",
+            "Paciente",
+            "signedOn",
+            "2029-12-31"));
+    mvc.perform(get("/api/v1/documents/" + doc.path("id").asText() + "/content").session(admin))
+        .andExpect(status().isOk());
+    assertThat(
+            read("/api/v1/patients/" + patient.path("id").asText()).path("provisional").asBoolean())
+        .isTrue();
   }
 }

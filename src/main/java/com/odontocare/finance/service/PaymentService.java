@@ -59,12 +59,10 @@ public class PaymentService {
   @Transactional
   public MovementResponse register(PaymentRequest r) {
     FinanceMoney.requireCurrency(r.currency());
-    var patient = patients.lockById(r.patientId()).orElseThrow(ApiException::notFound);
+    patients.lockById(r.patientId()).orElseThrow(ApiException::notFound);
     var prior = operations.previous(r.requestKey(), "PAYMENT", r);
     if (prior.isPresent())
       return queries.response(movements.findById(prior.get().getResultId()).orElseThrow());
-    if (patient.getProvisional())
-      throw ApiException.badRequest("Completa la ficha del paciente antes de cobrar.");
     requireDate(r.occurredOn());
     var session = cash.forMovement(r.currency(), r.method(), r.occurredOn(), false, r.amount());
     var m = new MoneyMovement();

@@ -169,9 +169,8 @@ public class TreatmentPlanService {
         if (request.acceptedBy() == null || request.acceptedBy().isBlank())
           throw ApiException.badRequest("Registra quién acepta expresamente el plan.");
         var patient = patients.findById(patientId).orElseThrow();
-        if (patient.getProvisional() || !patient.getActive())
-          throw ApiException.badRequest(
-              "Completa y activa la ficha del paciente antes de aceptar.");
+        if (!patient.getActive())
+          throw ApiException.badRequest("Activa la ficha del paciente antes de aceptar.");
         plan.setStatus("ACCEPTED");
         plan.setAcceptedAt(clock.instant());
         plan.setAcceptedBy(request.acceptedBy().strip());

@@ -39,7 +39,7 @@ class Phase1IntegrationTests {
   @BeforeEach
   void prepareIsolatedDatabase() throws Exception {
     assertThat(jdbc.queryForObject("select current_database()", String.class))
-        .isEqualTo("sistema_odontologo_test");
+        .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
@@ -559,7 +559,7 @@ class Phase1IntegrationTests {
     create("/api/v1/users", user("receptiononly", "RECEPTION"));
     var page = get("/api/v1/dentists/eligible-users?page=1&size=1");
     assertThat(page.get("items").size()).isEqualTo(1);
-    assertThat(page.get("totalElements").asLong()).isEqualTo(2);
+    assertThat(page.get("totalElements").asLong()).isEqualTo(3);
     assertThat(page.toString()).doesNotContain("password", "email", "roles", "username");
     var receptionist = login("receptiononly", password);
     perform(getRequest("/api/v1/dentists/eligible-users"), receptionist, null, 403);

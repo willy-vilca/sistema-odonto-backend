@@ -81,6 +81,37 @@ public class PatientService {
   }
 
   @Transactional
+  public PatientResponse createQuick(QuickPatientRequest request) {
+    profiles.lockInstallation().orElseThrow();
+    String name = request.fullName().strip().replaceAll("\\s+", " ");
+    Specification<Patient> sameContact =
+        (root, query, cb) ->
+            cb.and(
+                cb.equal(cb.lower(root.get("fullName")), name.toLowerCase(Locale.ROOT)),
+                cb.equal(root.join("contacts").get("phone"), request.phone()));
+    if (patients.exists(sameContact))
+      throw ApiException.conflict(
+          "Este paciente ya está registrado con ese teléfono. Búscalo y selecciona su ficha.");
+    return create(
+        new PatientRequest(
+            null,
+            name,
+            null,
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            true,
+            true,
+            List.of(
+                new PatientRequest.ContactRequest(
+                    request.phone(), name, "Paciente", false, true))));
+  }
+
+  @Transactional
   public PatientResponse update(UUID id, PatientRequest request) {
     var profile = profiles.lockInstallation().orElseThrow();
     var patient = patients.findById(id).orElseThrow(ApiException::notFound);

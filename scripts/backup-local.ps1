@@ -1,4 +1,4 @@
-param([ValidateSet('sistema_odontologo','sistema_odontologo_test')][string]$Database='sistema_odontologo')
+param([ValidateSet('sistema_odonto_mini','sistema_odonto_mini_test')][string]$Database='sistema_odonto_mini')
 $ErrorActionPreference='Stop'
 $backendRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $backupDirectory=Join-Path $backendRoot '.runtime/backups'

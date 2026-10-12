@@ -86,7 +86,7 @@ public class DentistService {
             .and(
                 (root, q, cb) -> {
                   q.distinct(true);
-                  return cb.equal(root.join("roles").get("code"), "DENTIST");
+                  return root.join("roles").get("code").in("DENTIST", "ADMIN");
                 });
     return PageResponse.of(
         users
@@ -136,10 +136,12 @@ public class DentistService {
         users
             .findWithAccessById(request.userId())
             .orElseThrow(() -> ApiException.badRequest("Selecciona un usuario existente."));
-    boolean hasRole = user.getRoles().stream().anyMatch(role -> role.getCode().equals("DENTIST"));
+    boolean hasRole =
+        user.getRoles().stream()
+            .anyMatch(role -> Set.of("DENTIST", "ADMIN").contains(role.getCode()));
     if (request.active() && (!user.getActive() || !hasRole))
       throw ApiException.badRequest(
-          "El odontólogo activo necesita un usuario activo con rol Odontólogo.");
+          "El odontólogo activo necesita una cuenta activa de odontólogo o administrador.");
     Set<UUID> previous =
         dentist.getServices().stream().map(service -> service.getId()).collect(Collectors.toSet());
     var selected = services.findAllById(request.serviceIds());
