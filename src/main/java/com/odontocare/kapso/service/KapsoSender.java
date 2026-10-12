@@ -76,6 +76,12 @@ public class KapsoSender {
                   "Kapso rechazó el envío. Revisa el código, la sesión del Sandbox y la ventana de"
                       + " 24 horas.";
             };
+        if (response.statusCode() == 402
+            && (code.equals("insufficient_credits") || code.equals("service_credits_exhausted")))
+          detail =
+              "Saldo insuficiente en Kapso para enviar el mensaje. Revisa los créditos del proyecto"
+                  + " en Billing; el cupo de mensajes del plan es independiente del saldo de"
+                  + " envío.";
         return new Outcome(null, "FAILED", code, detail);
       }
       String id = json.path("messages").path(0).path("id").asString("");

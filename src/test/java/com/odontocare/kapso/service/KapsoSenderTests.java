@@ -104,6 +104,27 @@ class KapsoSenderTests {
   }
 
   @Test
+  void exhaustedCreditsHaveActionableCopyWithoutExposingTheProviderBody() {
+    status = 402;
+    for (String code : List.of("insufficient_credits", "service_credits_exhausted")) {
+      response =
+          "{\"error\":{\"code\":\""
+              + code
+              + "\",\"message\":\"kapso-private-test-key private details\"}}";
+      var result = sender.send(message(), "+51999998888");
+      assertThat(result.status()).isEqualTo("FAILED");
+      assertThat(result.reference()).isNull();
+      assertThat(result.errorCode()).isEqualTo(code);
+      assertThat(result.errorMessage()).contains("Saldo insuficiente", "Billing", "independiente");
+      assertThat(result.errorMessage()).doesNotContain("kapso-private-test-key", "private details");
+    }
+    response = "{\"code\":\"billing_setup_required\"}";
+    assertThat(sender.send(message(), "+51999998888").errorMessage())
+        .contains("facturación")
+        .doesNotContain("Saldo insuficiente");
+  }
+
+  @Test
   void rateLimitAndUncertainOutcomesNeverClaimDelivery() {
     status = 429;
     response = "{}";

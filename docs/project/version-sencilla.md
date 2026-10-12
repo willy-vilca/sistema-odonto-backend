@@ -49,6 +49,8 @@ Adaptación implementada y comprobada el 12/10/2026; pendiente de la revisión d
 
 ## Ejecución y separación de versiones
 
+Actualización autorizada del 12/10/2026: WhatsApp, su trabajador y Groq activados para diagnosticar el rechazo de envío. Clave, número, webhook/túnel y recepción real comprobados. El proveedor devuelve HTTP 402 / `insufficient_credits`; recuperar la entrega depende de créditos del proyecto y una prueba entregada posterior. La pausa descrita en el párrafo siguiente corresponde a la revisión inicial y ya fue superada por esta autorización. [Diagnóstico y pasos de recuperación](diagnostico-kapso-saldo-insuficiente.md).
+
 La aplicación de revisión está disponible en `http://127.0.0.1:5173`, con backend local en 8080. Como la instalación es nueva, solicita crear una cuenta propia; no se proporcionó una contraseña predeterminada ni se copiaron usuarios de la base original.
 
 Kapso/Groq y la supervisión se conservan. En esta ejecución de revisión los conectores y trabajadores externos están pausados mediante argumentos de inicio para evitar que el Sandbox anterior atienda una instalación todavía vacía. Las claves privadas no se modificaron. Después de configurar profesional, servicios y horarios, detener esta ejecución e iniciar normalmente con `./mvnw.cmd spring-boot:run` para utilizar la configuración privada cuando se decida probar el canal de esta instalación. Para un cliente real deben configurarse sus propios participantes y número. Las comprobaciones de esta adaptación no enviaron WhatsApp ni hicieron inferencias reales.
