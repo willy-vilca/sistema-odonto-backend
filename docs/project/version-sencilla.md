@@ -49,6 +49,8 @@ Adaptación implementada y comprobada el 12/10/2026; pendiente de la revisión d
 
 ## Ejecución y separación de versiones
 
+Estado vigente del 12/10/2026, 11:19 Lima: el usuario configuró otra cuenta de Kapso; autenticación/webhook comprobados y backend reiniciado con esos valores. Prueba real recibida, ejecución Groq COMPLETED y respuesta READ en un intento, confirmada por el participante, sin cambios de pacientes/agenda/finanzas. WhatsApp/Groq activos; los apartados de pausa o saldo insuficiente siguientes conservan el recorrido anterior. [Evidencia de recuperación](diagnostico-kapso-saldo-insuficiente.md#recuperación-comprobada-con-la-configuración-nueva).
+
 Actualización autorizada del 12/10/2026: WhatsApp, su trabajador y Groq activados para diagnosticar el rechazo de envío. Clave, número, webhook/túnel y recepción real comprobados. El proveedor devuelve HTTP 402 / `insufficient_credits`; recuperar la entrega depende de créditos del proyecto y una prueba entregada posterior. La pausa descrita en el párrafo siguiente corresponde a la revisión inicial y ya fue superada por esta autorización. [Diagnóstico y pasos de recuperación](diagnostico-kapso-saldo-insuficiente.md).
 
 La aplicación de revisión está disponible en `http://127.0.0.1:5173`, con backend local en 8080. Como la instalación es nueva, solicita crear una cuenta propia; no se proporcionó una contraseña predeterminada ni se copiaron usuarios de la base original.
