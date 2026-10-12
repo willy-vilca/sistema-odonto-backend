@@ -27,6 +27,19 @@ La lectura de `sistema_odontologo` se limitó a cantidades agregadas de tokens d
 
 Esto es una muestra de desarrollo, no una muestra representativa de pacientes reales ni una conciliación de factura. Algunas respuestas se resuelven sin modelo y otras usan herramientas o reintentos. Los máximos de la muestra general fueron 18.049/2.383 tokens; no se garantiza que cada respuesta cueste menos de US$0,001. El presupuesto unitario elegido supera las medias observadas, pero las conversaciones prolongadas pueden aumentar el costo. No se deduce que los errores o llamadas sin uso registrado sean siempre gratuitos.
 
+### Capacidad publicada de Groq Developer frente a Free
+
+Comparación verificada el 12/10/2026 para `openai/gpt-oss-20b` en las páginas oficiales de [límites Free](https://console.groq.com/docs/rate-limits) y [modelos y límites Developer](https://console.groq.com/docs/models):
+
+| Límite | Free | Developer | Capacidad relativa | Incremento |
+|---|---:|---:|---:|---:|
+| Tokens por minuto | 8.000 | 250.000 | 31,25 veces | 3.025 % |
+| Llamadas al modelo por minuto | 30 | 1.000 | 33,33 veces | Aproximadamente 3.233 % |
+
+No son límites por conversación: se comparten a nivel de organización. La cuota de tokens contempla el trabajo del modelo, incluidos el contexto y las llamadas a herramientas. Una preparación observada sumó 8.638 tokens, frente a los 250.000 por minuto publicados para Developer; esto permite inferir un margen amplio para una conversación normal de reserva y el volumen inicial del odontólogo. No demuestra ausencia universal de esperas: conversaciones largas, concurrencia, reintentos y límites particulares de la cuenta pueden afectar la operación. Tras actualizar, revisar los valores efectivos en Settings → Limits y repetir una reserva real. No se realizó una actualización de plan ni una prueba de carga en este análisis.
+
+Resumen para presentación: `docs/presentacion/costos-whatsapp-agente-ia.docx`, dos páginas con Arial y texto negro; conserva ambas tablas de costos y sus condiciones. Se verificaron importes y equivalencias, las cuatro tablas y las dos páginas mediante exportación local de Word y el rasterizador del paquete de documentos con Poppler, ya que el paquete no incluye LibreOffice para Windows. La copia versionada se conserva en `backend/docs/project/presentacion/`.
+
 ## Tabla 1 — capacidad de una recarga en el Sandbox actual
 
 En el Sandbox se cobran respuestas entregadas sin la franquicia mensual del número compartido. [Regla oficial](https://docs.kapso.ai/docs/whatsapp/meta-message-billing#sandbox-service-messages). La capacidad puede utilizarse durante varios días o meses; no se exige consumir el saldo en un mes. Esta tabla no convierte los mensajes disponibles en reservas garantizadas.
