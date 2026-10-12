@@ -12,6 +12,20 @@ Preparado el 12/10/2026 para la presentación de la versión sencilla. Servicios
 
 Fuentes: [planes de Kapso](https://kapso.com/pricing), [facturación de Groq](https://console.groq.com/docs/billing-faqs). El mínimo US$5/US$5,55 corresponde a la pantalla que verificó el usuario, no a un mínimo universal confirmado en la página pública de Kapso. Revisar el checkout antes de pagar.
 
+## El cupo mensual y el saldo de créditos son independientes
+
+Los 2.000 mensajes mensuales de Free permiten utilizar la plataforma; no representan 2.000 envíos gratuitos del Sandbox. Ese cupo suma recibidos y enviados. Los US$2 de bienvenida son un saldo otorgado una sola vez y no se renuevan cada mes. Las respuestas entregadas en el Sandbox descuentan créditos por separado, aunque quede cupo del plan. Cuando el saldo ya no cubre el envío, es necesario recargar para seguir enviando, sin obligación de contratar Pro. [Cupo y conteo](https://docs.kapso.ai/docs/whatsapp/pricing-faq), [cobro del Sandbox y pausa por saldo](https://docs.kapso.ai/docs/whatsapp/meta-message-billing#sandbox-service-messages).
+
+### Comprobación de la cuenta nueva del 12 de octubre
+
+La captura aportada muestra US$2 de saldo base, US$0,24 en «Pending usage charges», un disponible de US$1,76 y un único concepto visible «WhatsApp Service usage». La lectura autenticada de una página acotada de la API del proyecto devolvió HTTP 200, exactamente 15 mensajes sin página siguiente: 7 recibidos y 8 enviados/leídos, sin referencias repetidas. No se enviaron mensajes durante la comprobación. Esto coincide exactamente con **8 respuestas × US$0,03 = US$0,24**: se explica por el envío de WhatsApp, no por los 15 mensajes a una misma tarifa ni por el modelo Groq que utiliza nuestra aplicación.
+
+El cálculo concilia los contadores y la tarifa con el concepto de la captura; no es una extracción de la factura individual de cada entrega. La API de mensajes no devolvió metadatos de facturación por entrega. Los registros locales desde la activación del webhook contienen 6 entradas y 7 respuestas leídas; la cuenta incluye además mensajes previos a esa activación, por lo que el total local no sustituye el total del proveedor. No se deduce que «Qty: 240.000» sean 240 mensajes: la documentación consultada no define la unidad de ese medidor de Billing.
+
+A US$0,03 por respuesta facturable, los US$2 iniciales equivalen aproximadamente a 66 respuestas completas, unas 13 reservas si se necesitan cinco respuestas por reserva. El disponible mostrado de US$1,76 equivaldría a unas 58 respuestas más, sujeto a otros consumos, cargos pendientes y sincronización. Estos importes no se reinician al renovarse el cupo mensual. El rechazo previo `insufficient_credits` de la cuenta anterior es coherente con haber agotado saldo antes de llegar a 2.000 mensajes.
+
+Las tablas conservan sus cifras: la del Sandbox ya cobra US$0,03 por respuesta; la de número propio supone la franquicia de producción publicada por Kapso, que no aplica al Sandbox. Para habilitar el número propio se debe prever saldo operativo inicial cuando se use facturación mediante créditos de Kapso. En la cuenta examinada, US$5 de saldo cuestan US$5,55 con comisión; es una reserva de saldo y no una mensualidad ni otro cargo que se suma de nuevo al consumirlo. Los ceros de la tabla mensual describen consumo estimado dentro de la franquicia, no una garantía de que cualquier cuenta envíe con saldo cero. Pro tampoco incluye los cargos de envío por el mero pago de su suscripción.
+
 ## Supuestos para las tablas
 
 - Todos los destinatarios son números peruanos; mensajes de texto de servicio dentro de 24 horas desde el último mensaje del paciente. No se incluyen marketing, plantillas fuera de ventana, audios, llamadas o recordatorios.
