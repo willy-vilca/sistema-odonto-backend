@@ -141,6 +141,7 @@ public class AccountQueryService {
       String currency,
       java.time.LocalDate from,
       java.time.LocalDate to,
+      UUID chargeId,
       PageQuery query) {
     if (kind != null
         && !Set.of("PAYMENT", "REFUND", "REVERSAL", "EXPENSE", "EXPENSE_REVERSAL").contains(kind))
@@ -167,22 +168,48 @@ public class AccountQueryService {
     if (from != null)
       spec = spec.and((r, c, b) -> b.greaterThanOrEqualTo(r.get("occurredOn"), from));
     if (to != null) spec = spec.and((r, c, b) -> b.lessThanOrEqualTo(r.get("occurredOn"), to));
+    UUID linkedCharge = null;
+    if (chargeId != null) {
+      var charge = charges.findById(chargeId).orElseThrow(ApiException::notFound);
+      if (patient != null && !charge.getPatientId().equals(patient)) throw ApiException.notFound();
+      linkedCharge = charge.getOriginalId() == null ? charge.getId() : charge.getOriginalId();
+      UUID originCharge = linkedCharge;
+      spec =
+          spec.and(SearchSpecifications.equal("kind", "PAYMENT"))
+              .and(
+                  (r, q, b) -> {
+                    var sub = q.subquery(UUID.class);
+                    var allocation = sub.from(MoneyApplication.class);
+                    sub.select(allocation.get("paymentId"))
+                        .where(b.equal(allocation.get("chargeId"), originCharge));
+                    return r.get("id").in(sub);
+                  });
+    }
     audit.record("MONEY_READ", "PAYMENT", patient, "Consultó movimientos de dinero");
+    var page =
+        movements.findAll(
+            spec,
+            query.pageable(
+                Map.of(
+                    "name",
+                    "description",
+                    "createdAt",
+                    "createdAt",
+                    "amount",
+                    "amount",
+                    "occurredOn",
+                    "occurredOn")));
+    Map<UUID, BigDecimal> byPayment = new HashMap<>();
+    if (linkedCharge != null && !page.isEmpty())
+      applications
+          .chargePaymentAmounts(linkedCharge, page.stream().map(MoneyMovement::getId).toList())
+          .forEach(a -> byPayment.put(a.getPaymentId(), a.getAmount()));
     return PageResponse.of(
-        movements
-            .findAll(
-                spec,
-                query.pageable(
-                    Map.of(
-                        "name",
-                        "description",
-                        "createdAt",
-                        "createdAt",
-                        "amount",
-                        "amount",
-                        "occurredOn",
-                        "occurredOn")))
-            .map(this::response));
+        page.map(
+            m ->
+                response(
+                    m,
+                    chargeId == null ? null : byPayment.getOrDefault(m.getId(), BigDecimal.ZERO))));
   }
 
   @Transactional
@@ -224,6 +251,10 @@ public class AccountQueryService {
   }
 
   public MovementResponse response(MoneyMovement m) {
+    return response(m, null);
+  }
+
+  private MovementResponse response(MoneyMovement m, BigDecimal chargeApplied) {
     boolean root = m.getOriginalId() == null;
     var effective = root ? m.getAmount().subtract(movements.returned(m.getId())) : m.getAmount();
     var applied =
@@ -248,6 +279,7 @@ public class AccountQueryService {
         m.getCategoryName(),
         m.getActorName(),
         m.getReceiptCode(),
-        m.getCreatedAt());
+        m.getCreatedAt(),
+        chargeApplied);
   }
 }

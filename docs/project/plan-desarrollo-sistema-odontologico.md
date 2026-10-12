@@ -2,6 +2,8 @@
 
 Variante autorizada el 11/10/2026: en la rama `version_sencilla` seguir también [alcance, plan y guía de la versión sencilla](version-sencilla.md). Sus diferencias se aplican únicamente a la instalación `sistema_odonto_mini`; main conserva el alcance original y sus criterios.
 
+Revisión de la variante autorizada el 12/10/2026: cargos con estado de pago, importes vigentes y acceso directo a abonos/constancias. Implementación sobre saldos derivados existentes; comprobaciones de pagos parciales y totales, cierre, ajustes, devoluciones, pagos distribuidos, permisos y paginación, seguidas de regresión completa y revisión de tres tamaños. [Registro y resultados](cargos-pagos-version-sencilla.md). Este ajuste no inicia fase 9 ni recordatorios.
+
 Fecha: 11 de octubre de 2026. Versión del plan: 3.15. Alcance de referencia: versión 1.13 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).
 
 Estado: fases 0 a 4 revisadas y aprobadas por el usuario; fase 5 completada técnicamente y revisada inicialmente, con revisión manual general favorable informada de manera aproximada. Fases 6 y 7 completadas y validadas con WhatsApp real y las comprobaciones internas correspondientes. Fase 7 cerrada el 08/10/2026 después de restaurar configuración/control y aprobar 209 pruebas backend actuales. Fase 8 completada técnicamente, verificada y revisada favorablemente por el usuario el 10/10/2026; recordatorios aplazados expresamente. Regresión de la presentación actual: 248 pruebas backend y 81 escenarios de navegador distintos aprobados en bloques; las evidencias anteriores se conservan. [Cierre de fase 8](cierre-fase-8.md). Fase 9 pendiente de instrucción. [Cierre de fase 7](cierre-fase-7.md) y [evidencia individual](validacion-real-agente-kapso-fase-7.md).

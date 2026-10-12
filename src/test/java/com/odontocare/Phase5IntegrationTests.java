@@ -1916,6 +1916,179 @@ class Phase5IntegrationTests {
   }
 
   @Test
+  void chargeListShowsExactUnpaidPartialAndPaidAmountsEvenAfterClosure() throws Exception {
+    var charge = charge();
+    assertThat(charge.path("debt").decimalValue()).isEqualByComparingTo("1200");
+    assertThat(charge.path("applied").decimalValue()).isZero();
+    assertThat(charge.path("paymentStatus").asText()).isEqualTo("UNPAID");
+    pay("300", charge);
+    pay("200", charge);
+    var partial =
+        read("/api/v1/charges?patientId=" + patient.path("id").asText()).path("items").get(0);
+    assertThat(partial.path("debt").decimalValue()).isEqualByComparingTo("1200");
+    assertThat(partial.path("applied").decimalValue()).isEqualByComparingTo("500");
+    assertThat(partial.path("pending").decimalValue()).isEqualByComparingTo("700");
+    assertThat(partial.path("paymentStatus").asText()).isEqualTo("PARTIAL");
+    pay("700", charge);
+    var paid =
+        read("/api/v1/charges?patientId=" + patient.path("id").asText()).path("items").get(0);
+    assertThat(paid.path("paymentStatus").asText()).isEqualTo("PAID");
+    closeCharge(charge);
+    var closed =
+        read("/api/v1/charges?closed=true&patientId=" + patient.path("id").asText())
+            .path("items")
+            .get(0);
+    assertThat(closed.path("closed").asBoolean()).isTrue();
+    assertThat(closed.path("applied").decimalValue()).isEqualByComparingTo("1200");
+    assertThat(closed.path("pending").decimalValue()).isZero();
+    assertThat(closed.path("paymentStatus").asText()).isEqualTo("PAID");
+  }
+
+  @Test
+  void chargePaymentStatusUsesAdjustedDebtWithoutClaimingAZeroDebtWasPaid() throws Exception {
+    var charge = charge();
+    var adjustment =
+        call(
+            post("/api/v1/charges/" + charge.path("id").asText() + "/adjustments").with(csrf()),
+            admin,
+            Map.of("requestKey", UUID.randomUUID(), "amount", "-200", "reason", "Precio acordado"),
+            200);
+    assertThat(adjustment.path("debt").isNull()).isTrue();
+    pay("100", charge);
+    var rows =
+        read("/api/v1/charges?patientId=" + patient.path("id").asText() + "&kind=PLAN")
+            .path("items");
+    assertThat(rows.get(0).path("debt").decimalValue()).isEqualByComparingTo("1000");
+    assertThat(rows.get(0).path("pending").decimalValue()).isEqualByComparingTo("900");
+    assertThat(rows.get(0).path("paymentStatus").asText()).isEqualTo("PARTIAL");
+    var freePlan = accepted("0", 1);
+    var free =
+        read("/api/v1/charges?patientId="
+                + patient.path("id").asText()
+                + "&planId="
+                + freePlan.path("id").asText())
+            .path("items")
+            .get(0);
+    assertThat(free.path("paymentStatus").asText()).isEqualTo("NO_BALANCE");
+    assertThat(free.path("applied").decimalValue()).isZero();
+  }
+
+  @Test
+  void chargePaymentsArePagedAndShowOnlyTheirShareOfAMultipleChargePayment() throws Exception {
+    var first = charge();
+    var secondPlan = accepted("800", 1);
+    var second =
+        read("/api/v1/charges?patientId="
+                + patient.path("id").asText()
+                + "&planId="
+                + secondPlan.path("id").asText())
+            .path("items")
+            .get(0);
+    var shared =
+        create(
+            "/api/v1/finance/payments",
+            paymentBody(
+                "500", "TRANSFER", List.of(allocation(first, "300"), allocation(second, "200"))));
+    var additional = pay("100", first);
+    String url =
+        "/api/v1/finance/movements?patientId="
+            + patient.path("id").asText()
+            + "&chargeId="
+            + first.path("id").asText();
+    var page = read(url + "&size=1&page=0&sort=createdAt&direction=asc");
+    assertThat(page.path("totalElements").asInt()).isEqualTo(2);
+    assertThat(page.path("items").size()).isEqualTo(1);
+    assertThat(page.path("items").get(0).path("id").asText()).isEqualTo(shared.path("id").asText());
+    assertThat(page.path("items").get(0).path("applied").decimalValue())
+        .isEqualByComparingTo("500");
+    assertThat(page.path("items").get(0).path("chargeApplied").decimalValue())
+        .isEqualByComparingTo("300");
+    assertThat(
+            read(url + "&size=1&page=1&sort=createdAt&direction=asc")
+                .path("items")
+                .get(0)
+                .path("id")
+                .asText())
+        .isEqualTo(additional.path("id").asText());
+    var secondPayments = read("/api/v1/finance/movements?chargeId=" + second.path("id").asText());
+    assertThat(secondPayments.path("totalElements").asInt()).isEqualTo(1);
+    assertThat(secondPayments.path("items").get(0).path("chargeApplied").decimalValue())
+        .isEqualByComparingTo("200");
+    assertThat(
+            read(url + "&search=" + shared.path("receiptCode").asText())
+                .path("totalElements")
+                .asInt())
+        .isEqualTo(1);
+    assertThat(read(url + "&method=CASH").path("totalElements").asInt()).isZero();
+    assertThat(read(url + "&from=2030-02-01").path("totalElements").asInt()).isZero();
+    var receipt = read("/api/v1/finance/documents/receipt/" + shared.path("id").asText());
+    mvc.perform(
+            get("/api/v1/finance/documents/" + receipt.path("id").asText() + "/content")
+                .session(admin))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void releasedAndRefundedPaymentsRemainVisibleWithoutInflatingPaidAmount() throws Exception {
+    var charge = charge();
+    var payment = pay("300", charge);
+    call(
+        post("/api/v1/finance/payments/" + payment.path("id").asText() + "/refund").with(csrf()),
+        admin,
+        correction("300", List.of(allocation(charge, "300"))),
+        200);
+    var payments = read("/api/v1/finance/movements?chargeId=" + charge.path("id").asText());
+    assertThat(payments.path("totalElements").asInt()).isEqualTo(1);
+    assertThat(payments.path("items").get(0).path("effectiveAmount").decimalValue()).isZero();
+    assertThat(payments.path("items").get(0).path("chargeApplied").decimalValue()).isZero();
+    var current =
+        read("/api/v1/charges?patientId=" + patient.path("id").asText()).path("items").get(0);
+    assertThat(current.path("paymentStatus").asText()).isEqualTo("UNPAID");
+    assertThat(current.path("applied").decimalValue()).isZero();
+    assertThat(current.path("pending").decimalValue()).isEqualByComparingTo("1200");
+  }
+
+  @Test
+  void chargePaymentReadsValidatePatientAndPreserveFinancePermissions() throws Exception {
+    var charge = charge();
+    var other =
+        create(
+            "/api/v1/patients/quick", Map.of("fullName", "Otra persona", "phone", "+51912345678"));
+    call(
+        get(
+            "/api/v1/finance/movements?patientId="
+                + other.path("id").asText()
+                + "&chargeId="
+                + charge.path("id").asText()),
+        admin,
+        null,
+        404);
+    call(get("/api/v1/finance/movements?chargeId=" + UUID.randomUUID()), admin, null, 404);
+    var user =
+        create(
+            "/api/v1/users",
+            Map.of(
+                "username",
+                "recepcioncargo",
+                "displayName",
+                "Recepción",
+                "email",
+                "",
+                "password",
+                password,
+                "active",
+                true,
+                "roles",
+                List.of("RECEPTION")));
+    var reception = login(user.path("username").asText());
+    call(
+        get("/api/v1/finance/movements?chargeId=" + charge.path("id").asText()),
+        reception,
+        null,
+        403);
+  }
+
+  @Test
   void minimalWalkInCheckoutFailureStillRollsBackEverything() throws Exception {
     patient =
         create(

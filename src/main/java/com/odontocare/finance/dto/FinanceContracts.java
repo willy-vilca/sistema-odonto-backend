@@ -34,7 +34,10 @@ public final class FinanceContracts {
       String actorName,
       Instant createdAt,
       boolean closed,
-      BigDecimal pending) {}
+      BigDecimal pending,
+      BigDecimal debt,
+      BigDecimal applied,
+      String paymentStatus) {}
 
   public record DebtSummary(
       String currency, BigDecimal charges, BigDecimal adjustments, BigDecimal netDebt) {}

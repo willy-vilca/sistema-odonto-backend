@@ -32,4 +32,15 @@ public interface MoneyApplicationRepository
       "select coalesce(sum(a.amount),0) from MoneyApplication a where a.paymentId=:payment and"
           + " a.chargeId=:charge")
   BigDecimal pairApplied(UUID payment, UUID charge);
+
+  interface PaymentAllocationAmount {
+    UUID getPaymentId();
+
+    BigDecimal getAmount();
+  }
+
+  @Query(
+      "select a.paymentId as paymentId, sum(a.amount) as amount from MoneyApplication a"
+          + " where a.chargeId=:charge and a.paymentId in :payments group by a.paymentId")
+  List<PaymentAllocationAmount> chargePaymentAmounts(UUID charge, Collection<UUID> payments);
 }

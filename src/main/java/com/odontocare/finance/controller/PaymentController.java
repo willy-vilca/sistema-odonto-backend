@@ -58,6 +58,7 @@ public class PaymentController {
   @PreAuthorize("hasAuthority('FINANCES_READ')")
   public PageResponse<MovementResponse> movements(
       @RequestParam(required = false) UUID patientId,
+      @RequestParam(required = false) UUID chargeId,
       @RequestParam(required = false) UUID originalId,
       @RequestParam(required = false) UUID cashSessionId,
       @RequestParam(required = false) String kind,
@@ -67,7 +68,7 @@ public class PaymentController {
       @RequestParam(required = false) LocalDate to,
       @Valid @ModelAttribute PageQuery query) {
     return queries.movements(
-        patientId, originalId, cashSessionId, kind, method, currency, from, to, query);
+        patientId, originalId, cashSessionId, kind, method, currency, from, to, chargeId, query);
   }
 
   @GetMapping("/applications")

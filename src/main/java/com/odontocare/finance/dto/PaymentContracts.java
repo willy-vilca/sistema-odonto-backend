@@ -106,7 +106,8 @@ public final class PaymentContracts {
       String categoryName,
       String actorName,
       String receiptCode,
-      Instant createdAt) {}
+      Instant createdAt,
+      BigDecimal chargeApplied) {}
 
   public record AccountSummary(
       String currency,

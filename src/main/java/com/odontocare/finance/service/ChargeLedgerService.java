@@ -3,7 +3,9 @@ package com.odontocare.finance.service;
 import com.odontocare.audit.service.AuditService;
 import com.odontocare.clinical.service.ClinicalAccess;
 import com.odontocare.finance.dto.FinanceContracts.*;
+import com.odontocare.finance.model.ChargeBalance;
 import com.odontocare.finance.model.ChargeEntry;
+import com.odontocare.finance.repository.ChargeBalanceRepository;
 import com.odontocare.finance.repository.ChargeEntryRepository;
 import com.odontocare.patients.repository.PatientRepository;
 import com.odontocare.shared.pagination.*;
@@ -21,6 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 @Service
 public class ChargeLedgerService {
   private final ChargeEntryRepository entries;
+  private final ChargeBalanceRepository balances;
   private final PatientRepository patients;
   private final PlanItemRepository items;
   private final PlanSessionRepository sessions;
@@ -41,7 +44,8 @@ public class ChargeLedgerService {
       ClinicalAccess access,
       ObjectMapper mapper,
       com.odontocare.finance.repository.MoneyApplicationRepository applications,
-      ChargeStateService states) {
+      ChargeStateService states,
+      ChargeBalanceRepository balances) {
     this.entries = entries;
     this.patients = patients;
     this.items = items;
@@ -52,6 +56,7 @@ public class ChargeLedgerService {
     this.access = access;
     this.mapper = mapper;
     this.applications = applications;
+    this.balances = balances;
   }
 
   public String fingerprint(Object value) {
@@ -224,13 +229,13 @@ public class ChargeLedgerService {
     return entry;
   }
 
-  @Transactional
+  @Transactional(isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   public PageResponse<EntryResponse> list(
       UUID patientId, UUID planId, UUID originId, String kind, String currency, PageQuery query) {
     return list(patientId, planId, originId, kind, currency, null, query);
   }
 
-  @Transactional
+  @Transactional(isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
   public PageResponse<EntryResponse> list(
       UUID patientId,
       UUID planId,
@@ -270,7 +275,16 @@ public class ChargeLedgerService {
             query.pageable(
                 Map.of("name", "description", "createdAt", "createdAt", "amount", "amount")));
     audit.record("CHARGES_READ", "CHARGE", patientId, "Consultó movimientos de deuda");
-    return PageResponse.of(page.map(this::response));
+    var ids =
+        page.stream()
+            .map(c -> c.getOriginalId() == null ? c.getId() : c.getOriginalId())
+            .distinct()
+            .toList();
+    Map<UUID, ChargeBalance> byId = new HashMap<>();
+    if (!ids.isEmpty()) balances.findByIdIn(ids).forEach(b -> byId.put(b.getId(), b));
+    return PageResponse.of(
+        page.map(
+            c -> response(c, byId.get(c.getOriginalId() == null ? c.getId() : c.getOriginalId()))));
   }
 
   @Transactional
@@ -288,6 +302,16 @@ public class ChargeLedgerService {
   }
 
   public EntryResponse response(ChargeEntry c) {
+    var balance =
+        balances
+            .findById(c.getOriginalId() == null ? c.getId() : c.getOriginalId())
+            .orElseThrow(ApiException::notFound);
+    return response(c, balance);
+  }
+
+  private EntryResponse response(ChargeEntry c, ChargeBalance balance) {
+    if (balance == null) throw ApiException.notFound();
+    boolean original = c.getOriginalId() == null;
     return new EntryResponse(
         c.getId(),
         c.getPatientId(),
@@ -304,9 +328,16 @@ public class ChargeLedgerService {
         c.getReason(),
         c.getActorName(),
         c.getCreatedAt(),
-        states.closed(c.getOriginalId() == null ? c.getId() : c.getOriginalId()),
-        c.getOriginalId() == null
-            ? entries.originDebt(c.getId()).subtract(applications.chargeApplied(c.getId()))
-            : null);
+        balance.isClosed(),
+        original ? balance.getPending() : null,
+        original ? balance.getDebt() : null,
+        original ? balance.getApplied() : null,
+        original ? paymentStatus(balance) : null);
+  }
+
+  private String paymentStatus(ChargeBalance balance) {
+    if (balance.getDebt().signum() == 0) return "NO_BALANCE";
+    if (balance.getPending().signum() == 0) return "PAID";
+    return balance.getApplied().signum() > 0 ? "PARTIAL" : "UNPAID";
   }
 }
