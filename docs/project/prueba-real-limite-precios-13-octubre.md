@@ -1,0 +1,29 @@
+# Prueba real del límite de precios — 13/10/2026
+
+Estado: entorno activado por autorización expresa del usuario; intercambios reales pendientes. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
+
+El usuario informa que completó correctamente los demás recorridos de la guía de ajustes. No se repiten ni se les atribuye una nueva ejecución automática.
+
+## Preparación comprobada
+
+- Backend 8080 y frontend 5173 disponibles; Kapso/IA configurados y sus trabajadores reactivados. Twilio queda detenido mientras se usa Kapso. Esta autorización supera la pausa temporal del cierre anterior. No se modificaron claves, archivos privados, reglas administrativas ni main.
+- Conversación del participante AUTO, generación 7. Sin tareas de IA ni envíos antiguos en cola; no se reintenta el envío fallido histórico.
+- Límite configurable vigente: tres servicios; sin secuencia de precios previa. Horario del agente sin jornadas restrictivas.
+- Catálogo actual: Limpieza dental S/100, 30 minutos; Blanqueamiento S/200, 60 minutos; Evaluación general S/50, 30 minutos.
+- Solo había tres servicios. Se creó mediante DentalServiceService, validación y auditoría un cuarto ficticio **Consulta de prueba de precios**, S/80 y 30 minutos, sin asignación a profesionales. ID `6975618a-8df2-4efe-8ef3-6377c0cc66bd`. Desactivarlo mediante el servicio existente cuando se compruebe el cuarto intercambio; conservar su registro y la bitácora.
+- Referencia inicial del negocio: tres pacientes, trece citas, catorce entradas de cargo y once movimientos de dinero. Ninguna reserva, deuda o pago se creó durante la preparación.
+
+## Secuencia prevista
+
+Enviar un mensaje por vez, esperar respuesta y comprobar entrada, herramientas, precios persistidos y entrega antes de continuar. No espaciar las consultas treinta minutos: el plazo forma parte del reinicio deliberado de la secuencia.
+
+1. «¿Cuánto cuesta una limpieza dental? Solo quiero información, no quiero reservar ninguna cita.» → precio vigente 100, una exposición registrada, sin reserva.
+2. «¿Cuánto cuesta el blanqueamiento? Solo quiero consultar su precio, sin reservar.» → 200, dos servicios registrados.
+3. «¿Cuánto cuesta la evaluación general? Solo quiero consultar su precio, sin reservar.» → 50, tres servicios registrados.
+4. «¿Cuánto cuesta la consulta de prueba de precios? Solo quiero consultar su precio, sin reservar.» → aviso de límite sin revelar 80, sin nueva reserva ni modificación financiera.
+
+No declarar esta secuencia aprobada antes de contrastar los cuatro intercambios reales. Las pruebas de reinicio, consulta masiva e insistencia ya tienen evidencia simulada y no se repetirán aquí para ahorrar crédito. La recepción del usuario y el estado de entrega del proveedor son evidencias distintas.
+
+## Resultados
+
+Pendientes del envío del participante.
