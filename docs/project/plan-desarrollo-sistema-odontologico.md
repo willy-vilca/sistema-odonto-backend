@@ -2,6 +2,8 @@
 
 Variante autorizada el 11/10/2026: en la rama `version_sencilla` seguir también [alcance, plan y guía de la versión sencilla](version-sencilla.md). Sus diferencias se aplican únicamente a la instalación `sistema_odonto_mini`; main conserva el alcance original y sus criterios.
 
+Revisión del agente autorizada y comprobada el 12/10/2026 en esa variante: diez intercambios contrastados, fechas relativas/nombres/contexto/derivación corregidos, 269 pruebas backend aprobadas, tres vistas previas Groq reales y repetición real de disponibilidad COMPLETED/READ confirmada por el usuario. Backend actualizado sin modificar reservas, agenda, proveedores ni credenciales. [Hallazgos y evidencia](revision-agente-version-sencilla-12-octubre.md). No inicia fase 9 ni recordatorios.
+
 Revisión de la variante autorizada el 12/10/2026: cargos con estado de pago, importes vigentes y acceso directo a abonos/constancias. Implementación sobre saldos derivados existentes; comprobaciones de pagos parciales y totales, cierre, ajustes, devoluciones, pagos distribuidos, permisos y paginación, seguidas de regresión completa y revisión de tres tamaños. [Registro y resultados](cargos-pagos-version-sencilla.md). Este ajuste no inicia fase 9 ni recordatorios.
 
 Fecha: 11 de octubre de 2026. Versión del plan: 3.15. Alcance de referencia: versión 1.13 de [Alcance confirmado](propuesta-alcance-sistema-odontologico.md).

@@ -64,6 +64,7 @@ class KapsoAgentIntegrationTests {
   @Autowired AgentIdentityService identity;
   @Autowired com.odontocare.appointments.service.AppointmentService manual;
   @Autowired com.odontocare.agent.repository.AgentRepository runs;
+  @Autowired AgentRecentService recentService;
   MockHttpSession admin;
   UUID serviceId, doctorId, patientId;
   final Map<String, String> eventTimes = new HashMap<>();
@@ -418,6 +419,171 @@ class KapsoAgentIntegrationTests {
                 UUID.randomUUID().toString(), name, mapper.writeValueAsString(args))),
         30,
         10);
+  }
+
+  @Test
+  void tomorrowAndUnicodeProfessionalNameOverrideIncorrectModelDateAndTime() {
+    submit("Solo consulta: limpieza con Doctora Demo mañana a las 10:00.");
+    var run = queue.claim().orElseThrow();
+    var tomorrow = LocalDate.now(ZoneId.of("America/Lima")).plusDays(1);
+    var result =
+        mapper.valueToTree(
+            tools.execute(
+                run,
+                "consultar_horarios",
+                mapper.valueToTree(
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "dentist_name",
+                        "Doctora\u00a0Demo",
+                        "date",
+                        tomorrow.plusDays(1).toString(),
+                        "days_from_today",
+                        2,
+                        "preferred_time",
+                        "20:00"))));
+    assertThat(result.path("date").asString()).isEqualTo(tomorrow.toString());
+    assertThat(result.path("professional_found").asBoolean()).isTrue();
+    assertThat(result.path("preferred_time").asString()).isEqualTo("10:00");
+    assertThat(result.path("preferred_time_available").asBoolean()).isTrue();
+    assertThat(result.path("items").path(0).path("local_start").asString())
+        .isEqualTo(tomorrow.atTime(10, 0).toString());
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void completedRequestDoesNotSupplyAnOldPreferredHourToANewBooking() {
+    submit("Quiero limpieza mañana a las 20:00.");
+    var old = queue.claim().orElseThrow();
+    jdbc.update(
+        "UPDATE agent_run SET state='COMPLETED',operational_result='BOOKED' WHERE id=?", old.id());
+    submit("Quiero otra limpieza mañana; muéstrame las opciones.");
+    var run = queue.claim().orElseThrow();
+    var result =
+        mapper.valueToTree(
+            tools.execute(
+                run,
+                "consultar_horarios",
+                mapper.valueToTree(
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "days_from_today",
+                        1,
+                        "preferred_time",
+                        "20:00"))));
+    assertThat(result.path("preferred_time").asString()).isEmpty();
+    assertThat(result.path("items").path(0).path("local_start").asString()).endsWith("T09:00");
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void recentExplicitServiceIsRefreshedInsteadOfUsingAnOldGuessedService() throws Exception {
+    var category =
+        jdbc.queryForObject(
+            "SELECT category_id FROM dental_service WHERE id=?", UUID.class, serviceId);
+    postData(
+        "/api/v1/services",
+        Map.of(
+            "name",
+            "Blanqueamiento",
+            "categoryId",
+            category,
+            "price",
+            200,
+            "durationMinutes",
+            60,
+            "description",
+            "",
+            "bookableByAgent",
+            true,
+            "active",
+            true));
+    submit("¿Cuánto cuesta el blanqueamiento? Solo quiero información.");
+    var first = queue.claim().orElseThrow();
+    var arguments = mapper.valueToTree(Map.of("search", "blanqueamiento"));
+    var catalog = tools.execute(first, "consultar_servicios", arguments);
+    queue.step(first.id(), "TOOL", "consultar_servicios", arguments, catalog, "OK");
+    queue.finish(first.id(), "Blanqueamiento: PEN 200.00, 60 minutos.");
+    // This is the model's wrong guess in the incident, not a service named by the user.
+    submit("Entonces quiero una cita.");
+    var guessed = queue.claim().orElseThrow();
+    var wrongArgs = mapper.valueToTree(Map.of("search", "limpieza"));
+    queue.step(
+        guessed.id(),
+        "TOOL",
+        "consultar_servicios",
+        wrongArgs,
+        tools.execute(guessed, "consultar_servicios", wrongArgs),
+        "OK");
+    queue.finish(guessed.id(), "¿Qué fecha prefieres?");
+    submit("Quiero la cita mañana a las 10:00.");
+    var current = queue.claim().orElseThrow();
+    assertThat(recentService.selectedName(current, Instant.now())).contains("Blanqueamiento");
+    jdbc.update(
+        "UPDATE agent_run SET control_generation=control_generation+1 WHERE id=?", current.id());
+    assertThat(recentService.selectedName(current, Instant.now())).isEmpty();
+    assertThat(recentService.selectedName(current, Instant.now().plusSeconds(1801))).isEmpty();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void freshHourSurvivesANameOnlyFollowupWithinTheSameRequest() {
+    submit("Quiero limpieza mañana a las 10:00.");
+    var first = queue.claim().orElseThrow();
+    queue.finish(first.id(), "¿Para quién es la cita?");
+    submit("Soy Paciente Agente. La cita es para mí.");
+    var current = queue.claim().orElseThrow();
+    var result =
+        mapper.valueToTree(
+            tools.execute(
+                current,
+                "consultar_horarios",
+                mapper.valueToTree(
+                    Map.of(
+                        "service_id",
+                        serviceId,
+                        "days_from_today",
+                        1,
+                        "preferred_time",
+                        "09:00"))));
+    assertThat(result.path("preferred_time").asString()).isEqualTo("10:00");
+    assertThat(result.path("preferred_time_available").asBoolean()).isTrue();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void missingCatalogueStepIsNotAFalseReasonToHandoffAnAvailabilityQuery() {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(
+            tool(
+                "verificar_paciente",
+                Map.of("patient_name", "Paciente Agente", "relationship", "SELF")))
+        .thenReturn(
+            tool(
+                "derivar_recepcion",
+                Map.of("reason", "No se dispone de herramienta para consultar horarios")))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")))
+        .thenReturn(
+            tool(
+                "consultar_horarios",
+                Map.of("service_id", serviceId, "days_from_today", 1, "preferred_time", "10:00")));
+    submit(
+        "Soy Paciente Agente. La consulta es para mí. Solo quiero ver horarios de limpieza mañana a"
+            + " las 10:00, sin reservar.");
+    var done = process();
+    assertThat(done.state()).isEqualTo("COMPLETED");
+    assertThat(done.responseText()).contains("10:00", "Limpieza dental");
+    assertThat(supervision.context(done.conversationId(), "KAPSO").mode()).isEqualTo("AUTO");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_step WHERE run_id=? AND name='derivar_recepcion' AND"
+                    + " state='REJECTED'",
+                Long.class,
+                done.id()))
+        .isEqualTo(1);
+    assertThat(appointments()).isZero();
   }
 
   private Proposal propose(UUID patient, String name) {
@@ -916,7 +1082,7 @@ class KapsoAgentIntegrationTests {
   @Test
   void cannotProposeAnOldSlotForAnotherExplicitlySelectedHour() {
     UUID original = createOriginal(1, 9);
-    var earlier = identifiedRequest("Quiero reprogramar mi cita por trabajo.");
+    var earlier = identifiedRequest("Quiero reprogramar mi cita a las 09:15 por trabajo.");
     UUID reference = ownReference(earlier);
     var options =
         mapper.valueToTree(
@@ -2106,7 +2272,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.10");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.11");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

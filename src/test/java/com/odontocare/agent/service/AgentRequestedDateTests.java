@@ -1,11 +1,34 @@
 package com.odontocare.agent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 class AgentRequestedDateTests {
+  @Test
+  void resolvesTodayTomorrowAndDayAfterTomorrowWithoutConfusingMorning() {
+    var received = LocalDate.of(2026, 10, 12);
+    assertThat(
+            AgentRequestedDate.resolve(
+                "ok, entonces quiero una cita para mañana a las 10:00", received))
+        .contains(received.plusDays(1));
+    assertThat(AgentRequestedDate.resolve("mañana por la mañana", received))
+        .contains(received.plusDays(1));
+    assertThat(AgentRequestedDate.resolve("pasado mañana a las 10", received))
+        .contains(received.plusDays(2));
+    assertThat(AgentRequestedDate.resolve("hoy día a las 20:00", received)).contains(received);
+    assertThat(AgentRequestedDate.resolve("el martes por la mañana", received))
+        .contains(received.plusDays(1));
+    assertThat(AgentRequestedDate.resolve("a las 10 de la mañana", received)).isEmpty();
+    assertThat(AgentRequestedDate.resolve("por la mañana", received)).isEmpty();
+    assertThatThrownBy(() -> AgentRequestedDate.resolve("hoy o mañana", received))
+        .hasMessageContaining("una sola fecha");
+    assertThatThrownBy(() -> AgentRequestedDate.resolve("mañana 14/10/2026", received))
+        .hasMessageContaining("no coinciden");
+  }
+
   @Test
   void resolvesWeekdaysFromWednesdayWithoutTrustingModelArithmetic() {
     var received = LocalDate.of(2026, 10, 7);

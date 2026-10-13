@@ -22,6 +22,50 @@ public class AgentRepository {
     this.mapper = mapper;
   }
 
+  /** Only recent user choices in this channel and control generation, after its last booking. */
+  public List<String> recentRequestBodies(AgentRun run, Instant since) {
+    return jdbc.queryForList(
+        "SELECT m.body FROM agent_inbox_message m JOIN agent_run r ON r.message_id=m.id JOIN"
+            + " agent_inbox_message current ON current.id=? WHERE m.conversation_id=? AND"
+            + " m.source=current.source AND m.direction='INBOUND' AND"
+            + " m.sequence_no<=current.sequence_no AND m.created_at>=? AND"
+            + " r.control_generation=(SELECT control_generation FROM agent_run WHERE id=?) AND"
+            + " r.state IN ('COMPLETED','PROCESSING') AND m.sequence_no>coalesce((SELECT"
+            + " max(old.sequence_no) FROM agent_run done JOIN agent_inbox_message old ON"
+            + " old.id=done.message_id WHERE old.conversation_id=m.conversation_id AND"
+            + " old.source=m.source AND done.operational_result IN"
+            + " ('BOOKED','RESCHEDULED','CANCELLED') AND old.sequence_no<current.sequence_no),0)"
+            + " ORDER BY m.sequence_no DESC LIMIT 12",
+        String.class,
+        run.messageId(),
+        run.conversationId(),
+        Timestamp.from(since),
+        run.id());
+  }
+
+  public record RecentCatalogLookup(String request, String result) {}
+
+  public List<RecentCatalogLookup> recentCatalogLookups(AgentRun run, Instant since) {
+    return jdbc.query(
+        "SELECT m.body,s.result_json::text FROM agent_step s JOIN agent_run r ON r.id=s.run_id JOIN"
+            + " agent_inbox_message m ON m.id=r.message_id JOIN agent_inbox_message current ON"
+            + " current.id=? WHERE r.conversation_id=? AND m.source=current.source AND"
+            + " m.sequence_no<current.sequence_no AND s.name='consultar_servicios' AND s.state='OK'"
+            + " AND r.state='COMPLETED' AND s.created_at>=? AND"
+            + " jsonb_array_length(s.result_json->'items')=1 AND r.control_generation=(SELECT"
+            + " control_generation FROM agent_run WHERE id=?) AND m.sequence_no>coalesce((SELECT"
+            + " max(old.sequence_no) FROM agent_run done JOIN agent_inbox_message old ON"
+            + " old.id=done.message_id WHERE old.conversation_id=m.conversation_id AND"
+            + " old.source=m.source AND done.operational_result IN"
+            + " ('BOOKED','RESCHEDULED','CANCELLED') AND old.sequence_no<current.sequence_no),0)"
+            + " ORDER BY m.sequence_no DESC,s.ordinal DESC LIMIT 12",
+        (rs, index) -> new RecentCatalogLookup(rs.getString(1), rs.getString(2)),
+        run.messageId(),
+        run.conversationId(),
+        Timestamp.from(since),
+        run.id());
+  }
+
   public boolean hasRejectedBookingLookup(UUID run) {
     return Boolean.TRUE.equals(
         jdbc.queryForObject(

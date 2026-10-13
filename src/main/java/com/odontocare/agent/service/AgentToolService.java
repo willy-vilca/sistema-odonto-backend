@@ -213,7 +213,10 @@ public class AgentToolService {
     var incoming = conversations.message(run.messageId(), false).orElseThrow();
     var receivedDate = incoming.createdAt().atZone(zone).toLocalDate();
     LocalDate today = LocalDate.now(clock.withZone(zone)), date;
-    if (args.hasNonNull("days_from_today")) {
+    var requestedDate = AgentRequestedDate.resolve(incoming.body(), receivedDate);
+    if (requestedDate.isPresent()) {
+      date = requestedDate.get();
+    } else if (args.hasNonNull("days_from_today")) {
       if (args.hasNonNull("date") && !args.path("date").asString("").isBlank())
         throw ApiException.badRequest("Utiliza fecha absoluta o relativa, no ambas.");
       int days = number(args, "days_from_today", 0, 60);
@@ -225,12 +228,19 @@ public class AgentToolService {
         throw ApiException.badRequest("La fecha debe ser YYYY-MM-DD.");
       }
     }
-    date = AgentRequestedDate.resolve(incoming.body(), receivedDate).orElse(date);
     if (date.isBefore(today) || date.isAfter(today.plusDays(60)))
       throw ApiException.badRequest("Consulta una fecha entre hoy y los próximos 60 días.");
     String preferred = text(args, "preferred_time", 5, false);
     preferred =
-        AgentRequestedTime.resolve(incoming.body()).map(LocalTime::toString).orElse(preferred);
+        AgentRequestedTime.resolve(incoming.body())
+            .or(
+                () ->
+                    runs.recentRequestBodies(run, incoming.createdAt().minusSeconds(1800)).stream()
+                        .map(AgentRequestedTime::resolve)
+                        .flatMap(Optional::stream)
+                        .findFirst())
+            .map(LocalTime::toString)
+            .orElse("");
     if (!preferred.isBlank())
       try {
         LocalTime.parse(preferred);
@@ -317,11 +327,15 @@ public class AgentToolService {
         preferredFound,
         "preferred_time",
         preferred,
+        "professional_found",
+        !dentists.isEmpty(),
         "items",
         results,
         "message",
         results.isEmpty()
-            ? "No hay horarios disponibles ni profesionales habilitados en la fecha consultada."
+            ? dentists.isEmpty()
+                ? "No se encontró un profesional habilitado con los datos indicados."
+                : "No hay intervalos disponibles para este servicio en la fecha consultada."
             : "Solo estos horarios fueron calculados por la agenda; no están retenidos.");
   }
 
@@ -475,7 +489,7 @@ public class AgentToolService {
       return "";
     }
     if (!value.isString()) throw ApiException.badRequest("El campo " + field + " debe ser texto.");
-    String text = value.asString().strip();
+    String text = value.asString().replaceAll("(?U)\\s+", " ").strip();
     if (text.length() > max || required && text.isBlank())
       throw ApiException.badRequest("Valor inválido: " + field);
     return text;

@@ -9,7 +9,8 @@ import java.util.regex.Pattern;
 final class AgentRequestedTime {
   private static final Pattern CLOCK =
       Pattern.compile(
-          "(?<![\\d:])(?:(\\d{1,2}):(\\d{2})(?:\\s*(am|pm)\\b)?|(\\d{1,2})\\s*(am|pm)\\b)(?![\\d:])");
+          "(?<![\\d:])(?:(\\d{1,2}):(\\d{2})(?:\\s*(am|pm)\\b)?|(\\d{1,2})\\s*(am|pm)\\b|"
+              + "(?:a las|manana|hoy)\\s*(\\d{1,2})\\b(?![/:]|\\s*(?:am|pm)\\b))(?![\\d:])");
 
   private AgentRequestedTime() {}
 
@@ -17,13 +18,18 @@ final class AgentRequestedTime {
     String text =
         Normalizer.normalize(body.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
             .replaceAll("\\p{M}", "")
+            .replaceAll("(?U)\\s+", " ")
             .replaceAll("de la manana", "am")
             .replaceAll("de la tarde|de la noche", "pm")
             .replaceAll("([ap])\\.\\s*m\\.", "$1m");
     var found = new HashSet<LocalTime>();
     var matcher = CLOCK.matcher(text);
     while (matcher.find()) {
-      int hour = Integer.parseInt(matcher.group(1) != null ? matcher.group(1) : matcher.group(4));
+      int hour =
+          Integer.parseInt(
+              matcher.group(1) != null
+                  ? matcher.group(1)
+                  : matcher.group(4) != null ? matcher.group(4) : matcher.group(6));
       int minute = matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 0;
       String meridian = matcher.group(3) != null ? matcher.group(3) : matcher.group(5);
       if (minute > 59 || hour > 23 || (meridian != null && (hour < 1 || hour > 12)))

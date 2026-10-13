@@ -1,6 +1,8 @@
 package com.odontocare.agent.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import tools.jackson.databind.JsonNode;
 
@@ -17,12 +19,36 @@ final class AgentAvailabilityReply {
         Objects.toString(data.get("preferred_time"), args.path("preferred_time").asString(""));
     boolean occupied =
         !preferred.isBlank() && Boolean.FALSE.equals(data.get("preferred_time_available"));
+    String date = Objects.toString(data.get("date"), "");
+    String day =
+        date.isBlank()
+            ? "la fecha consultada"
+            : LocalDate.parse(date)
+                .format(
+                    DateTimeFormatter.ofPattern("EEEE dd/MM/yyyy", Locale.forLanguageTag("es-PE")));
+    if (Boolean.FALSE.equals(data.get("professional_found"))) {
+      response =
+          "No encontré un profesional habilitado con los datos indicados. Confirma con qué"
+              + " odontólogo deseas atenderte para consultar sus horarios. Todavía no se creó ni"
+              + " cambió ninguna cita.";
+      return;
+    }
+    if (items.isEmpty()) {
+      response =
+          "No hay horarios disponibles para el "
+              + day
+              + ".\n\n¿Quieres consultar otra fecha? Todavía no se creó ni cambió ninguna cita.";
+      return;
+    }
     var text =
         new StringBuilder(
             occupied
-                ? "El horario de " + preferred + " no está disponible.\n"
-                : "Estos son los horarios disponibles:\n");
-    if (items.isEmpty()) text.append("No hay horarios disponibles para la fecha consultada.\n");
+                ? "El horario de "
+                    + preferred
+                    + " no está disponible para el "
+                    + day
+                    + ". Estos son otros horarios:\n"
+                : "Estos son los horarios disponibles para el " + day + ":\n");
     for (Object item : items.stream().limit(5).toList()) {
       if (!(item instanceof Map<?, ?> slot)) continue;
       var start = LocalDateTime.parse(slot.get("local_start").toString());

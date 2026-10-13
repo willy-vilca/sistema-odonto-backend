@@ -2,6 +2,8 @@
 
 Decisión del usuario del 11/10/2026. Variante 1.0 en `version_sencilla` de backend y frontend. Parte del alcance 1.13 y plan 3.15; las diferencias de este documento prevalecen exclusivamente para esta variante. La versión de registro permanece en main.
 
+Revisión del agente autorizada el 12/10/2026: [hallazgos, correcciones y comprobación real](revision-agente-version-sencilla-12-octubre.md). Flujo v7.11 y 269 pruebas backend aprobadas; disponibilidad de mañana a las 10:00 comprobada con Groq y WhatsApp real. Preservar la agenda configurada (sábado cerrado), datos, controles y credenciales. Este tramo usa las integraciones que el usuario activó; la pausa de proveedores de la revisión inicial siguiente es histórica.
+
 ## Alcance y decisiones
 
 - Instalación local independiente en `sistema_odonto_mini`. Pruebas destructivas únicamente en `sistema_odonto_mini_test`, comprobando el nombre antes de limpiar. Nunca limpiar ni migrar la instalación original para este trabajo.

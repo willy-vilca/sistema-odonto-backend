@@ -7,7 +7,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/** Resolves an unambiguous Spanish weekday against the received message's local date. */
+/** Resolves unambiguous Spanish dates against the received message's local date. */
 final class AgentRequestedDate {
   private static final List<String> WEEKDAYS =
       List.of("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo");
@@ -15,7 +15,23 @@ final class AgentRequestedDate {
   static Optional<LocalDate> resolve(String message, LocalDate receivedDate) {
     String text =
         Normalizer.normalize(message.toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
-            .replaceAll("\\p{M}", "");
+            .replaceAll("\\p{M}", "")
+            .replaceAll("(?U)\\s+", " ");
+    var relative = new LinkedHashSet<LocalDate>();
+    String dayText = text.replaceAll("\\b(?:por|de|en|toda) la manana\\b", "");
+    if (Pattern.compile("\\bpasado manana\\b").matcher(dayText).find()) {
+      relative.add(receivedDate.plusDays(2));
+      dayText = dayText.replaceAll("\\bpasado manana\\b", "");
+    }
+    if (Pattern.compile("\\besta manana\\b").matcher(dayText).find()) {
+      relative.add(receivedDate);
+      dayText = dayText.replaceAll("\\besta manana\\b", "");
+    }
+    if (Pattern.compile("\\bhoy\\b").matcher(dayText).find()) relative.add(receivedDate);
+    if (Pattern.compile("\\bmanana\\b").matcher(dayText).find())
+      relative.add(receivedDate.plusDays(1));
+    if (relative.size() > 1)
+      throw ApiException.badRequest("Indica una sola fecha para consultar el horario.");
     var found = new ArrayList<DayOfWeek>();
     for (int i = 0; i < WEEKDAYS.size(); i++)
       if (Pattern.compile("\\b" + WEEKDAYS.get(i) + "\\b").matcher(text).find())
@@ -46,21 +62,31 @@ final class AgentRequestedDate {
       if (found.size() == 1 && found.getFirst() != date.getDayOfWeek())
         throw ApiException.badRequest(
             "La fecha y el día de semana indicados no coinciden. ¿Cuál deseas?");
+      if (!relative.isEmpty() && !relative.iterator().next().equals(date))
+        throw ApiException.badRequest(
+            "La fecha y la referencia relativa no coinciden. Confirma el día que deseas.");
       return Optional.of(date);
     }
     if (Pattern.compile(
             "\\b(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\\b")
         .matcher(text)
         .find()) return Optional.empty();
+    if (found.isEmpty()) return relative.stream().findFirst();
     if (found.size() != 1) return Optional.empty();
     var day = found.getFirst();
-    if (text.contains("proxima semana"))
-      return Optional.of(
-          receivedDate.with(TemporalAdjusters.next(DayOfWeek.MONDAY)).plusDays(day.getValue() - 1));
     boolean next =
         text.matches("(?s).*\\bproxim[oa]\\s+" + WEEKDAYS.get(day.getValue() - 1) + "\\b.*");
-    return Optional.of(
-        receivedDate.with(next ? TemporalAdjusters.next(day) : TemporalAdjusters.nextOrSame(day)));
+    var date =
+        text.contains("proxima semana")
+            ? receivedDate
+                .with(TemporalAdjusters.next(DayOfWeek.MONDAY))
+                .plusDays(day.getValue() - 1)
+            : receivedDate.with(
+                next ? TemporalAdjusters.next(day) : TemporalAdjusters.nextOrSame(day));
+    if (!relative.isEmpty() && !relative.iterator().next().equals(date))
+      throw ApiException.badRequest(
+          "La fecha y el día de semana indicados no coinciden. ¿Cuál deseas?");
+    return Optional.of(date);
   }
 
   private AgentRequestedDate() {}

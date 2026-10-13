@@ -1,5 +1,7 @@
 # Instantáneas de las guías maestras
 
+Revisión vigente del agente, 12/10/2026: [diagnóstico de diez intercambios, correcciones y evidencia real](revision-agente-version-sencilla-12-octubre.md). Solo version_sencilla; flujo v7.11, 269 pruebas backend aprobadas, tres consultas Groq APP_TEST sin cambios de negocio/envíos y una consulta WhatsApp correcta READ confirmada por el participante. Horarios, datos, main y credenciales conservados; fase 9 y recordatorios pendientes.
+
 Instantánea de la variante del 12/10/2026: [versión sencilla, alcance, plan, uso y comprobación](version-sencilla.md). Trabajo exclusivo en `version_sencilla`, base `sistema_odonto_mini`, migración V25, 255 casos backend y 90 escenarios distintos de navegador aprobados en bloques. Main conserva la versión de registro. Las notas siguientes describen su evolución histórica y no sustituyen las diferencias de esta variante.
 
 Revisión completada del 11/10/2026: plantillas retiradas de la interfaz con backend conservado, PDF institucionales y tabulados y asteriscos rojos en campos obligatorios. [Guía y verificación](presentacion-pdf-formularios.md). Alcance 1.13 y plan 3.15; 248 comprobaciones backend y 81 escenarios distintos de navegador aprobados en bloques, con muestras PDF y tres tamaños de pantalla. Originales, datos, permisos, cálculos y correlativos conservados. Main; fase 9 y recordatorios pendientes.
