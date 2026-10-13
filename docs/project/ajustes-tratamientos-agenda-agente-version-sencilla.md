@@ -49,3 +49,11 @@ El backend actualizado queda en 8080 y la interfaz en [http://127.0.0.1:5173](ht
 7. **Precios por WhatsApp, después de reactivar los trabajadores:** en Ajustes del asistente deja el máximo en tres. Consulta consecutivamente precios de cuatro servicios distintos que existan en el catálogo. Debe informar los tres primeros y limitar el cuarto; un saludo no reinicia el contador. Si insistes con otro precio, debe derivar y pausar la IA. Devolver el control humano conserva los controles existentes; una propuesta de reserva verificada o treinta minutos sin consultas de precio reinician la secuencia. Consulta un horario y confirma únicamente una propuesta que quieras reservar: el límite de precios no elimina la confirmación de citas.
 
 Los acuerdos de pago y las fechas de sesiones son opcionales e independientes. Un inicial pactado no se presenta como recibido en el borrador; la aceptación con inicial exige confirmar su recepción. Las fechas previstas no garantizan un horario. Para planes antiguos, las nuevas opciones no inventan retroactivamente pagos ni citas: se conservan sus registros y una sesión pendiente puede coordinarse expresamente. No se añadieron controles periódicos ilimitados, recordatorios automáticos ni fase 9.
+
+## Evidencia guardada
+
+Cambios funcionales guardados en backend `ec3576b` y frontend `dd8a950`, ambos en `version_sencilla`. Las instantáneas de estas guías se conservan en `backend/docs/project`; las capturas anteriores no se reemplazaron.
+
+- [Resumen de comprobaciones](../backend/docs/verification/treatment-adjustments/validation.json) y [comparación de todos los campos originales con el respaldo](../backend/docs/verification/treatment-adjustments/preservation.json).
+- [Proforma de muestra](../backend/docs/verification/treatment-adjustments/proforma-borrador.pdf) y [acuerdo aceptado de muestra](../backend/docs/verification/treatment-adjustments/acuerdo-aceptado.pdf), obtenidos exclusivamente en la instalación protegida de pruebas. La identidad y los valores de esas muestras son ficticios.
+- Capturas de formularios, sesiones, mes y política de precios en `frontend/evidence/treatment-adjustments`, para los tres tamaños. Respaldo previo completo local en `backend/.runtime/backups/mini-before-treatment-20261013-045927.dump`, fuera de Git.
