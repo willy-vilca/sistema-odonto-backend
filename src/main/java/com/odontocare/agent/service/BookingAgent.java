@@ -166,6 +166,13 @@ public class BookingAgent {
       if (AgentIdentityService.normalize(incoming.body())
           .matches("(?s).*(no confirmo|no reserves|no canceles|no reprogrames).*"))
         changes.discard(run);
+      var directPriceService = tools.directPriceService(run, incoming.body());
+      if (directPriceService.isPresent()) {
+        var arguments = mapper.valueToTree(Map.of("search", directPriceService.get(), "page", 0));
+        var result = tools.execute(run, "consultar_servicios", arguments);
+        queue.step(run.id(), "TOOL", "consultar_servicios", arguments, result, "OK");
+        if (finishPriceQuery(run, result)) return;
+      }
       var profile = profiles.findById((short) 1).orElseThrow();
       var zone = ZoneId.of(profile.getTimeZone());
       var context = new ArrayList<Map<String, Object>>();
@@ -532,18 +539,8 @@ public class BookingAgent {
                     .noneMatch(
                         item ->
                             item instanceof Map<?, ?> row && row.get("price") instanceof Number);
-            if (allRestricted || AgentPricingPolicy.priceOnly(incoming.body())) {
-              boolean handoff =
-                  Boolean.TRUE.equals(prices.get("prices_restricted")) && pricing.denied(run);
-              String text = allRestricted ? AgentPricingPolicy.NOTICE : pricing.response(prices);
-              if (handoff)
-                replies.handoff(
-                    run,
-                    text + "\nVoy a dejar tu consulta pendiente de atención personal.",
-                    "PRICE_LIMIT");
-              else queue.finish(run.id(), text);
-              return;
-            }
+            if ((allRestricted || AgentPricingPolicy.priceOnly(incoming.body()))
+                && finishPriceQuery(run, result)) return;
           }
           if (state.equals("OK") && call.name().equals("derivar_recepcion")) {
             replies.handoff(run, supervision.policy().handoffText(), "PATIENT_REQUEST");
@@ -655,6 +652,22 @@ public class BookingAgent {
           "INTERNAL_ERROR",
           "No pudo completarse la operación. Revisa la agenda y la bitácora antes de reintentar.");
     }
+  }
+
+  private boolean finishPriceQuery(AgentRun run, Object result) {
+    if (!(result instanceof Map<?, ?> prices)
+        || !(prices.get("items") instanceof List<?> items)
+        || items.isEmpty()) return false;
+    boolean allRestricted =
+        items.stream()
+            .noneMatch(item -> item instanceof Map<?, ?> row && row.get("price") instanceof Number);
+    boolean handoff = Boolean.TRUE.equals(prices.get("prices_restricted")) && pricing.denied(run);
+    String text = allRestricted ? AgentPricingPolicy.NOTICE : pricing.response(prices);
+    if (handoff)
+      replies.handoff(
+          run, text + "\nVoy a dejar tu consulta pendiente de atención personal.", "PRICE_LIMIT");
+    else queue.finish(run.id(), text);
+    return true;
   }
 
   private Optional<com.odontocare.agent.dto.AgentContracts.Proposal> proposalForSource(

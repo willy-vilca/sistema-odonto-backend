@@ -379,6 +379,115 @@ class KapsoAgentIntegrationTests {
   }
 
   @Test
+  void directNamedPricesUseCurrentCatalogueAndRefuseFourthWithoutDependingOnTheModel()
+      throws Exception {
+    priceService("Blanqueamiento", 200);
+    priceService("Evaluación general", 50);
+    priceService("Consulta de prueba de precios", 80);
+    AgentRun last = null;
+    for (var name :
+        List.of(
+            "Limpieza dental",
+            "Blanqueamiento",
+            "Evaluación general",
+            "Consulta de prueba de precios")) {
+      submit("¿Cuánto cuesta " + name + "? Solo quiero consultar su precio, sin reservar.");
+      last = process();
+      assertThat(last.state()).isEqualTo("COMPLETED");
+    }
+    assertThat(last.responseText())
+        .contains("límite", "reservar una cita")
+        .doesNotContain("80.00", "no dispongo");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT cardinality(service_ids) FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isEqualTo(3);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT warning_count FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isEqualTo(1);
+    var result =
+        jdbc.queryForObject(
+            "SELECT result_json::text FROM agent_step WHERE run_id=? AND"
+                + " name='consultar_servicios'",
+            String.class,
+            last.id());
+    assertThat(result)
+        .contains("Consulta de prueba de precios", "price_restricted")
+        .doesNotContain("\"price\":");
+    assertThat(appointments()).isZero();
+    verifyNoInteractions(model);
+  }
+
+  @Test
+  void directPriceQueryNormalizesAccentsAndDoesNotQuoteSimilarNamesOrConsumeAnotherSlot()
+      throws Exception {
+    priceService("Evaluación general", 50);
+    priceService("Evaluación general ampliada", 80);
+    submit("¿Cuánto cuesta la EVALUACION GENERAL? Solo información, sin reservar.");
+    var first = process();
+    assertThat(first.responseText())
+        .contains("Evaluación general", "50.00")
+        .doesNotContain("ampliada", "80.00");
+    submit("¿Cuánto cuesta la evaluación general? Solo información.");
+    assertThat(process().responseText()).contains("50.00");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT cardinality(service_ids) FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isEqualTo(1);
+    verifyNoInteractions(model);
+  }
+
+  @Test
+  void directPriceLimitRecoversAfterThirtyMinutesAndHandsOffActualInsistence() throws Exception {
+    priceService("Servicio Beta", 200);
+    jdbc.update("UPDATE agent_policy SET max_price_services=1");
+    submit("¿Cuánto cuesta Limpieza dental? Solo información.");
+    process();
+    submit("¿Cuánto cuesta Servicio Beta? Solo información.");
+    assertThat(process().responseText()).contains("límite").doesNotContain("200.00");
+    jdbc.update("UPDATE agent_price_sequence SET last_query_at=now()-interval '31 minutes'");
+    submit("¿Cuánto cuesta Servicio Beta? Solo información.");
+    assertThat(process().responseText()).contains("200.00");
+    submit("¿Cuánto cuesta Limpieza dental? Solo información.");
+    process();
+    var repeated = submit("¿Cuánto cuesta Limpieza dental? Solo información.");
+    process();
+    assertThat(supervision.context(repeated.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+    assertThat(appointments()).isZero();
+    verifyNoInteractions(model);
+  }
+
+  @Test
+  void directPricePreviewRemainsSeparateAndUnknownServiceDoesNotTriggerAFalseLimit()
+      throws Exception {
+    var preview =
+        queue.test(
+            new TestMessage(phone, "Demo", "¿Cuánto cuesta Limpieza dental?", UUID.randomUUID()));
+    assertThat(process().responseText()).contains("100.00");
+    assertThat(queue.detail(preview.runId()).reply()).isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_price_sequence WHERE source='KAPSO'", Integer.class))
+        .isZero();
+    verifyNoInteractions(model);
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "servicio inexistente")))
+        .thenReturn(
+            new LanguageModelClient.Reply(
+                "No encuentro ese servicio en el catálogo actual.", List.of(), 20, 10));
+    submit("¿Cuánto cuesta el servicio inexistente? Solo información.");
+    assertThat(process().responseText()).contains("No encuentro").doesNotContain("límite");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_price_sequence WHERE warning_count>0", Integer.class))
+        .isZero();
+  }
+
+  @Test
   void priceGreetingDoesNotResetButThirtyMinutesAndVerifiedProposalDo() throws Exception {
     priceService("Servicio Beta", 200);
     priceService("Servicio Gamma", 300);
@@ -2399,7 +2508,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.12");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.13");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

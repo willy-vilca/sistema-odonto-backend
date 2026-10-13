@@ -14,8 +14,9 @@ import tools.jackson.databind.*;
 @Service
 public class AgentPricingPolicy {
   public static final String NOTICE =
-      "Para consultar precios de otros tratamientos, te atenderá personalmente el consultorio."
-          + " Puedo ayudarte a coordinar una cita.";
+      "Ya alcanzamos el límite de consultas de precios seguidas. Por ahora no puedo darte más"
+          + " precios. Si deseas, puedo ayudarte a reservar una cita; para más información te"
+          + " atenderá personalmente el consultorio.";
   private final AgentPriceSequenceRepository sequences;
   private final AgentInboxRepository inbox;
   private final ObjectMapper mapper;

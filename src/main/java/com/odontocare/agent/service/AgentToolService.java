@@ -56,6 +56,17 @@ public class AgentToolService {
   }
 
   @Transactional(timeout = 10)
+  public Optional<String> directPriceService(AgentRun run, String message) {
+    if (!AgentPricingPolicy.priceOnly(message)) return Optional.empty();
+    String normalized = AgentIdentityService.normalize(message);
+    if (!normalized.matches("^(hola )?cuanto (cuesta|vale|sale|esta|es) .+"))
+      return Optional.empty();
+    supervision.requireAction(run);
+    var names = catalog.explicitlyNamedServices(normalized);
+    return names.size() == 1 ? Optional.of(names.getFirst()) : Optional.empty();
+  }
+
+  @Transactional(timeout = 10)
   public Object execute(AgentRun run, String name, JsonNode args) {
     supervision.requireAction(run);
     if (!args.isObject())
@@ -85,11 +96,15 @@ public class AgentToolService {
       }
       case "consultar_servicios" -> {
         fields(args, "search", "page");
+        String search = text(args, "search", 160, false);
+        var serviceRows = catalog.services(search, page(args));
+        var exact =
+            serviceRows.stream()
+                .filter(s -> s.get("name").toString().equalsIgnoreCase(search.strip()))
+                .findFirst();
+        if (page(args) == 0 && exact.isPresent()) serviceRows = List.of(exact.get());
         yield pricing.catalogue(
-            run,
-            catalog.services(text(args, "search", 160, false), page(args)),
-            profiles.findById((short) 1).orElseThrow().getCurrency(),
-            page(args));
+            run, serviceRows, profiles.findById((short) 1).orElseThrow().getCurrency(), page(args));
       }
       case "pacientes_contacto" -> {
         fields(args, "search", "page");

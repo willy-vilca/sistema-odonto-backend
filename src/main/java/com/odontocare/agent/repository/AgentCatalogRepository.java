@@ -12,6 +12,16 @@ public class AgentCatalogRepository {
     this.jdbc = jdbc;
   }
 
+  public List<String> explicitlyNamedServices(String normalizedMessage) {
+    return jdbc.queryForList(
+        "SELECT s.name FROM dental_service s JOIN service_category c ON c.id=s.category_id"
+            + " WHERE s.active AND s.bookable_by_agent AND c.active AND strpos(?, ' ' ||"
+            + " trim(regexp_replace(translate(lower(s.name),'áéíóúüñ','aeiouun'),"
+            + " '[^a-z0-9]+',' ','g')) || ' ')>0 ORDER BY s.name,s.id LIMIT 2",
+        String.class,
+        " " + normalizedMessage + " ");
+  }
+
   public List<Map<String, Object>> services(String search, int page) {
     return jdbc.queryForList(
         "SELECT s.id,s.name,s.price,s.duration_minutes FROM dental_service s JOIN service_category"
