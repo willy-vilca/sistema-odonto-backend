@@ -1,5 +1,7 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
+Comprobación externa posterior de la variante el 13/10/2026: usuario aprobó los demás recorridos y se validaron tres precios y rechazo claro del cuarto por WhatsApp real. Incidencia corregida en v7.13, 116 regresiones del agente aprobadas, repetición real READ sin inferencia, servicio temporal desactivado y Kapso/IA activos con autorización. [Resultado y límites de esta comprobación](prueba-real-limite-precios-13-octubre.md). Las notas anteriores de reactivación/prueba de precios pendiente quedan superadas para este tramo; no se inicia fase 9 ni recordatorios.
+
 Ampliación de `version_sencilla` del 13/10/2026 completada: tratamientos/agenda, acuerdo financiero y PDF, restricción de precios y seguimiento. 294 pruebas backend y 121 escenarios distintos de navegador en bloques aprobados, dos PDF renderizados/revisados y V26 aplicada solo a mini con conservación de datos/main. [Cierre, límites de la revisión y guía breve](ajustes-tratamientos-agenda-agente-version-sencilla.md). Las comprobaciones externas nuevas siguen pendientes de reactivar los trabajadores; no se infiere su aprobación desde los proveedores simulados. Fase 9 y recordatorios continúan pendientes.
 
 Variante autorizada el 11/10/2026: en la rama `version_sencilla` seguir también [alcance, plan y guía de la versión sencilla](version-sencilla.md). Sus diferencias se aplican únicamente a la instalación `sistema_odonto_mini`; main conserva el alcance original y sus criterios.

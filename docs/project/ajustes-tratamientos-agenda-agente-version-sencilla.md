@@ -2,6 +2,8 @@
 
 Estado: implementado y comprobado el 13/10/2026. Variante 1.1, exclusivamente en `version_sencilla` de backend/frontend y `sistema_odonto_mini`; pruebas que limpian datos solo en `sistema_odonto_mini_test`.
 
+Actualización posterior: el usuario informó que completó correctamente los recorridos de la guía y autorizó reactivar Kapso/IA para la comprobación real acotada de precios. Tres precios y el cuarto rechazo quedaron **aprobados por WhatsApp real** tras una corrección v7.13, 116 regresiones del agente aprobadas y repetición únicamente de la cuarta pregunta. Servicio temporal desactivado, datos conservados y trabajadores activos. [Recorrido, incidencia y cierre](prueba-real-limite-precios-13-octubre.md). Esta actualización supera la pausa inicial de revisión descrita más abajo.
+
 El usuario aprobó las cuatro propuestas principales de [análisis de la presentación](propuesta-ajustes-presentacion-version-sencilla.md): sesiones por fecha/frecuencia, agenda y servicio propio/vínculo de tratamiento, proforma PDF y límite consecutivo de precios. También autorizó aviso visual, consulta de la atención anterior y contacto desde cita. No autorizó controles periódicos sin fin ni recordatorios automáticos; fase 9 sigue pendiente.
 
 ## Decisiones de implementación

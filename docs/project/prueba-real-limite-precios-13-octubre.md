@@ -1,6 +1,6 @@
 # Prueba real del límite de precios — 13/10/2026
 
-Estado: tres consultas aprobadas; cuarta detectó una omisión del modelo, corregida en v7.13 y pendiente de repetir por WhatsApp. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
+Estado: **prueba real completada y aprobada el 13/10/2026**, después de corregir la omisión del modelo y repetir únicamente la cuarta pregunta. Se comprobaron tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. `version_sencilla`, `sistema_odonto_mini` y configuración privada existente conservados.
 
 El usuario informa que completó correctamente los demás recorridos de la guía de ajustes. No se repiten ni se les atribuye una nueva ejecución automática.
 
@@ -32,6 +32,7 @@ No declarar esta secuencia aprobada antes de contrastar los cuatro intercambios 
 | 2. Blanqueamiento | PEN 200.00 y 60 minutos, recepción confirmada por el usuario. Dos servicios distintos contados, cero avisos. | Entrada 12:43:52 Lima; ejecución `a2c9913a-7cdb-4767-9f77-472b8397c6ce` COMPLETED, una inferencia (1873/42 tokens), catálogo actual de blanqueamiento verificado. READ en un envío; AUTO/generación 7 y negocio 3/13/14/11 conservados. La consulta de apoyo del servicio previo no consumió otra exposición. |
 | 3. Evaluación general | PEN 50.00 y 30 minutos, recepción confirmada por el usuario. Tres servicios contados, cero avisos: límite completo antes de la cuarta consulta. | Entrada 12:45:54 Lima; ejecución `251ac671-be47-4c1d-b6f8-c5e4c4dbaf33` COMPLETED, una inferencia (1813/37 tokens), catálogo de evaluación verificado. READ en un envío; AUTO/generación 7 y negocio 3/13/14/11 conservados. |
 | 4. Primer intento | No mostró 80, pero respondió incorrectamente «no dispongo de información sobre ese servicio». **No se aprueba como aplicación del límite.** | Entrada 12:48:36 Lima; ejecución `9349f222-8dd1-4ce6-88a2-289fcc518a36`. Servicio temporal activo y habilitado. Solo consultó como apoyo Evaluación general, el modelo no buscó el servicio solicitado y respondió sin herramientas. READ en un intento; contador tres, avisos cero. Se conserva la incidencia original. |
+| 4. Repetición corregida | Aviso explícito de límite y ayuda para reservar, sin revelar 80. Recepción confirmada por el usuario. Consulta del servicio real, precio retirado por el servidor; contador tres y un aviso. **Aprobada.** | Entrada 13:02:01 Lima; ejecución `07744ad3-ec5f-4cbf-9e7e-3dec394a0c48` COMPLETED/v7.13 en un intento. `consultar_servicios` devolvió el servicio existente con `price_restricted=true` y sin campo price. Cero inferencias y cero tokens; respuesta READ en un envío. AUTO/generación 7 y negocio 3/13/14/11 conservados. |
 
 ## Corrección de la cuarta consulta
 
@@ -41,4 +42,10 @@ El aviso explícito es: «Ya alcanzamos el límite de consultas de precios segui
 
 **116 casos distintos del agente aprobados en bloques**, incluidos cuatro nuevos: tres precios y cuarto rechazo sin dependencia del modelo, acentos/nombres similares/repetición, configuración/reinicio a treinta minutos/insistencia y separación APP_TEST/servicio inexistente. La primera regresión aprobó 115; el único fallo restante era la referencia esperada de versión v7.12 en la prueba de recuperación, actualizada a v7.13 y repetida con resultado aprobado. Compilación/empaquetado y diferencias Git comprobados. Pruebas únicamente con proveedores simulados en mini_test, sin envíos ni inferencias externos adicionales. No hubo cambios frontend.
 
-Backend corregido reactivado en 8080 con el contador real aún en tres y sin avisos ni tareas antiguas en cola. No se reejecutó ni se sustituyó el mensaje fallido anterior. **La repetición real del paso 4 sigue pendiente**; mantener activo el servicio temporal hasta contrastarla y desactivarlo al cerrar la prueba.
+Backend corregido reactivado en 8080; no se reejecutó ni se sustituyó el mensaje fallido anterior. La repetición del paso 4 quedó comprobada y el servicio ficticio **desactivado** mediante DentalServiceService, con SERVICE_CREATED/SERVICE_UPDATED en auditoría y sin vinculación a profesionales. Su registro y la evidencia se conservan; no aparece entre los servicios activos ni habilitados para el agente.
+
+## Cierre
+
+Se utilizaron cinco intercambios reales en total: tres precios, el intento incorrecto conservado y una repetición del cuarto. No se solicitarán más mensajes para este tramo. Sin citas, pacientes, cargos o pagos nuevos; contador tres/aviso uno, AUTO/generación 7. Ninguna tarea ni envío pendiente. El contador no se reinició manualmente: conserva el plazo de treinta minutos desde la última consulta o el avance a una propuesta de reserva verificada.
+
+Backend 8080, frontend 5173 y trabajadores Kapso/IA activos; Twilio detenido mientras se utiliza Kapso. Credenciales, reglas, horarios y main sin cambios. La corrección está guardada en `03ff414`, con documentación de cierre posterior. No se realizaron compras ni se repitieron pruebas masivas, de insistencia o de reservas sobre el Sandbox. Las comprobaciones restantes de la política conservan su evidencia de regresión simulada.
