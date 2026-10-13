@@ -1,6 +1,6 @@
 # Prueba real del límite de precios — 13/10/2026
 
-Estado: prueba real en curso; dos consultas aprobadas. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
+Estado: prueba real en curso; tres consultas aprobadas y límite alcanzado. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
 
 El usuario informa que completó correctamente los demás recorridos de la guía de ajustes. No se repiten ni se les atribuye una nueva ejecución automática.
 
@@ -30,5 +30,6 @@ No declarar esta secuencia aprobada antes de contrastar los cuatro intercambios 
 |---|---|---|
 | 1. Limpieza dental | Respuesta con PEN 100.00 y 30 minutos; recepción confirmada por el usuario. Un servicio contado, cero avisos de límite. | Entrada 13/10/2026 12:41:32 Lima; ejecución `6072b955-1b1b-48c3-af76-53bf9480bd3b` COMPLETED en un intento. Una inferencia (1617/43 tokens), catálogo filtrado por «limpieza», respuesta READ en un envío. AUTO/generación 7 y referencia de negocio 3/13/14/11 conservados. |
 | 2. Blanqueamiento | PEN 200.00 y 60 minutos, recepción confirmada por el usuario. Dos servicios distintos contados, cero avisos. | Entrada 12:43:52 Lima; ejecución `a2c9913a-7cdb-4767-9f77-472b8397c6ce` COMPLETED, una inferencia (1873/42 tokens), catálogo actual de blanqueamiento verificado. READ en un envío; AUTO/generación 7 y negocio 3/13/14/11 conservados. La consulta de apoyo del servicio previo no consumió otra exposición. |
+| 3. Evaluación general | PEN 50.00 y 30 minutos, recepción confirmada por el usuario. Tres servicios contados, cero avisos: límite completo antes de la cuarta consulta. | Entrada 12:45:54 Lima; ejecución `251ac671-be47-4c1d-b6f8-c5e4c4dbaf33` COMPLETED, una inferencia (1813/37 tokens), catálogo de evaluación verificado. READ en un envío; AUTO/generación 7 y negocio 3/13/14/11 conservados. |
 
-Pasos 3–4 pendientes. No se enviaron mensajes adicionales ni se hicieron llamadas nuevas al modelo durante esta comprobación por lectura.
+Paso 4 pendiente. No se enviaron mensajes adicionales ni se hicieron llamadas nuevas al modelo durante esta comprobación por lectura.
