@@ -1,6 +1,6 @@
 # Prueba real del límite de precios — 13/10/2026
 
-Estado: entorno activado por autorización expresa del usuario; intercambios reales pendientes. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
+Estado: prueba real en curso; primera consulta aprobada. Solo comprobar tres precios permitidos y rechazo del cuarto, sin reservar citas, pruebas masivas, insistencias adicionales ni compras. Usar `version_sencilla`, `sistema_odonto_mini` y configuración privada existente.
 
 El usuario informa que completó correctamente los demás recorridos de la guía de ajustes. No se repiten ni se les atribuye una nueva ejecución automática.
 
@@ -26,4 +26,8 @@ No declarar esta secuencia aprobada antes de contrastar los cuatro intercambios 
 
 ## Resultados
 
-Pendientes del envío del participante.
+| Paso | Resultado contrastado | Evidencia |
+|---|---|---|
+| 1. Limpieza dental | Respuesta con PEN 100.00 y 30 minutos; recepción confirmada por el usuario. Un servicio contado, cero avisos de límite. | Entrada 13/10/2026 12:41:32 Lima; ejecución `6072b955-1b1b-48c3-af76-53bf9480bd3b` COMPLETED en un intento. Una inferencia (1617/43 tokens), catálogo filtrado por «limpieza», respuesta READ en un envío. AUTO/generación 7 y referencia de negocio 3/13/14/11 conservados. |
+
+Pasos 2–4 pendientes. No se enviaron mensajes adicionales ni se hicieron llamadas nuevas al modelo durante esta comprobación por lectura.
