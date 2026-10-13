@@ -1,5 +1,7 @@
 # Plan de desarrollo de la primera entrega del sistema odontológico
 
+Ampliación de `version_sencilla` del 13/10/2026 completada: tratamientos/agenda, acuerdo financiero y PDF, restricción de precios y seguimiento. 294 pruebas backend y 121 escenarios distintos de navegador en bloques aprobados, dos PDF renderizados/revisados y V26 aplicada solo a mini con conservación de datos/main. [Cierre, límites de la revisión y guía breve](ajustes-tratamientos-agenda-agente-version-sencilla.md). Las comprobaciones externas nuevas siguen pendientes de reactivar los trabajadores; no se infiere su aprobación desde los proveedores simulados. Fase 9 y recordatorios continúan pendientes.
+
 Variante autorizada el 11/10/2026: en la rama `version_sencilla` seguir también [alcance, plan y guía de la versión sencilla](version-sencilla.md). Sus diferencias se aplican únicamente a la instalación `sistema_odonto_mini`; main conserva el alcance original y sus criterios.
 
 Revisión del agente autorizada y comprobada el 12/10/2026 en esa variante: diez intercambios contrastados, fechas relativas/nombres/contexto/derivación corregidos, 269 pruebas backend aprobadas, tres vistas previas Groq reales y repetición real de disponibilidad COMPLETED/READ confirmada por el usuario. Backend actualizado sin modificar reservas, agenda, proveedores ni credenciales. [Hallazgos y evidencia](revision-agente-version-sencilla-12-octubre.md). No inicia fase 9 ni recordatorios.

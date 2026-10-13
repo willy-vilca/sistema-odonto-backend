@@ -23,7 +23,33 @@ public final class SupervisionContracts {
       @NotBlank @Size(max = 900) String handoffText,
       @NotBlank @Size(max = 900) String clinicalText,
       @NotBlank @Size(max = 900) String closedText,
-      @NotBlank @Size(max = 900) String failureText) {}
+      @NotBlank @Size(max = 900) String failureText,
+      @Min(1) @Max(20) Integer maxPriceServices) {
+    public Policy(
+        Long version,
+        boolean enabled,
+        List<Period> schedule,
+        int changeLeadMinutes,
+        boolean allowReschedule,
+        boolean allowCancel,
+        String handoffText,
+        String clinicalText,
+        String closedText,
+        String failureText) {
+      this(
+          version,
+          enabled,
+          schedule,
+          changeLeadMinutes,
+          allowReschedule,
+          allowCancel,
+          handoffText,
+          clinicalText,
+          closedText,
+          failureText,
+          null);
+    }
+  }
 
   public record Control(
       @NotBlank @Pattern(regexp = "HUMAN|AUTO|CLOSED") String mode,

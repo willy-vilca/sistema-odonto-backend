@@ -42,6 +42,7 @@ class Phase1IntegrationTests {
         .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
+            + " treatment_proforma_content,treatment_proforma,treatment_scheduled_session,agent_price_sequence,"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
             + " agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_state,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
     jdbc.update(

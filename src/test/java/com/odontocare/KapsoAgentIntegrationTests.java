@@ -76,11 +76,12 @@ class KapsoAgentIntegrationTests {
         .isEqualTo("sistema_odonto_mini_test");
     jdbc.execute(
         "TRUNCATE"
+            + " treatment_proforma_content,treatment_proforma,treatment_scheduled_session,agent_price_sequence,"
             + " agent_appointment_reference,agent_change_proposal,agent_request_context,agent_supervision,"
             + " kapso_webhook_event,kapso_message,kapso_conversation,agent_proposal,agent_slot,agent_step,agent_run,agent_message_source,agent_conversation_source,whatsapp_delivery_event,whatsapp_message,whatsapp_conversation,financial_content,financial_document,money_application,finance_operation,money_movement,installment,installment_schedule,cash_session,expense_category,charge_state,charge_entry,treatment_session,treatment_operation,treatment_item,treatment_plan,document_consent,document_content,patient_document,document_category,encounter_revision,clinical_encounter,clinical_state,clinical_template,appointment_history,appointment,patient_contact,patient,installation_logo,audit_event,user_role,dentist_service,weekly_period,schedule_exception,dentist,dental_service,service_category,user_account");
     jdbc.update(
         "UPDATE agent_policy SET"
-            + " enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true"
+            + " enabled=true,schedule='[]',version=0,change_lead_minutes=0,allow_reschedule=true,allow_cancel=true,max_price_services=3"
             + " WHERE id=1");
     jdbc.update(
         "UPDATE installation_profile SET"
@@ -283,7 +284,7 @@ class KapsoAgentIntegrationTests {
             jdbc.queryForObject(
                 "SELECT body FROM kapso_message WHERE direction='OUTBOUND'", String.class))
         .isEqualTo(done.responseText());
-    verify(model, times(3)).reply(anyList(), anyList());
+    verify(model, times(2)).reply(anyList(), anyList());
   }
 
   @Test
@@ -299,6 +300,129 @@ class KapsoAgentIntegrationTests {
         .doesNotContain("120", "50 minutos");
     assertThat(jdbc.queryForObject("SELECT count(*) FROM appointment", Integer.class)).isZero();
     verify(model, times(6)).reply(anyList(), anyList());
+  }
+
+  private UUID priceService(String name, int price) throws Exception {
+    var category =
+        jdbc.queryForObject(
+            "SELECT category_id FROM dental_service WHERE id=?", UUID.class, serviceId);
+    UUID id =
+        id(
+            postData(
+                "/api/v1/services",
+                Map.of(
+                    "name",
+                    name,
+                    "categoryId",
+                    category,
+                    "price",
+                    price,
+                    "durationMinutes",
+                    30,
+                    "description",
+                    "",
+                    "active",
+                    true,
+                    "bookableByAgent",
+                    true)));
+    jdbc.update("INSERT INTO dentist_service(dentist_id,service_id) VALUES(?,?)", doctorId, id);
+    return id;
+  }
+
+  private AgentRun priceQuery(String name) {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", name)));
+    submit("¿Cuánto cuesta " + name + "? Solo quiero información.");
+    return process();
+  }
+
+  @Test
+  void priceSequenceAllowsThreeThenRefusesFourthAndHandsOffInsistence() throws Exception {
+    priceService("Servicio Beta", 200);
+    priceService("Servicio Gamma", 300);
+    priceService("Servicio Zeta", 400);
+    assertThat(priceQuery("limpieza").responseText()).contains("100.00");
+    assertThat(priceQuery("beta").responseText()).contains("200.00");
+    assertThat(priceQuery("gamma").responseText()).contains("300.00");
+    var denied = priceQuery("zeta");
+    assertThat(denied.responseText()).contains("personalmente").doesNotContain("400");
+    assertThat(supervision.context(denied.conversationId(), "KAPSO").mode()).isEqualTo("AUTO");
+    var insisted = priceQuery("zeta");
+    assertThat(insisted.responseText()).doesNotContain("400");
+    assertThat(supervision.context(insisted.conversationId(), "KAPSO").mode()).isEqualTo("HANDOFF");
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void massivePriceQueryDoesNotExposeTheFourthAndRepeatingKnownPriceDoesNotConsumeAnotherSlot()
+      throws Exception {
+    priceService("Servicio Beta", 200);
+    priceService("Servicio Gamma", 300);
+    priceService("Servicio Zeta", 400);
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "")));
+    submit("Dame todos los precios de todos los servicios.");
+    var done = process();
+    assertThat(done.responseText()).contains("100.00", "200.00", "300.00").doesNotContain("400.00");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT cardinality(service_ids) FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isEqualTo(3);
+    assertThat(priceQuery("limpieza").responseText()).contains("100.00");
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT cardinality(service_ids) FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isEqualTo(3);
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void priceGreetingDoesNotResetButThirtyMinutesAndVerifiedProposalDo() throws Exception {
+    priceService("Servicio Beta", 200);
+    priceService("Servicio Gamma", 300);
+    priceService("Servicio Zeta", 400);
+    priceQuery("limpieza");
+    priceQuery("beta");
+    priceQuery("gamma");
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(
+            new LanguageModelClient.Reply("Hola, ¿en qué puedo ayudarte?", List.of(), 20, 10));
+    submit("Hola");
+    process();
+    assertThat(priceQuery("zeta").responseText()).doesNotContain("400.00");
+    jdbc.update(
+        "UPDATE agent_price_sequence SET last_query_at=now()-interval '31"
+            + " minutes',warning_count=0");
+    assertThat(priceQuery("zeta").responseText()).contains("400.00");
+    priceQuery("beta");
+    priceQuery("gamma");
+    scriptProposal(patientId, "Paciente Agente");
+    var result = submit("Soy Paciente Agente. La cita es para mí: quiero limpieza mañana a las 9.");
+    assertThat(process().state()).isEqualTo("COMPLETED");
+    assertThat(queue.proposal(result.conversationId())).isNotNull();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT cardinality(service_ids) FROM agent_price_sequence WHERE source='KAPSO'",
+                Integer.class))
+        .isZero();
+    assertThat(appointments()).isZero();
+  }
+
+  @Test
+  void applicationPriceQueriesDoNotConsumeTheRealConversationBudget() throws Exception {
+    when(model.reply(anyList(), anyList()))
+        .thenReturn(tool("consultar_servicios", Map.of("search", "limpieza")));
+    var preview =
+        queue.test(new TestMessage(phone, "Demo", "¿Cuánto cuesta limpieza?", UUID.randomUUID()));
+    assertThat(process().responseText()).contains("100.00");
+    assertThat(queue.detail(preview.runId()).reply()).isNull();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(*) FROM agent_price_sequence WHERE source='KAPSO'", Integer.class))
+        .isZero();
+    assertThat(priceQuery("limpieza").responseText()).contains("100.00");
   }
 
   private void scriptProposal(UUID patient, String name) {
@@ -1144,7 +1268,7 @@ class KapsoAgentIntegrationTests {
               return new LanguageModelClient.Reply(
                   "La limpieza cuesta PEN 100.00 y dura 60 minutos.", List.of(), 30, 10);
             });
-    submit("¿Cuánto cuesta la limpieza? Solo quiero información.");
+    submit("Quiero información de limpieza dental, sin reservar por ahora.");
     var waiting = process();
     assertThat(waiting.state()).isEqualTo("QUEUED");
     assertThat(runs.checkpoint(waiting.id())).isPresent();
@@ -1340,7 +1464,10 @@ class KapsoAgentIntegrationTests {
     var submitted =
         queue.test(
             new TestMessage(
-                phone, "Demo", "Solo quiero consultar el precio de limpieza", UUID.randomUUID()));
+                phone,
+                "Demo",
+                "Quiero información de limpieza dental, sin reservar por ahora.",
+                UUID.randomUUID()));
     var waiting = process();
     assertThat(waiting.id()).isEqualTo(submitted.runId());
     assertThat(waiting.state()).isEqualTo("QUEUED");
@@ -2272,7 +2399,7 @@ class KapsoAgentIntegrationTests {
     assertThat(recovered.attempts()).isEqualTo(2);
     agent.process(recovered);
     assertThat(appointments()).isEqualTo(1);
-    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.11");
+    assertThat(queue.detail(recovered.id()).metadata().toString()).contains("supervised-v7.12");
     assertThat(queue.detail(recovered.id()).reply()).isNotNull();
     assertThat(queue.claim()).isEmpty();
   }

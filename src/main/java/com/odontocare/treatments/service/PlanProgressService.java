@@ -18,18 +18,21 @@ public class PlanProgressService {
   private final PlanSessionRepository sessions;
   private final ClinicalAccess access;
   private final AuditService audit;
+  private final TreatmentPlanningRepository planning;
 
   public PlanProgressService(
       TreatmentPlanRepository plans,
       PlanItemRepository items,
       PlanSessionRepository sessions,
       ClinicalAccess access,
-      AuditService audit) {
+      AuditService audit,
+      TreatmentPlanningRepository planning) {
     this.plans = plans;
     this.items = items;
     this.sessions = sessions;
     this.access = access;
     this.audit = audit;
+    this.planning = planning;
   }
 
   public PlanItem validate(Encounter encounter, Procedure procedure) {
@@ -52,6 +55,7 @@ public class PlanProgressService {
     var item = validate(encounter, procedure);
     if (sessions.completed(item.getId()) + procedure.quantity() > item.getSessions())
       throw ApiException.conflict("La atención supera las sesiones pendientes del tratamiento.");
+    planning.complete(item.getId(), encounter.getAppointmentId(), procedure.quantity());
     var session = new PlanSession();
     session.setPlanId(item.getPlanId());
     session.setItemId(item.getId());

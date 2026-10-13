@@ -22,7 +22,59 @@ public record AppointmentResponse(
     String status,
     String origin,
     String notes,
-    long version) {
+    long version,
+    UUID planItemId,
+    UUID scheduledSessionId,
+    java.math.BigDecimal agreedPrice,
+    boolean administrative,
+    String treatmentLabel,
+    Integer treatmentSessionNumber) {
+  public AppointmentResponse(
+      UUID id,
+      UUID patientId,
+      String patientName,
+      String patientCode,
+      UUID dentistId,
+      String dentistName,
+      UUID serviceId,
+      String serviceName,
+      int durationMinutes,
+      int gapMinutes,
+      Instant startsAt,
+      Instant endsAt,
+      LocalDateTime localStart,
+      LocalDateTime localEnd,
+      String status,
+      String origin,
+      String notes,
+      long version) {
+    this(
+        id,
+        patientId,
+        patientName,
+        patientCode,
+        dentistId,
+        dentistName,
+        serviceId,
+        serviceName,
+        durationMinutes,
+        gapMinutes,
+        startsAt,
+        endsAt,
+        localStart,
+        localEnd,
+        status,
+        origin,
+        notes,
+        version,
+        null,
+        null,
+        null,
+        serviceId == null,
+        null,
+        null);
+  }
+
   public static AppointmentResponse of(Appointment appointment, ZoneId zone) {
     return new AppointmentResponse(
         appointment.getId(),
@@ -42,6 +94,12 @@ public record AppointmentResponse(
         appointment.getStatus().name(),
         appointment.getOrigin(),
         appointment.getNotes(),
-        appointment.getVersion());
+        appointment.getVersion(),
+        appointment.getPlanItemId(),
+        appointment.getScheduledSessionId(),
+        appointment.getAgreedPrice(),
+        appointment.getAdministrative(),
+        appointment.getTreatmentLabel(),
+        appointment.getTreatmentSessionNumber());
   }
 }

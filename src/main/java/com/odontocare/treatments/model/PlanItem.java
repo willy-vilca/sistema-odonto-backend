@@ -18,6 +18,26 @@ public class PlanItem extends VersionedEntity {
   private Integer sessions;
   private BigDecimal unitPrice;
   private Integer position;
+  private int durationMinutes = 30;
+
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  private String scheduling = "{\"mode\":\"NONE\",\"dates\":[]}";
+
+  public int getDurationMinutes() {
+    return durationMinutes;
+  }
+
+  public void setDurationMinutes(int value) {
+    durationMinutes = value;
+  }
+
+  public String getScheduling() {
+    return scheduling;
+  }
+
+  public void setScheduling(String value) {
+    scheduling = value;
+  }
 
   public UUID getPlanId() {
     return planId;

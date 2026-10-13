@@ -33,6 +33,7 @@ public class BookingAgent {
   private final AgentReplyService replies;
   private final AgentIdentityService identity;
   private final AgentRecentService recentService;
+  private final AgentPricingPolicy pricing;
 
   public BookingAgent(
       AgentProperties config,
@@ -50,7 +51,8 @@ public class BookingAgent {
       AgentChangeService changes,
       AgentReplyService replies,
       AgentIdentityService identity,
-      AgentRecentService recentService) {
+      AgentRecentService recentService,
+      AgentPricingPolicy pricing) {
     this.config = config;
     this.model = model;
     this.definitions = definitions;
@@ -67,6 +69,7 @@ public class BookingAgent {
     this.replies = replies;
     this.identity = identity;
     this.recentService = recentService;
+    this.pricing = pricing;
   }
 
   public void process(AgentRun run) {
@@ -518,6 +521,30 @@ public class BookingAgent {
                     + " reintenta.");
           }
           queue.step(run.id(), "TOOL", call.name(), args, result, state);
+          if (state.equals("OK")
+              && call.name().equals("consultar_servicios")
+              && AgentPricingPolicy.asksPrice(incoming.body())
+              && result instanceof Map<?, ?> prices
+              && prices.get("items") instanceof List<?> items
+              && !items.isEmpty()) {
+            boolean allRestricted =
+                items.stream()
+                    .noneMatch(
+                        item ->
+                            item instanceof Map<?, ?> row && row.get("price") instanceof Number);
+            if (allRestricted || AgentPricingPolicy.priceOnly(incoming.body())) {
+              boolean handoff =
+                  Boolean.TRUE.equals(prices.get("prices_restricted")) && pricing.denied(run);
+              String text = allRestricted ? AgentPricingPolicy.NOTICE : pricing.response(prices);
+              if (handoff)
+                replies.handoff(
+                    run,
+                    text + "\nVoy a dejar tu consulta pendiente de atención personal.",
+                    "PRICE_LIMIT");
+              else queue.finish(run.id(), text);
+              return;
+            }
+          }
           if (state.equals("OK") && call.name().equals("derivar_recepcion")) {
             replies.handoff(run, supervision.policy().handoffText(), "PATIENT_REQUEST");
             return;

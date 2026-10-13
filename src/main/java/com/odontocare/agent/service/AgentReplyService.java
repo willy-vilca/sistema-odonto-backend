@@ -19,6 +19,7 @@ public class AgentReplyService {
   private final AuditService audit;
   private final Clock clock;
   private final AgentSupervisionService supervision;
+  private final AgentPricingPolicy pricing;
 
   public AgentReplyService(
       AgentRepository runs,
@@ -26,13 +27,15 @@ public class AgentReplyService {
       KapsoRepository kapso,
       AuditService audit,
       AgentSupervisionService supervision,
-      Clock clock) {
+      Clock clock,
+      AgentPricingPolicy pricing) {
     this.runs = runs;
     this.inbox = inbox;
     this.kapso = kapso;
     this.audit = audit;
     this.clock = clock;
     this.supervision = supervision;
+    this.pricing = pricing;
   }
 
   @Transactional
@@ -55,9 +58,24 @@ public class AgentReplyService {
           .ifPresent(p -> runs.proposalState(p.id(), "SUPERSEDED"));
       return;
     }
+    var checked = pricing.outgoing(run, text);
+    if (!checked.text().equals(text) && checked.text().startsWith(AgentPricingPolicy.NOTICE))
+      runs.step(
+          run.id(),
+          "TOOL",
+          "validar_limite_precios",
+          Map.of("server_policy", true),
+          Map.of("restricted", true, "handoff", checked.handoff()),
+          "REJECTED",
+          clock.instant());
+    text = checked.text();
     runs.finish(id, "COMPLETED", text, null, null, clock.instant());
     supervision.completed(run, "RESPONDED");
     enqueue(run, text);
+    if (checked.handoff()) {
+      kapso.markHandoffNotice(run.id());
+      supervision.handoff(run, "PRICE_LIMIT");
+    }
   }
 
   @Transactional

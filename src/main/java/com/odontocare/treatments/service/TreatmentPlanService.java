@@ -34,6 +34,11 @@ public class TreatmentPlanService {
   private final ClinicalAccess access;
   private final AuditService audit;
   private final Clock clock;
+  private final TreatmentPlanningRepository planning;
+  private final SessionDates dates;
+  private final PlanAgreementService agreements;
+  private final com.odontocare.appointments.service.AppointmentService appointments;
+  private final TreatmentProformaService proformas;
 
   public TreatmentPlanService(
       TreatmentPlanRepository plans,
@@ -48,7 +53,12 @@ public class TreatmentPlanService {
       InstallationProfileRepository profiles,
       ClinicalAccess access,
       AuditService audit,
-      Clock clock) {
+      Clock clock,
+      TreatmentPlanningRepository planning,
+      SessionDates dates,
+      PlanAgreementService agreements,
+      com.odontocare.appointments.service.AppointmentService appointments,
+      TreatmentProformaService proformas) {
     this.plans = plans;
     this.items = items;
     this.operations = operations;
@@ -62,6 +72,11 @@ public class TreatmentPlanService {
     this.access = access;
     this.audit = audit;
     this.clock = clock;
+    this.planning = planning;
+    this.dates = dates;
+    this.agreements = agreements;
+    this.appointments = appointments;
+    this.proformas = proformas;
   }
 
   @Transactional
@@ -134,6 +149,8 @@ public class TreatmentPlanService {
     int position = 1;
     for (var item : request.items()) addItem(plan, item, position++);
     items.flush();
+    planning.agreement(
+        plan.getId(), agreements.validate(request.paymentAgreement(), items.total(plan.getId())));
     operation(
         plan,
         request.requestKey(),
@@ -177,6 +194,9 @@ public class TreatmentPlanService {
         plan.setAcceptedTotal(items.total(id));
         for (var item : items.findByPlanIdOrderByPosition(id))
           issue(plan, item, "Aceptación explícita del plan");
+        charges.flush();
+        agreements.apply(plan, request.initialCollection());
+        for (var item : items.findByPlanIdOrderByPosition(id)) schedule(plan, item);
       }
       case "finish" -> {
         if (!Set.of("ACCEPTED", "IN_PROGRESS").contains(plan.getStatus())
@@ -195,6 +215,20 @@ public class TreatmentPlanService {
           for (var item : items.findByPlanIdOrderByPosition(id))
             ledger.releaseUnperformed(item, request.requestKey(), request.reason());
         plan.setStatus("CANCELLED");
+        plans.saveAndFlush(plan);
+        var future = planning.futureAppointments(id, clock.instant());
+        if (!future.isEmpty() && !access.actor().getPermissions().contains("APPOINTMENTS_WRITE"))
+          throw ApiException.forbidden();
+        for (var appointment : future) {
+          var current = appointmentsQueryVersion(appointment);
+          appointments.changeStatus(
+              appointment,
+              new com.odontocare.appointments.dto.StatusRequest(
+                  current,
+                  com.odontocare.appointments.model.AppointmentStatus.CANCELLED,
+                  "Cancelación del plan: " + request.reason()));
+        }
+        planning.cancelPending(id);
       }
       default -> throw ApiException.badRequest("Operación de plan no válida.");
     }
@@ -212,7 +246,12 @@ public class TreatmentPlanService {
             + charges.planDebt(id)
             + " "
             + plan.getCurrency());
+    if (action.equals("accept") || action.equals("propose")) proformas.emit(id);
     return response(plan);
+  }
+
+  private long appointmentsQueryVersion(UUID id) {
+    return planning.appointmentVersion(id);
   }
 
   @Transactional
@@ -232,6 +271,7 @@ public class TreatmentPlanService {
     var item = addItem(plan, request.item(), position);
     items.flush();
     issue(plan, item, request.reason());
+    schedule(plan, item);
     plan.advanceRevision();
     plans.saveAndFlush(plan);
     operation(
@@ -352,7 +392,28 @@ public class TreatmentPlanService {
     item.setSessions(request.sessions());
     item.setUnitPrice(request.unitPrice().setScale(2));
     item.setPosition(position);
-    return items.save(item);
+    int duration =
+        request.durationMinutes() != null
+            ? request.durationMinutes()
+            : service == null ? 30 : service.getDurationMinutes();
+    if (duration < 1 || duration > 1440)
+      throw ApiException.badRequest("Indica una duración positiva para las sesiones.");
+    dates.calculate(request.scheduling(), request.sessions());
+    item.setDurationMinutes(duration);
+    item.setScheduling(planning.encode(request.scheduling()));
+    items.saveAndFlush(item);
+    return item;
+  }
+
+  private void schedule(TreatmentPlan plan, PlanItem item) {
+    var calculated = dates.calculate(planning.scheduling(item.getId()), item.getSessions());
+    for (int index = 0; index < calculated.size(); index++)
+      planning.create(
+          plan.getId(),
+          item.getId(),
+          index + 1,
+          calculated.get(index),
+          planning.duration(item.getId()));
   }
 
   private void issue(TreatmentPlan plan, PlanItem item, String reason) {
@@ -411,7 +472,9 @@ public class TreatmentPlanService {
         charges.planDebt(p.getId()),
         sessions.total(p.getId()),
         items.sessions(p.getId()),
-        p.getVersion());
+        p.getVersion(),
+        planning.agreement(p.getId()),
+        planning.payment(p.getId()));
   }
 
   private ItemResponse itemResponse(PlanItem i) {
@@ -428,6 +491,8 @@ public class TreatmentPlanService {
         i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())),
         sessions.completed(i.getId()),
         charges.itemDebt(i.getId()),
-        required(i.getPlanId()).getCode() + " · " + i.getDescription());
+        required(i.getPlanId()).getCode() + " · " + i.getDescription(),
+        planning.duration(i.getId()),
+        planning.scheduling(i.getId()));
   }
 }

@@ -1,5 +1,7 @@
 # Alcance confirmado de la primera entrega del sistema odontológico
 
+Ampliación de `version_sencilla` autorizada el 13/10/2026: planificación finita de sesiones sin hora, citas propias/vinculadas a planes, proforma/acuerdo e inicial/cuotas pactados con registro atómico al aceptar, límite consecutivo de precios y seguimiento/contacto. Exclusiva de mini, con main conservado. Prevalecen las decisiones y condiciones de [cierre de estos ajustes](ajustes-tratamientos-agenda-agente-version-sencilla.md); no incorpora controles indefinidos, recordatorios ni fase 9.
+
 Variante autorizada el 11/10/2026: en la rama `version_sencilla` seguir también [alcance, plan y guía de la versión sencilla](version-sencilla.md). Sus diferencias se aplican únicamente a la instalación `sistema_odonto_mini`; main conserva el alcance original y sus criterios.
 
 Revisión correctiva autorizada el 12/10/2026 para WhatsApp/IA de esta variante: interpretar fechas y elecciones recientes del paciente con respaldo del servidor, normalizar nombres, distinguir resultados vacíos y evitar derivaciones por omitir un paso disponible. Conservar límites, confirmación expresa e integridad de reservas; no ampliar herramientas clínicas/financieras. [Resultados comprobados](revision-agente-version-sencilla-12-octubre.md).

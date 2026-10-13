@@ -32,6 +32,10 @@ public class AppointmentService {
   private final AuditService audit;
   private final Clock clock;
   private final ObjectMapper mapper;
+  private final com.odontocare.treatments.repository.TreatmentPlanningRepository planning;
+  private final com.odontocare.treatments.repository.PlanItemRepository planItems;
+  private final com.odontocare.treatments.repository.TreatmentPlanRepository plans;
+  private final com.odontocare.treatments.repository.PlanSessionRepository planProgress;
 
   public AppointmentService(
       AppointmentRepository appointments,
@@ -45,7 +49,11 @@ public class AppointmentService {
       AppointmentHistoryService history,
       AuditService audit,
       Clock clock,
-      ObjectMapper mapper) {
+      ObjectMapper mapper,
+      com.odontocare.treatments.repository.TreatmentPlanningRepository planning,
+      com.odontocare.treatments.repository.PlanItemRepository planItems,
+      com.odontocare.treatments.repository.TreatmentPlanRepository plans,
+      com.odontocare.treatments.repository.PlanSessionRepository planProgress) {
     this.appointments = appointments;
     this.patients = patients;
     this.dentists = dentists;
@@ -58,6 +66,10 @@ public class AppointmentService {
     this.audit = audit;
     this.clock = clock;
     this.mapper = mapper;
+    this.planning = planning;
+    this.planItems = planItems;
+    this.plans = plans;
+    this.planProgress = planProgress;
   }
 
   @Transactional
@@ -70,13 +82,17 @@ public class AppointmentService {
   public AppointmentResponse createByAgent(AppointmentRequest request, boolean applicationTest) {
     if (request.serviceId() == null)
       throw ApiException.badRequest("El agente necesita un servicio del catálogo.");
+    if (request.planItemId() != null
+        || request.scheduledSessionId() != null
+        || request.administrative() != null
+        || request.agreedPrice() != null)
+      throw ApiException.badRequest("La reserva automática solo usa el catálogo habilitado.");
     return createInternal(request, applicationTest ? "AI_TEST" : "WHATSAPP");
   }
 
   private AppointmentResponse createInternal(AppointmentRequest request, String origin) {
     var profile = profiles.readLockedInstallation().orElseThrow();
     var zone = ZoneId.of(profile.getTimeZone());
-    var dentist = dentists.lockById(request.dentistId()).orElseThrow(ApiException::notFound);
     String fingerprint = fingerprint(request, origin.equals("MANUAL") ? "" : origin);
     var repeated = appointments.findByRequestKey(request.requestKey());
     if (repeated.isPresent()) {
@@ -85,6 +101,51 @@ public class AppointmentService {
             "La clave de solicitud ya se utilizó para una reserva diferente.");
       return AppointmentResponse.of(repeated.get(), zone);
     }
+    com.odontocare.treatments.dto.ScheduledSessionContracts.Session planned = null;
+    if (request.planItemId() != null || request.scheduledSessionId() != null) {
+      patients.lockById(request.patientId()).orElseThrow(ApiException::notFound);
+      UUID itemId = request.planItemId();
+      if (request.scheduledSessionId() != null) {
+        var found =
+            planning
+                .session(request.scheduledSessionId(), false)
+                .orElseThrow(ApiException::notFound);
+        if (itemId != null && !itemId.equals(found.itemId()))
+          throw ApiException.badRequest("La sesión no pertenece al tratamiento seleccionado.");
+        itemId = found.itemId();
+      }
+      var item = planItems.findById(itemId).orElseThrow(ApiException::notFound);
+      var plan = plans.lockById(item.getPlanId()).orElseThrow();
+      if (!Set.of("ACCEPTED", "IN_PROGRESS").contains(plan.getStatus())
+          || !plan.getPatientId().equals(request.patientId())
+          || !plan.getDentistId().equals(request.dentistId()))
+        throw ApiException.badRequest(
+            "Selecciona una sesión de un plan activo de este paciente y profesional.");
+      planning.ensureRemaining(item, planProgress.completed(item.getId()));
+      planned =
+          request.scheduledSessionId() == null
+              ? planning
+                  .firstPending(itemId)
+                  .orElseThrow(
+                      () ->
+                          ApiException.conflict(
+                              "Todas las sesiones pendientes ya tienen cita; revisa el plan."))
+              : planning.session(request.scheduledSessionId(), true).orElseThrow();
+      if (!planned.status().equals("PENDING"))
+        throw ApiException.conflict("Esta sesión ya tiene cita o está cerrada.");
+      if (request.scheduledSessionVersion() != null
+          && planned.version() != request.scheduledSessionVersion())
+        throw ApiException.conflict(
+            "La planificación cambió; actualiza la sesión antes de asignar hora.");
+      if (!Objects.equals(item.getServiceId(), request.serviceId())
+          || Boolean.TRUE.equals(request.administrative()))
+        throw ApiException.badRequest("El servicio debe coincidir con la sesión del tratamiento.");
+    }
+    var dentist = dentists.lockById(request.dentistId()).orElseThrow(ApiException::notFound);
+    if (Boolean.TRUE.equals(request.administrative())
+        && (request.serviceId() != null || planned != null || request.agreedPrice() != null))
+      throw ApiException.badRequest(
+          "Una cita administrativa no tiene servicio, tratamiento ni precio acordado.");
     var patient = patients.findById(request.patientId()).orElseThrow(ApiException::notFound);
     if (!patient.getActive()) throw ApiException.badRequest("El paciente está inactivo.");
     var service =
@@ -95,9 +156,11 @@ public class AppointmentService {
     if (!origin.equals("MANUAL") && !service.getBookableByAgent())
       throw ApiException.badRequest("El servicio no está habilitado para reserva automática.");
     int duration =
-        service == null
-            ? (request.durationMinutes() == null ? 0 : request.durationMinutes())
-            : service.getDurationMinutes();
+        planned != null
+            ? planned.durationMinutes()
+            : service == null
+                ? (request.durationMinutes() == null ? 0 : request.durationMinutes())
+                : service.getDurationMinutes();
     if (duration < 1 || duration > 1440 || service == null && request.reason().isBlank())
       throw ApiException.badRequest("Una cita administrativa necesita motivo y duración positiva.");
     Instant start = rules.instant(request.localStart(), zone);
@@ -108,6 +171,18 @@ public class AppointmentService {
     appointment.setDentistName(dentist.getFullName());
     appointment.setService(service);
     appointment.setServiceName(service == null ? request.reason().strip() : service.getName());
+    appointment.setAdministrative(
+        request.administrative() == null
+            ? service == null && planned == null
+            : request.administrative());
+    appointment.setAgreedPrice(request.agreedPrice());
+    if (planned != null) {
+      appointment.setPlanItemId(planned.itemId());
+      appointment.setScheduledSessionId(planned.id());
+      appointment.setServiceName(planned.description());
+      appointment.setTreatmentLabel(planned.planCode() + " · " + planned.planTitle());
+      appointment.setTreatmentSessionNumber(planned.sessionNumber());
+    }
     appointment.setDurationMinutes(duration);
     appointment.setGapMinutes(profile.getAppointmentGapMinutes());
     setInterval(appointment, start);
@@ -117,6 +192,10 @@ public class AppointmentService {
     appointment.setOrigin(origin);
     if (!origin.equals("MANUAL")) appointment.setStatus(AppointmentStatus.CONFIRMED);
     appointments.saveAndFlush(appointment);
+    if (planned != null) {
+      planning.assigned(planned.id(), appointment.getId());
+      planning.date(planned.id(), request.localStart().toLocalDate());
+    }
     if (origin.equals("MANUAL")) {
       history.append(appointment, "CREATED", null, null, "Reserva manual");
       audit.record(
@@ -159,6 +238,9 @@ public class AppointmentService {
     var appointment = appointments.lockById(id).orElseThrow(ApiException::notFound);
     appointment.checkVersion(request.version());
     states.requireReschedulable(appointment);
+    if (appointment.getPlanItemId() != null
+        && !appointment.getDentist().getId().equals(request.dentistId()))
+      throw ApiException.badRequest("La sesión conserva el profesional de su plan de tratamiento.");
     Map<UUID, Dentist> locked = new HashMap<>();
     java.util.stream.Stream.of(appointment.getDentist().getId(), request.dentistId())
         .distinct()
@@ -188,6 +270,8 @@ public class AppointmentService {
     setInterval(appointment, start);
     appointment.setStatus(agent ? AppointmentStatus.CONFIRMED : AppointmentStatus.RESERVED);
     appointments.saveAndFlush(appointment);
+    planning.appointmentState(
+        appointment.getId(), appointment.getStatus().name(), request.localStart().toLocalDate());
     if (agent)
       history.appendAs(
           appointment,
@@ -236,6 +320,10 @@ public class AppointmentService {
     var previous = appointment.getStatus();
     appointment.setStatus(request.status());
     appointments.saveAndFlush(appointment);
+    planning.appointmentState(
+        appointment.getId(),
+        request.status().name(),
+        LocalDate.ofInstant(appointment.getStartsAt(), ZoneId.of(profile.getTimeZone())));
     if (agent)
       history.appendAs(
           appointment,
@@ -304,10 +392,35 @@ public class AppointmentService {
           .formatHex(
               MessageDigest.getInstance("SHA-256")
                   .digest(
-                      (origin + mapper.writeValueAsString(request))
+                      (origin
+                              + mapper.writeValueAsString(
+                                  request.administrative() == null
+                                          && request.planItemId() == null
+                                          && request.scheduledSessionId() == null
+                                          && request.agreedPrice() == null
+                                      ? new LegacyRequest(
+                                          request.patientId(),
+                                          request.dentistId(),
+                                          request.serviceId(),
+                                          request.reason(),
+                                          request.durationMinutes(),
+                                          request.localStart(),
+                                          request.notes(),
+                                          request.requestKey())
+                                      : request))
                           .getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
   }
+
+  private record LegacyRequest(
+      UUID patientId,
+      UUID dentistId,
+      UUID serviceId,
+      String reason,
+      Integer durationMinutes,
+      LocalDateTime localStart,
+      String notes,
+      UUID requestKey) {}
 }

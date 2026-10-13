@@ -142,8 +142,19 @@ public class EncounterService {
     if (!encounter.getStatus().equals("DRAFT"))
       throw ApiException.conflict("La atención ya está finalizada.");
     var content = mapper.readValue(encounter.getDraft(), EncounterContent.class);
-    if (encounter.getAppointmentId() != null)
+    if (encounter.getAppointmentId() != null) {
+      var appointment = appointments.findById(encounter.getAppointmentId()).orElseThrow();
+      if (appointment.getPlanItemId() != null
+          && content.procedures().stream()
+                  .filter(
+                      p -> appointment.getPlanItemId().equals(p.planItemId()) && p.quantity() == 1)
+                  .count()
+              != 1)
+        throw ApiException.badRequest(
+            "Esta cita corresponde a una sesión de tratamiento. Conserva su procedimiento vinculado"
+                + " para finalizar sin generar otra deuda.");
       booking.completeClinical(encounter.getAppointmentId());
+    }
     billing.finalizeProcedures(encounter, content.procedures());
     append(encounter, content, "Finalización inicial");
     encounter.setStatus("FINAL");

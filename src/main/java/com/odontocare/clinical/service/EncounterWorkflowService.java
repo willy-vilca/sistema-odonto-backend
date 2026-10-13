@@ -21,6 +21,7 @@ public class EncounterWorkflowService {
   private final ClinicalAccess access;
   private final DentalServiceRepository services;
   private final InstallationProfileRepository profiles;
+  private final com.odontocare.treatments.repository.PlanItemRepository planItems;
 
   public EncounterWorkflowService(
       AppointmentRepository appointments,
@@ -28,13 +29,15 @@ public class EncounterWorkflowService {
       EncounterService encounters,
       ClinicalAccess access,
       DentalServiceRepository services,
-      InstallationProfileRepository profiles) {
+      InstallationProfileRepository profiles,
+      com.odontocare.treatments.repository.PlanItemRepository planItems) {
     this.appointments = appointments;
     this.records = records;
     this.encounters = encounters;
     this.access = access;
     this.services = services;
     this.profiles = profiles;
+    this.planItems = planItems;
   }
 
   @Transactional
@@ -51,17 +54,25 @@ public class EncounterWorkflowService {
         appointment.getService() == null
             ? null
             : services.findById(appointment.getService().getId()).orElseThrow();
+    var planItem =
+        appointment.getPlanItemId() == null
+            ? null
+            : planItems.findById(appointment.getPlanItemId()).orElseThrow();
     var procedures =
-        service == null
+        appointment.getAdministrative()
             ? List.<Procedure>of()
             : List.of(
                 new Procedure(
-                    service.getId(),
+                    service == null ? null : service.getId(),
                     appointment.getServiceName(),
                     1,
-                    null,
-                    null,
-                    service.getPrice()));
+                    planItem == null ? null : planItem.getTooth(),
+                    appointment.getPlanItemId(),
+                    planItem != null
+                        ? null
+                        : appointment.getAgreedPrice() != null
+                            ? appointment.getAgreedPrice()
+                            : service == null ? null : service.getPrice()));
     var date =
         LocalDate.ofInstant(
             appointment.getStartsAt(),
@@ -78,5 +89,40 @@ public class EncounterWorkflowService {
             new EncounterContent("", "", "", "", procedures),
             0L),
         dentist.getFullName());
+  }
+
+  @Transactional(readOnly = true)
+  public EncounterResponse previous(UUID patient, UUID dentist, UUID exclude, UUID planId) {
+    access.requireDentist(dentist);
+    var spec =
+        com.odontocare.shared.pagination.SearchSpecifications
+            .<com.odontocare.clinical.model.Encounter>equal("patientId", patient)
+            .and(com.odontocare.shared.pagination.SearchSpecifications.equal("dentistId", dentist))
+            .and(com.odontocare.shared.pagination.SearchSpecifications.equal("status", "FINAL"));
+    if (exclude != null) spec = spec.and((root, query, cb) -> cb.notEqual(root.get("id"), exclude));
+    if (planId != null)
+      spec =
+          spec.and(
+              (root, query, cb) -> {
+                var sub = query.subquery(UUID.class);
+                var session = sub.from(com.odontocare.treatments.model.PlanSession.class);
+                sub.select(session.get("encounterId"))
+                    .where(
+                        cb.equal(session.get("planId"), planId),
+                        cb.equal(session.get("encounterId"), root.get("id")));
+                return cb.exists(sub);
+              });
+    var page =
+        records.findAll(
+            spec,
+            org.springframework.data.domain.PageRequest.of(
+                0,
+                1,
+                org.springframework.data.domain.Sort.by(
+                    org.springframework.data.domain.Sort.Direction.DESC,
+                    "attendedOn",
+                    "createdAt",
+                    "id")));
+    return page.isEmpty() ? null : encounters.get(page.getContent().getFirst().getId());
   }
 }

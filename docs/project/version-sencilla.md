@@ -1,6 +1,8 @@
 # OdontoCare para un odontólogo — versión sencilla
 
-Decisión del usuario del 11/10/2026. Variante 1.0 en `version_sencilla` de backend y frontend. Parte del alcance 1.13 y plan 3.15; las diferencias de este documento prevalecen exclusivamente para esta variante. La versión de registro permanece en main.
+Decisión del usuario del 11/10/2026. Variante 1.1 en `version_sencilla` de backend y frontend. Parte del alcance 1.13 y plan 3.15; las diferencias de este documento prevalecen exclusivamente para esta variante. La versión de registro permanece en main.
+
+Ampliación autorizada y comprobada el 13/10/2026: sesiones finitas por fecha/frecuencia y pendientes sin hora, citas con servicio propio o sesión de plan, proforma/acuerdo con inicial y cuotas, aceptación/cobro/cuotas atómicos, límite de precios persistido en el servidor, avisos visuales, atención anterior y contacto desde cita. Seguir [cierre y guía breve](ajustes-tratamientos-agenda-agente-version-sencilla.md). 294 pruebas backend y 121 escenarios distintos de navegador aprobados; V26 y registros existentes conservados. Los trabajadores externos permanecen temporalmente desactivados en la ejecución de revisión por rechazo de reactivación de la aprobación automática; archivos privados sin cambios. No declarar una nueva comprobación real de WhatsApp ni iniciar recordatorios/fase 9.
 
 Revisión del agente autorizada el 12/10/2026: [hallazgos, correcciones y comprobación real](revision-agente-version-sencilla-12-octubre.md). Flujo v7.11 y 269 pruebas backend aprobadas; disponibilidad de mañana a las 10:00 comprobada con Groq y WhatsApp real. Preservar la agenda configurada (sábado cerrado), datos, controles y credenciales. Este tramo usa las integraciones que el usuario activó; la pausa de proveedores de la revisión inicial siguiente es histórica.
 

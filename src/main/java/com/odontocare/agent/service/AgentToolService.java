@@ -28,6 +28,7 @@ public class AgentToolService {
   private final AgentSupervisionService supervision;
   private final AgentIdentityService identity;
   private final AgentChangeService changes;
+  private final AgentPricingPolicy pricing;
 
   public AgentToolService(
       AgentRepository runs,
@@ -39,7 +40,8 @@ public class AgentToolService {
       AgentIdentityService identity,
       AgentChangeService changes,
       AgentSupervisionService supervision,
-      Clock clock) {
+      Clock clock,
+      AgentPricingPolicy pricing) {
     this.runs = runs;
     this.catalog = catalog;
     this.conversations = conversations;
@@ -50,6 +52,7 @@ public class AgentToolService {
     this.supervision = supervision;
     this.identity = identity;
     this.changes = changes;
+    this.pricing = pricing;
   }
 
   @Transactional(timeout = 10)
@@ -82,15 +85,11 @@ public class AgentToolService {
       }
       case "consultar_servicios" -> {
         fields(args, "search", "page");
-        yield Map.of(
-            "items",
+        yield pricing.catalogue(
+            run,
             catalog.services(text(args, "search", 160, false), page(args)),
-            "page",
-            page(args),
-            "page_size",
-            5,
-            "currency",
-            profiles.findById((short) 1).orElseThrow().getCurrency());
+            profiles.findById((short) 1).orElseThrow().getCurrency(),
+            page(args));
       }
       case "pacientes_contacto" -> {
         fields(args, "search", "page");
@@ -437,6 +436,7 @@ public class AgentToolService {
             summary,
             clock.instant());
     supervision.request(run, "CONFIRMATION_PENDING", summary, patient, patientName, null);
+    pricing.resetForReservation(run);
     audit.recordAs(
         null,
         "Agente IA",

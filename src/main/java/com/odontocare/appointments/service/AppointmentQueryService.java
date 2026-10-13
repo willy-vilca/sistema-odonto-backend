@@ -19,14 +19,17 @@ public class AppointmentQueryService {
   private final AppointmentRepository appointments;
   private final AppointmentHistoryRepository history;
   private final InstallationProfileRepository profiles;
+  private final com.odontocare.treatments.repository.TreatmentPlanningRepository planning;
 
   public AppointmentQueryService(
       AppointmentRepository appointments,
       AppointmentHistoryRepository history,
-      InstallationProfileRepository profiles) {
+      InstallationProfileRepository profiles,
+      com.odontocare.treatments.repository.TreatmentPlanningRepository planning) {
     this.appointments = appointments;
     this.history = history;
     this.profiles = profiles;
+    this.planning = planning;
   }
 
   private ZoneId zone() {
@@ -107,7 +110,11 @@ public class AppointmentQueryService {
   }
 
   public record CalendarResponse(
-      List<AppointmentResponse> items, String timeZone, LocalDate from, LocalDate to) {}
+      List<AppointmentResponse> items,
+      String timeZone,
+      LocalDate from,
+      LocalDate to,
+      List<com.odontocare.treatments.dto.ScheduledSessionContracts.Session> pendingSessions) {}
 
   public CalendarResponse calendar(UUID dentist, LocalDate from, LocalDate to) {
     return calendar(dentist, null, from, to);
@@ -130,7 +137,18 @@ public class AppointmentQueryService {
             .toList(),
         zone.toString(),
         from,
-        to);
+        to,
+        pending(dentist, patient, from, to));
+  }
+
+  private List<com.odontocare.treatments.dto.ScheduledSessionContracts.Session> pending(
+      UUID dentist, UUID patient, LocalDate from, LocalDate to) {
+    var query = new PageQuery();
+    query.setSize(1000);
+    var page = planning.list(patient, dentist, null, from, to, "PENDING", query);
+    if (page.totalElements() > 1000)
+      throw ApiException.badRequest("Reduce el intervalo para consultar las sesiones pendientes.");
+    return page.items();
   }
 
   public PageResponse<HistoryResponse> history(UUID id, PageQuery pageQuery, String action) {

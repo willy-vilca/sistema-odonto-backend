@@ -23,7 +23,7 @@ public class Appointment extends VersionedEntity {
   @JoinColumn(name = "service_id")
   private DentalService service;
 
-  @Column(nullable = false, length = 160)
+  @Column(nullable = false, length = 300)
   private String serviceName;
 
   @Column(nullable = false, length = 120)
@@ -59,6 +59,67 @@ public class Appointment extends VersionedEntity {
 
   @Column(nullable = false, length = 64)
   private String requestFingerprint;
+
+  private UUID planItemId;
+  private UUID scheduledSessionId;
+
+  @Column(precision = 10, scale = 2)
+  private java.math.BigDecimal agreedPrice;
+
+  private boolean administrative;
+
+  @Column(length = 220)
+  private String treatmentLabel;
+
+  private Integer treatmentSessionNumber;
+
+  public UUID getPlanItemId() {
+    return planItemId;
+  }
+
+  public void setPlanItemId(UUID value) {
+    planItemId = value;
+  }
+
+  public UUID getScheduledSessionId() {
+    return scheduledSessionId;
+  }
+
+  public void setScheduledSessionId(UUID value) {
+    scheduledSessionId = value;
+  }
+
+  public java.math.BigDecimal getAgreedPrice() {
+    return agreedPrice;
+  }
+
+  public void setAgreedPrice(java.math.BigDecimal value) {
+    agreedPrice = value;
+  }
+
+  public boolean getAdministrative() {
+    return administrative;
+  }
+
+  public void setAdministrative(boolean value) {
+    administrative = value;
+  }
+
+  public String getTreatmentLabel() {
+    return treatmentLabel;
+  }
+
+  public void setTreatmentLabel(String value) {
+    treatmentLabel = value;
+  }
+
+  public Integer getTreatmentSessionNumber() {
+    return treatmentSessionNumber;
+  }
+
+  public void setTreatmentSessionNumber(Integer value) {
+    treatmentSessionNumber = value;
+  }
 
   public Patient getPatient() {
     return patient;

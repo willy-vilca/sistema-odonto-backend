@@ -35,14 +35,15 @@ public class AgentSupervisionRepository {
                     r.getString("handoff_text"),
                     r.getString("clinical_text"),
                     r.getString("closed_text"),
-                    r.getString("failure_text")))
+                    r.getString("failure_text"),
+                    r.getInt("max_price_services")))
         .getFirst();
   }
 
   public void savePolicy(Policy p) {
     jdbc.update(
         "UPDATE agent_policy SET"
-            + " version=version+1,enabled=?,schedule=?::jsonb,change_lead_minutes=?,allow_reschedule=?,allow_cancel=?,handoff_text=?,clinical_text=?,closed_text=?,failure_text=?"
+            + " version=version+1,enabled=?,schedule=?::jsonb,change_lead_minutes=?,allow_reschedule=?,allow_cancel=?,handoff_text=?,clinical_text=?,closed_text=?,failure_text=?,max_price_services=coalesce(?,max_price_services)"
             + " WHERE id=1",
         p.enabled(),
         mapper.writeValueAsString(p.schedule()),
@@ -52,7 +53,8 @@ public class AgentSupervisionRepository {
         p.handoffText().strip(),
         p.clinicalText().strip(),
         p.closedText().strip(),
-        p.failureText().strip());
+        p.failureText().strip(),
+        p.maxPriceServices());
   }
 
   public void initialize(UUID conversation, String source) {
@@ -126,7 +128,7 @@ public class AgentSupervisionRepository {
   public void attachRun(UUID run, UUID conversation, String provider) {
     jdbc.update(
         "UPDATE agent_run SET control_generation=(SELECT generation FROM agent_supervision WHERE"
-            + " conversation_id=?),flow_version='supervised-v7.11',provider=? WHERE id=?",
+            + " conversation_id=?),flow_version='supervised-v7.12',provider=? WHERE id=?",
         conversation,
         provider,
         run);

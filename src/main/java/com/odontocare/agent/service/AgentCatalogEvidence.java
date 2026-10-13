@@ -51,7 +51,15 @@ final class AgentCatalogEvidence {
     return true;
   }
 
-  private BigDecimal amount(String value) {
+  static Set<BigDecimal> quotedAmounts(String response) {
+    var result = new HashSet<BigDecimal>();
+    var match = PRICE.matcher(response.replace('\u202f', ' ').replace('\u00a0', ' '));
+    while (match.find())
+      result.add(amount(match.group(1) != null ? match.group(1) : match.group(2)));
+    return result;
+  }
+
+  private static BigDecimal amount(String value) {
     value = value.replaceAll("[.,]+$", "");
     int comma = value.lastIndexOf(','), dot = value.lastIndexOf('.');
     if (comma >= 0 && dot >= 0)
